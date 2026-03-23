@@ -1,8 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+
+const HEADER_LOGO_PATH = "/brand/paymong-header-logo.svg";
 
 const navItems = [
   "카테고리1",
@@ -213,17 +216,25 @@ export function FixedHeader() {
   return (
     <>
       <LiquidGlassFilter />
-      <header className="fixed inset-x-0 top-0 z-50 px-4 py-5 sm:px-6 lg:px-10">
+      <header className="fixed inset-x-0 top-0 z-50 bg-white/94 px-4 py-5 backdrop-blur-sm sm:px-6 lg:px-10">
         <div className="mx-auto flex max-w-[1360px] items-center justify-between gap-4">
           <Link
             href="/"
-            className="relative z-10 text-[1.02rem] font-semibold tracking-[0.26em] text-[var(--text-primary)] uppercase"
+            className="relative z-10 inline-flex items-center text-[1.02rem] font-semibold tracking-[0.26em] text-[var(--text-primary)] uppercase"
           >
-            Paymong
+            <Image
+              src={HEADER_LOGO_PATH}
+              alt="Paymong"
+              className="h-8 w-auto object-contain"
+              width={148}
+              height={32}
+              priority
+            />
+            <span className="hidden">Paymong</span>
           </Link>
 
           <nav className="hidden flex-1 justify-center lg:flex">
-            <div className="liquid-glass-pill flex items-center gap-1 rounded-full px-2 py-2">
+            <div className="liquid-glass-pill flex items-center gap-1 rounded-full bg-[#f3e9d5] px-2 py-2">
               {navItems.map((item, index) => (
                 <motion.a
                   key={item}

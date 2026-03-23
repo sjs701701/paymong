@@ -6,6 +6,10 @@
   --brand-1: #0038f1;
   --brand-2: #00abff;
   --brand-3: #8423fe;
+  --primary-color: #0a0f1e;
+  --text-initial: #0a0f1e;
+  --text-hover: #ffffff;
+  --bg-initial: #92D5FF;
   --glass-fill: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.72),
@@ -106,6 +110,96 @@ button {
   filter: blur(88px);
   opacity: 0.18;
   pointer-events: none;
+}
+
+.hero-title-shell {
+  position: relative;
+  width: 100%;
+  max-width: 1360px;
+  min-height: clamp(20rem, 36vw, 30rem);
+}
+
+.hero-title-stage {
+  position: absolute;
+  inset: -2.4rem -1.5rem -3.4rem;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero-design-slot {
+  position: absolute;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  padding: 0.9rem 1rem;
+  border: 1px dashed rgba(10, 15, 30, 0.18);
+  background-color: rgba(255, 255, 255, 0.28);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.hero-design-slot::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0.08)),
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.12), transparent 72%);
+  pointer-events: none;
+}
+
+.hero-design-slot__label {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  padding: 0.38rem 0.72rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: rgba(10, 15, 30, 0.74);
+  box-shadow: 0 8px 20px rgba(10, 15, 30, 0.08);
+}
+
+.hero-design-slot--orbit {
+  top: 5%;
+  left: 2%;
+  width: clamp(10rem, 17vw, 14rem);
+  height: clamp(8rem, 12vw, 10rem);
+  border-radius: 44% 56% 48% 52% / 53% 43% 57% 47%;
+  transform: rotate(-8deg);
+}
+
+.hero-design-slot--ribbon {
+  top: 3%;
+  right: 7%;
+  width: clamp(11rem, 18vw, 15rem);
+  height: clamp(5.5rem, 7vw, 7rem);
+  border-radius: 999px;
+  transform: rotate(10deg);
+}
+
+.hero-design-slot--sweep {
+  top: 42%;
+  left: -1%;
+  width: clamp(14rem, 28vw, 21rem);
+  height: clamp(4.8rem, 7vw, 6.6rem);
+  border-radius: 999px;
+  transform: rotate(-12deg);
+}
+
+.hero-design-slot--echo {
+  right: 3%;
+  bottom: 6%;
+  width: clamp(10rem, 18vw, 14rem);
+  height: clamp(7.5rem, 11vw, 9.5rem);
+  border-radius: 40% 60% 56% 44% / 52% 48% 54% 46%;
+  transform: rotate(12deg);
 }
 
 .glass-panel {
@@ -355,6 +449,119 @@ button {
   transition-delay: 0.25s;
 }
 
+.cta-btn {
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 13px 52px;
+  border: 2px solid #0a0f1e;
+  border-radius: 9999px;
+  background-color: var(--bg-initial);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  overflow: hidden;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.2s ease;
+}
+
+.cta-btn__logo {
+  position: relative;
+  z-index: 2;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+}
+
+.bg-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--primary-color);
+  transform: translateY(100%);
+  transition: transform 0.18s cubic-bezier(0.25, 1, 0.5, 1);
+  z-index: 1;
+}
+
+.text-box {
+  position: relative;
+  z-index: 2;
+  display: block;
+  overflow: hidden;
+  padding: 3px 0;
+}
+
+.text-wrapper {
+  display: grid;
+}
+
+.text-top,
+.text-bottom {
+  grid-area: 1 / 1;
+  display: block;
+  line-height: 1.45;
+  padding-bottom: 1px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.text-top {
+  color: var(--text-initial);
+  transform: translateY(0);
+  opacity: 1;
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+.text-bottom {
+  color: var(--text-hover);
+  transform: translateY(120%);
+  opacity: 0;
+  transition: transform 0.1s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.1s ease;
+}
+
+.cta-btn:hover .bg-fill {
+  transform: translateY(0);
+  transition: transform 0.18s cubic-bezier(0.25, 1, 0.5, 1);
+  transition-delay: 0s;
+}
+
+.cta-btn:hover .text-top {
+  transform: translateY(-120%);
+  opacity: 0;
+  transition-delay: 0s;
+}
+
+.cta-btn:hover .text-bottom {
+  transform: translateY(0);
+  opacity: 1;
+  transition-duration: 0.08s;
+  transition-delay: 0.08s;
+}
+
+.cta-btn:not(:hover) .text-bottom {
+  transition-delay: 0s;
+  transition-duration: 0.08s;
+}
+
+.cta-btn:not(:hover) .bg-fill {
+  transition-delay: 0.06s;
+}
+
+.cta-btn:not(:hover) .text-top {
+  transition-delay: 0.1s;
+}
+
+.cta-btn:active {
+  transform: scale(0.96);
+}
+
 .editorial-kicker {
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -362,6 +569,49 @@ button {
 
 .text-balance {
   text-wrap: balance;
+}
+
+@media (max-width: 900px) {
+  .hero-title-shell {
+    min-height: clamp(18rem, 56vw, 24rem);
+  }
+
+  .hero-title-stage {
+    inset: -1.25rem -0.4rem -2.2rem;
+  }
+
+  .hero-design-slot--orbit {
+    top: 8%;
+    left: 1%;
+    width: clamp(7rem, 24vw, 9rem);
+    height: clamp(5.5rem, 18vw, 7rem);
+  }
+
+  .hero-design-slot--ribbon {
+    top: 7%;
+    right: 2%;
+    width: clamp(7.5rem, 25vw, 9.5rem);
+    height: clamp(4rem, 11vw, 4.8rem);
+  }
+
+  .hero-design-slot--sweep {
+    top: 47%;
+    left: 0;
+    width: clamp(10rem, 42vw, 13rem);
+    height: clamp(4rem, 11vw, 5rem);
+  }
+
+  .hero-design-slot--echo {
+    right: 1%;
+    bottom: 10%;
+    width: clamp(7rem, 22vw, 9rem);
+    height: clamp(5.5rem, 17vw, 7rem);
+  }
+
+  .hero-design-slot__label {
+    font-size: 0.62rem;
+    padding: 0.32rem 0.58rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -376,5 +626,24 @@ button {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .cta-btn,
+  .cta-btn .bg-fill,
+  .cta-btn .text-top,
+  .cta-btn .text-bottom {
+    transition-duration: revert !important;
+  }
+
+  .cta-btn .bg-fill {
+    transition-duration: 0.18s !important;
+  }
+
+  .cta-btn .text-top {
+    transition-duration: 0.1s !important;
+  }
+
+  .cta-btn .text-bottom {
+    transition-duration: 0.1s !important;
   }
 }
