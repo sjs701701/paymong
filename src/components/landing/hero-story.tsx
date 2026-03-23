@@ -22,7 +22,7 @@ const keywordStates: KeywordState[] = [
   { id: "rent", label: "월세", accentColor: "#0038F1" },
   { id: "tuition", label: "교육비", accentColor: "#00ABFF" },
   { id: "labor", label: "인건비", accentColor: "#5D62FF" },
-  { id: "contract", label: "계약 비용", accentColor: "#8423FE" },
+  { id: "contract", label: "이사비", accentColor: "#8423FE" },
 ];
 
 const AURA_OPACITIES = [0.12, 0.18, 0.24, 0.18];
@@ -41,6 +41,7 @@ function withAlpha(hex: string, alpha: number) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+// Decorative assets live under public/design/hero-keywords/<keywordId>/.
 function buildDecorAssets(keywordId: KeywordId): KeywordDecorAsset[] {
   return [
     {
@@ -107,7 +108,7 @@ function HeadlineRotator({
       </div>
 
       <div className="relative z-10 flex w-full max-w-[1360px] flex-col">
-      <p className="-translate-x-[240px] flex w-full max-w-[15.5em] items-end justify-start self-start text-left text-[clamp(4.2rem,10.5vw,11rem)] font-semibold leading-[1.02] tracking-[-0.06em] text-[var(--text-primary)]">
+      <p className="-translate-x-[240px] flex w-full max-w-[15.5em] items-end justify-start self-start text-left text-[clamp(4rem,10vw,10.4rem)] font-semibold leading-[1.02] tracking-[-0.06em] text-[var(--text-primary)]">
           <span className="inline-flex w-[4.8em] shrink-0 items-end justify-end overflow-hidden">
             <AnimatePresence mode="wait">
               <motion.span
@@ -123,9 +124,9 @@ function HeadlineRotator({
               </motion.span>
             </AnimatePresence>
           </span>
-          <span className="shrink-0">도 카드로.</span>
+          <span className="shrink-0 tracking-[-0.03em]">도 카드로.</span>
         </p>
-        <p className="mt-5 w-full max-w-[13.2em] self-end text-right text-[clamp(4.2rem,10.5vw,11rem)] font-semibold leading-[0.98] tracking-[-0.06em] text-[var(--text-primary)]/82">
+        <p className="mt-5 w-full max-w-[13.2em] self-end whitespace-nowrap text-right text-[clamp(4rem,10vw,10.4rem)] font-semibold leading-[0.98] tracking-[-0.06em] text-[var(--text-primary)]/82">
           그게 페이몽입니다.
         </p>
       </div>
@@ -251,7 +252,7 @@ export function HeroStory() {
         </div>
         <div className="hero-noise" />
 
-        <div className="relative z-10 flex flex-col items-center px-4 sm:px-6">
+        <div className="relative z-10 flex flex-col items-center px-4 pt-10 sm:px-6 sm:pt-12">
           <HeadlineRotator activeItem={activeItem} />
 
           <button className="cta-btn mt-20" aria-label="지금 바로 시작하기">
