@@ -15,7 +15,7 @@ export type KeywordState = {
 type KeywordDecorAsset = {
   slot: KeywordDecorSlotId;
   label: string;
-  path: string;
+  pathBase: string;
 };
 
 const keywordStates: KeywordState[] = [
@@ -27,6 +27,7 @@ const keywordStates: KeywordState[] = [
 
 const AURA_OPACITIES = [0.12, 0.18, 0.24, 0.18];
 const COOLDOWN_MS = 520;
+const DECOR_ASSET_EXTENSIONS = ["svg", "png", "jpg", "jpeg", "webp"] as const;
 
 function withAlpha(hex: string, alpha: number) {
   const normalized = hex.replace("#", "");
@@ -46,25 +47,129 @@ function buildDecorAssets(keywordId: KeywordId): KeywordDecorAsset[] {
   return [
     {
       slot: "orbit",
-      label: "orbit-shell.webp",
-      path: `/design/hero-keywords/${keywordId}/orbit-shell.webp`,
+      label: "orbit-shell",
+      pathBase: `/design/hero-keywords/${keywordId}/orbit-shell`,
     },
     {
       slot: "ribbon",
-      label: "right-ribbon.webp",
-      path: `/design/hero-keywords/${keywordId}/right-ribbon.webp`,
+      label: "right-ribbon",
+      pathBase: `/design/hero-keywords/${keywordId}/right-ribbon`,
     },
     {
       slot: "sweep",
-      label: "left-sweep.webp",
-      path: `/design/hero-keywords/${keywordId}/left-sweep.webp`,
+      label: "left-sweep",
+      pathBase: `/design/hero-keywords/${keywordId}/left-sweep`,
     },
     {
       slot: "echo",
-      label: "bottom-echo.webp",
-      path: `/design/hero-keywords/${keywordId}/bottom-echo.webp`,
+      label: "bottom-echo",
+      pathBase: `/design/hero-keywords/${keywordId}/bottom-echo`,
     },
   ];
+}
+
+function buildDecorAssetCandidates(pathBase: string) {
+  return DECOR_ASSET_EXTENSIONS.map((extension) => `${pathBase}.${extension}`);
+}
+
+function useResolvedAssetPath(pathBase: string) {
+  const [resolvedPath, setResolvedPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    let disposed = false;
+    const candidates = buildDecorAssetCandidates(pathBase);
+
+    setResolvedPath(candidates[0] ?? null);
+
+    const tryCandidate = (index: number) => {
+      if (disposed || index >= candidates.length) {
+        if (!disposed) setResolvedPath(null);
+        return;
+      }
+
+      const candidate = candidates[index];
+      const image = new Image();
+
+      image.onload = () => {
+        if (!disposed) setResolvedPath(candidate);
+      };
+
+      image.onerror = () => {
+        tryCandidate(index + 1);
+      };
+
+      image.src = candidate;
+    };
+
+    tryCandidate(0);
+
+    return () => {
+      disposed = true;
+    };
+  }, [pathBase]);
+
+  return resolvedPath;
+}
+
+function DecorSlot({
+  asset,
+  accentColor,
+}: {
+  asset: KeywordDecorAsset;
+  accentColor: string;
+}) {
+  const resolvedPath = useResolvedAssetPath(asset.pathBase);
+
+  const slotStyle = {
+    backgroundImage: resolvedPath ? `url("${resolvedPath}")` : "none",
+    borderColor: withAlpha(accentColor, 0.32),
+    boxShadow: `0 20px 48px ${withAlpha(accentColor, 0.08)}`,
+  } satisfies CSSProperties;
+
+  return (
+    <div
+      className={`hero-design-slot hero-design-slot--${asset.slot}`}
+      style={slotStyle}
+    >
+      <span className="hero-design-slot__label">{asset.label}</span>
+    </div>
+  );
+}
+
+function OrbitAssetOverlay({
+  asset,
+}: {
+  asset: KeywordDecorAsset;
+}) {
+  const resolvedPath = useResolvedAssetPath(asset.pathBase);
+
+  if (!resolvedPath) return null;
+
+  return (
+    <img
+      src={resolvedPath}
+      alt=""
+      className="hero-orbit-asset"
+    />
+  );
+}
+
+function RibbonAssetOverlay({
+  asset,
+}: {
+  asset: KeywordDecorAsset;
+}) {
+  const resolvedPath = useResolvedAssetPath(asset.pathBase);
+
+  if (!resolvedPath) return null;
+
+  return (
+    <img
+      src={resolvedPath}
+      alt=""
+      className="hero-ribbon-asset"
+    />
+  );
 }
 
 function HeadlineRotator({
@@ -73,6 +178,9 @@ function HeadlineRotator({
   activeItem: KeywordState;
 }) {
   const decorAssets = useMemo(() => buildDecorAssets(activeItem.id), [activeItem.id]);
+  const orbitAsset = decorAssets.find((asset) => asset.slot === "orbit");
+  const ribbonAsset = decorAssets.find((asset) => asset.slot === "ribbon");
+  const baseDecorAssets = decorAssets.filter((asset) => asset.slot !== "orbit" && asset.slot !== "ribbon");
 
   return (
     <div className="hero-title-shell">
@@ -86,50 +194,79 @@ function HeadlineRotator({
             transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
             className="relative h-full w-full"
           >
-            {decorAssets.map((asset) => {
-              const slotStyle = {
-                backgroundImage: `linear-gradient(135deg, ${withAlpha(activeItem.accentColor, 0.12)}, rgba(255, 255, 255, 0.66)), url("${asset.path}")`,
-                borderColor: withAlpha(activeItem.accentColor, 0.32),
-                boxShadow: `0 20px 48px ${withAlpha(activeItem.accentColor, 0.12)}, inset 0 1px 0 rgba(255, 255, 255, 0.72)`,
-              } satisfies CSSProperties;
-
-              return (
-                <div
-                  key={asset.path}
-                  className={`hero-design-slot hero-design-slot--${asset.slot}`}
-                  style={slotStyle}
-                >
-                  <span className="hero-design-slot__label">{asset.label}</span>
-                </div>
-              );
-            })}
+            {baseDecorAssets.map((asset) => (
+              <DecorSlot
+                key={asset.pathBase}
+                asset={asset}
+                accentColor={activeItem.accentColor}
+              />
+            ))}
           </motion.div>
         </AnimatePresence>
       </div>
 
       <div className="relative z-10 flex w-full max-w-[1360px] flex-col">
-      <p className="-translate-x-[240px] flex w-full max-w-[15.5em] items-end justify-start self-start text-left text-[clamp(4rem,10vw,10.4rem)] font-semibold leading-[1.02] tracking-[-0.06em] text-[var(--text-primary)]">
+      <p className="-translate-x-[240px] flex w-full max-w-[15.5em] items-end justify-start self-start text-left text-[clamp(3rem,7.8vw,7.9rem)] font-semibold leading-[1.02] tracking-[-0.06em] text-[var(--text-primary)]">
           <span className="inline-flex w-[4.8em] shrink-0 items-end justify-end overflow-hidden">
             <AnimatePresence mode="wait">
-              <motion.span
-                key={activeItem.id}
-                initial={{ opacity: 0, filter: "blur(14px)", y: 36, scale: 0.98 }}
-                animate={{ opacity: 1, filter: "blur(0px)", y: 0, scale: 1 }}
-                exit={{ opacity: 0, filter: "blur(10px)", y: -24, scale: 1.015 }}
-                transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
-                className="inline-block whitespace-nowrap font-[var(--font-display)] font-extrabold tracking-[-0.04em]"
-                style={{ color: activeItem.accentColor }}
+              <span
+                className="inline-flex h-[1.08em] w-[2.95em] items-center justify-center whitespace-nowrap rounded-full px-[0.12em]"
+                style={{ backgroundColor: activeItem.accentColor }}
               >
-                {activeItem.label}
-              </motion.span>
+                <motion.span
+                  key={activeItem.id}
+                  initial={{ opacity: 0, filter: "blur(14px)", y: 36, scale: 0.98 }}
+                  animate={{ opacity: 1, filter: "blur(0px)", y: 0, scale: 1 }}
+                  exit={{ opacity: 0, filter: "blur(10px)", y: -24, scale: 1.015 }}
+                  transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
+                  className={`inline-flex items-center justify-center whitespace-nowrap text-[0.74em] font-[var(--font-display)] font-extrabold leading-none ${activeItem.id === "rent" ? "tracking-[0.08em]" : "tracking-[-0.04em]"}`}
+                  style={{ color: "#fff" }}
+                >
+                  {activeItem.label}
+                </motion.span>
+              </span>
             </AnimatePresence>
           </span>
           <span className="shrink-0 tracking-[-0.03em]">도 카드로.</span>
         </p>
-        <p className="mt-5 w-full max-w-[13.2em] self-end whitespace-nowrap text-right text-[clamp(4rem,10vw,10.4rem)] font-semibold leading-[0.98] tracking-[-0.06em] text-[var(--text-primary)]/82">
-          그게 페이몽입니다.
+        <p className="mt-5 w-full max-w-[13.2em] self-end whitespace-nowrap text-right text-[clamp(3rem,7.8vw,7.9rem)] font-semibold leading-[0.98] tracking-[-0.06em] text-[var(--text-primary)]">
+          그게 페이몽이니까.
         </p>
       </div>
+
+      {orbitAsset ? (
+        <div className="hero-title-stage hero-title-stage--overlay" aria-hidden="true">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`${activeItem.id}-orbit`}
+            initial={{ opacity: 0, filter: "blur(14px)", scale: 0.98 }}
+            animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+            exit={{ opacity: 0, filter: "blur(12px)", scale: 1.01 }}
+            transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+            className="relative h-full w-full"
+          >
+              <OrbitAssetOverlay asset={orbitAsset} />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      ) : null}
+
+      {ribbonAsset ? (
+        <div className="hero-title-stage" aria-hidden="true">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`${activeItem.id}-ribbon`}
+              initial={{ opacity: 0, filter: "blur(14px)", scale: 0.98 }}
+              animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+              exit={{ opacity: 0, filter: "blur(12px)", scale: 1.01 }}
+              transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+              className="relative h-full w-full"
+            >
+              <RibbonAssetOverlay asset={ribbonAsset} />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -252,10 +389,10 @@ export function HeroStory() {
         </div>
         <div className="hero-noise" />
 
-        <div className="relative z-10 flex flex-col items-center px-4 pt-10 sm:px-6 sm:pt-12">
+        <div className="relative z-10 flex translate-y-8 flex-col items-center px-4 sm:translate-y-10 sm:px-6">
           <HeadlineRotator activeItem={activeItem} />
 
-          <button className="cta-btn mt-20" aria-label="지금 바로 시작하기">
+          <button className="cta-btn -mt-24 sm:-mt-28" aria-label="지금 바로 시작하기">
             <span className="bg-fill"></span>
             <svg className="cta-btn__logo" viewBox="0 0 47 29" fill="none" xmlns="http://www.w3.org/2000/svg">
               <mask id="mask0_2016_717" style={{ maskType: "luminance" }} maskUnits="userSpaceOnUse" x="0" y="0" width="47" height="29">

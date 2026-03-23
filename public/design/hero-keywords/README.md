@@ -5,25 +5,25 @@ Place the hero decorative image assets in this folder structure:
 ```text
 public/design/hero-keywords/
   rent/
-    orbit-shell.webp
-    right-ribbon.webp
-    left-sweep.webp
-    bottom-echo.webp
+    orbit-shell.(svg|png|jpg|jpeg|webp)
+    right-ribbon.(svg|png|jpg|jpeg|webp)
+    left-sweep.(svg|png|jpg|jpeg|webp)
+    bottom-echo.(svg|png|jpg|jpeg|webp)
   tuition/
-    orbit-shell.webp
-    right-ribbon.webp
-    left-sweep.webp
-    bottom-echo.webp
+    orbit-shell.(svg|png|jpg|jpeg|webp)
+    right-ribbon.(svg|png|jpg|jpeg|webp)
+    left-sweep.(svg|png|jpg|jpeg|webp)
+    bottom-echo.(svg|png|jpg|jpeg|webp)
   labor/
-    orbit-shell.webp
-    right-ribbon.webp
-    left-sweep.webp
-    bottom-echo.webp
+    orbit-shell.(svg|png|jpg|jpeg|webp)
+    right-ribbon.(svg|png|jpg|jpeg|webp)
+    left-sweep.(svg|png|jpg|jpeg|webp)
+    bottom-echo.(svg|png|jpg|jpeg|webp)
   contract/
-    orbit-shell.webp
-    right-ribbon.webp
-    left-sweep.webp
-    bottom-echo.webp
+    orbit-shell.(svg|png|jpg|jpeg|webp)
+    right-ribbon.(svg|png|jpg|jpeg|webp)
+    left-sweep.(svg|png|jpg|jpeg|webp)
+    bottom-echo.(svg|png|jpg|jpeg|webp)
 ```
 
 ## Keyword folders
@@ -35,29 +35,38 @@ public/design/hero-keywords/
 
 These folder names are fixed by the current hero component code.
 
-## Required filenames per folder
+## Required base filenames per folder
 
-- `orbit-shell.webp`
-- `right-ribbon.webp`
-- `left-sweep.webp`
-- `bottom-echo.webp`
+- `orbit-shell`
+- `right-ribbon`
+- `left-sweep`
+- `bottom-echo`
 
-These filenames are also fixed by the current code.
+Use one of these extensions for each file:
+
+- `.svg`
+- `.png`
+- `.jpg`
+- `.jpeg`
+- `.webp`
+
+The current code checks these extensions in that order and uses the first file
+it finds.
 
 ## Recommended asset format
 
-- Use `.webp`
+- Supported: `.svg`, `.png`, `.jpg`, `.jpeg`, `.webp`
 - Prefer transparent background assets
-- Export in RGB/RGBA
 - Keep each file lightweight for fast dev/server startup
+- Outline shapes and clean vector fills work best
 
 ## Practical export guidance
 
-- `orbit-shell.webp`: organic blob or round card, around `1200x900`
-- `right-ribbon.webp`: long horizontal ribbon, around `1400x600`
-- `left-sweep.webp`: wide sweep band, around `1600x700`
-- `bottom-echo.webp`: soft bottom accent or blob, around `1200x900`
+- `orbit-shell.svg`: organic blob or round card
+- `right-ribbon.svg`: long horizontal ribbon
+- `left-sweep.svg`: wide sweep band
+- `bottom-echo.svg`: soft bottom accent or blob
 
-The exact size does not need to match perfectly because the hero uses CSS
-background sizing and responsive containers. A 2x export with transparent
-padding usually works well.
+The exact canvas size does not need to match perfectly because the hero uses
+CSS background sizing and responsive containers. Keep the SVG viewBox clean and
+leave a bit of internal padding if the shape needs breathing room.

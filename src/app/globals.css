@@ -126,28 +126,63 @@ button {
   z-index: 0;
 }
 
+.hero-title-stage--overlay {
+  z-index: 20;
+}
+
+.hero-orbit-asset {
+  position: absolute;
+  z-index: 30;
+  top: -14.25%;
+  left: -1%;
+  width: clamp(10rem, 17vw, 14rem);
+  height: auto;
+  display: block;
+  transform: rotate(-8deg);
+  object-fit: contain;
+  filter: drop-shadow(0 20px 48px rgba(10, 15, 30, 0.08));
+  animation: hero-float-orbit 8.6s ease-in-out infinite;
+  animation-delay: -2.4s;
+  will-change: transform, translate;
+}
+
+.hero-ribbon-asset {
+  position: absolute;
+  top: 1%;
+  right: 11.8%;
+  width: clamp(12.3rem, 19.8vw, 16.6rem);
+  height: clamp(6.2rem, 7.8vw, 7.9rem);
+  display: block;
+  transform: rotate(10deg);
+  object-fit: contain;
+  filter: drop-shadow(0 20px 48px rgba(10, 15, 30, 0.08));
+  animation: hero-float-ribbon 2s ease-in infinite alternate;
+  animation-delay: -1.1s;
+  will-change: transform, translate;
+}
+
 .hero-design-slot {
   position: absolute;
   display: flex;
   align-items: flex-end;
-  overflow: hidden;
+  overflow: visible;
   padding: 0.9rem 1rem;
   border: 1px dashed rgba(10, 15, 30, 0.18);
-  background-color: rgba(255, 255, 255, 0.28);
+  background-color: transparent;
   background-position: center;
   background-repeat: no-repeat;
-  background-size: cover;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background-size: contain;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  animation: hero-float 10.8s ease-in-out infinite;
+  will-change: transform, translate;
 }
 
 .hero-design-slot::after {
   position: absolute;
   inset: 0;
   content: "";
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0.08)),
-    radial-gradient(circle at center, rgba(255, 255, 255, 0.12), transparent 72%);
+  background: none;
   pointer-events: none;
 }
 
@@ -166,24 +201,6 @@ button {
   box-shadow: 0 8px 20px rgba(10, 15, 30, 0.08);
 }
 
-.hero-design-slot--orbit {
-  top: 5%;
-  left: 2%;
-  width: clamp(10rem, 17vw, 14rem);
-  height: clamp(8rem, 12vw, 10rem);
-  border-radius: 44% 56% 48% 52% / 53% 43% 57% 47%;
-  transform: rotate(-8deg);
-}
-
-.hero-design-slot--ribbon {
-  top: 3%;
-  right: 7%;
-  width: clamp(11rem, 18vw, 15rem);
-  height: clamp(5.5rem, 7vw, 7rem);
-  border-radius: 999px;
-  transform: rotate(10deg);
-}
-
 .hero-design-slot--sweep {
   top: 42%;
   left: -1%;
@@ -191,6 +208,8 @@ button {
   height: clamp(4.8rem, 7vw, 6.6rem);
   border-radius: 999px;
   transform: rotate(-12deg);
+  animation-duration: 12.6s;
+  animation-delay: -3.4s;
 }
 
 .hero-design-slot--echo {
@@ -200,6 +219,53 @@ button {
   height: clamp(7.5rem, 11vw, 9.5rem);
   border-radius: 40% 60% 56% 44% / 52% 48% 54% 46%;
   transform: rotate(12deg);
+  animation-duration: 14.2s;
+  animation-delay: -4.8s;
+}
+
+@keyframes hero-float {
+  0% {
+    translate: 0 0;
+    animation-timing-function: cubic-bezier(0.33, 0, 0.16, 1);
+  }
+
+  28% {
+    translate: 0 -8px;
+    animation-timing-function: cubic-bezier(0.24, 0.72, 0.24, 1);
+  }
+
+  58% {
+    translate: 0 -18px;
+    animation-timing-function: cubic-bezier(0.36, 0, 0.2, 1);
+  }
+
+  100% {
+    translate: 0 0;
+  }
+}
+
+@keyframes hero-float-orbit {
+  0% {
+    translate: 0 0;
+  }
+
+  50% {
+    translate: 0 -18px;
+  }
+
+  100% {
+    translate: 0 0;
+  }
+}
+
+@keyframes hero-float-ribbon {
+  from {
+    translate: 0 0;
+  }
+
+  to {
+    translate: 0 -10px;
+  }
 }
 
 .glass-panel {
@@ -456,7 +522,7 @@ button {
   align-items: center;
   gap: 0.625rem;
   padding: 13px 52px;
-  border: 2px solid #0a0f1e;
+  /* border: 2px solid #0a0f1e; */
   border-radius: 9999px;
   background-color: var(--bg-initial);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
@@ -581,10 +647,20 @@ button {
   }
 
   .hero-design-slot--orbit {
-    top: 8%;
-    left: 1%;
+    display: none;
+  }
+
+  .hero-orbit-asset {
+    top: -7.5%;
+    left: -0.8%;
     width: clamp(7rem, 24vw, 9rem);
-    height: clamp(5.5rem, 18vw, 7rem);
+  }
+
+  .hero-ribbon-asset {
+    top: 5%;
+    right: 4.8%;
+    width: clamp(8.4rem, 27vw, 10.8rem);
+    height: clamp(4.4rem, 12vw, 5.4rem);
   }
 
   .hero-design-slot--ribbon {
