@@ -52,8 +52,8 @@ const DESKTOP_FRAME_HEIGHT_RATIO = 0.64;
 const MOBILE_FRAME_HEIGHT_RATIO = 0.56;
 const DESKTOP_FRAME_LIFT = 132;
 const MOBILE_FRAME_LIFT = 92;
-const DESKTOP_FRAME_PEEK = 56;
-const MOBILE_FRAME_PEEK = 40;
+const DESKTOP_FRAME_PEEK = 140;
+const MOBILE_FRAME_PEEK = 100;
 const VIDEO_STAGE_PIN_SCROLL = 3000;
 const LAST_KEYWORD_SETTLE_MS = 900;
 const LAST_KEYWORD_REVEAL_WHEEL_THRESHOLD = 140;
@@ -504,7 +504,13 @@ export function HeroStory({
     };
 
     const onWheel = (event: WheelEvent) => {
-      if (!isHeroControlling()) return;
+      if (!isHeroControlling()) {
+        if (idxRef.current < LAST_KEYWORD_INDEX && event.deltaY > 0 && isNearHeroStart()) {
+          event.preventDefault();
+          lockToHeroTop();
+        }
+        return;
+      }
       const now = window.performance.now();
 
       if (isCtaDockedRef.current && now < revealUnlockUntilRef.current) {
@@ -547,7 +553,7 @@ export function HeroStory({
           revealIntentRef.current = 0;
           isCtaDockedRef.current = true;
           setIsCtaDocked(true);
-          revealUnlockUntilRef.current = now + 1450;
+          revealUnlockUntilRef.current = now + 600;
           return;
         }
 
@@ -633,7 +639,7 @@ export function HeroStory({
           revealIntentRef.current = 0;
           isCtaDockedRef.current = true;
           setIsCtaDocked(true);
-          revealUnlockUntilRef.current = now + 1450;
+          revealUnlockUntilRef.current = now + 600;
           touchYRef.current = currentY;
           return;
         }
@@ -708,9 +714,9 @@ export function HeroStory({
 
     const ctx = gsap.context(() => {
       gsap.set(frame, {
-        y: frameLift,
-        scale: 0.96,
-        opacity: 0.74,
+        y: 0,
+        scale: 1,
+        opacity: 1,
         transformOrigin: "top center",
         willChange: "transform, opacity",
       });
@@ -742,39 +748,30 @@ export function HeroStory({
         });
       }
 
-      if (activeIndex !== LAST_KEYWORD_INDEX || !isCtaDocked) {
-        return;
-      }
-
-      gsap.to(nextSectionBackground, {
-        opacity: 1,
-        ease: "none",
-        scrollTrigger: {
-          trigger: nextSection,
-          start: "top 30%",
-          end: "top top",
-          scrub: 0.8,
-          invalidateOnRefresh: true,
-        },
-      });
-
-      gsap.timeline({
-        defaults: { ease: "none" },
-        scrollTrigger: {
-          trigger: nextSection,
-          start: "top bottom",
-          end: "top top",
-          scrub: 1.2,
-          invalidateOnRefresh: true,
-        },
-      })
-        .to(frame, {
-          y: 0,
-          scale: 1,
+      if (activeIndex === LAST_KEYWORD_INDEX && isCtaDocked) {
+        gsap.to(nextSectionBackground, {
           opacity: 1,
-          duration: 1,
-        }, 0)
-        .to(titleBlock, {
+          ease: "none",
+          scrollTrigger: {
+            trigger: nextSection,
+            start: "top 30%",
+            end: "top top",
+            scrub: 0.8,
+            invalidateOnRefresh: true,
+          },
+        });
+
+        gsap.timeline({
+          defaults: { ease: "none" },
+          scrollTrigger: {
+            trigger: nextSection,
+            start: "top bottom",
+            end: "top top",
+            scrub: 1.2,
+            invalidateOnRefresh: true,
+          },
+        })
+          .to(titleBlock, {
           y: -24,
           scale: 0.94,
           opacity: 0.4,
@@ -812,6 +809,7 @@ export function HeroStory({
           visibility: "hidden",
           duration: 0.01,
         }, 0.28);
+      }
     }, section);
 
     return () => {
@@ -824,13 +822,14 @@ export function HeroStory({
     const titleBlock = titleBlockRef.current;
     const heroStage = heroStageRef.current;
     const aura = auraRef.current;
+    const nextSectionBg = nextSectionBackgroundRef.current;
 
     if (!heroContainer || !titleBlock || !heroStage || activeIndex !== LAST_KEYWORD_INDEX) {
       return;
     }
 
     if (!isCtaDocked) {
-      gsap.killTweensOf([heroContainer, titleBlock, heroStage, aura].filter(Boolean));
+      gsap.killTweensOf([heroContainer, titleBlock, heroStage, aura, nextSectionBg].filter(Boolean));
       gsap.set(heroContainer, {
         opacity: 1,
         visibility: "visible",
@@ -849,10 +848,13 @@ export function HeroStory({
           opacity: AURA_OPACITIES[activeIndex],
         });
       }
+      if (nextSectionBg) {
+        gsap.set(nextSectionBg, { opacity: 0 });
+      }
       return;
     }
 
-    const fadeTargets = aura ? [heroContainer, titleBlock, heroStage, aura] : [heroContainer, titleBlock, heroStage];
+    const fadeTargets = [heroContainer, titleBlock, heroStage, aura, nextSectionBg].filter(Boolean);
     gsap.killTweensOf(fadeTargets);
 
     const tween = gsap.timeline({
@@ -864,18 +866,27 @@ export function HeroStory({
 
     tween
       .to(titleBlock, {
-        y: -18,
-        scale: 0.96,
-        opacity: 0.68,
-        filter: "blur(6px)",
+        y: -32,
+        scale: 0.92,
+        opacity: 0,
+        filter: "blur(16px)",
       }, 0)
       .to(heroStage, {
-        opacity: 0.78,
+        opacity: 0,
+      }, 0)
+      .to(heroContainer, {
+        opacity: 0,
       }, 0);
 
     if (aura) {
       tween.to(aura, {
-        opacity: Math.max(0.1, AURA_OPACITIES[activeIndex] * 0.6),
+        opacity: 0,
+      }, 0);
+    }
+
+    if (nextSectionBg) {
+      tween.to(nextSectionBg, {
+        opacity: 1,
       }, 0);
     }
 
@@ -1026,10 +1037,6 @@ export function HeroStory({
 
           <div
             className="relative z-10"
-            style={{
-              opacity: activeIndex === LAST_KEYWORD_INDEX ? 1 : 0,
-              transition: "opacity 220ms ease",
-            }}
           >
             <div ref={frameRef} className="hero-next-shell-frame" style={nextFrameStyle}>
               <div className="hero-next-shell-frame__surface" />

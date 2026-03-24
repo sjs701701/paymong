@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #FFFEF6;
-  --bg-elevated: rgba(255, 254, 246, 0.82);
+  --bg: #ffffff;
+  --bg-elevated: rgba(255, 255, 255, 0.82);
   --brand-1: #0038f1;
   --brand-2: #00abff;
   --brand-3: #8423fe;
@@ -38,45 +38,11 @@ html,
 body {
   margin: 0;
   min-height: 100%;
-  background:
-    radial-gradient(circle at top left, rgba(0, 56, 241, 0.04), transparent 32%),
-    radial-gradient(circle at 78% 18%, rgba(0, 171, 255, 0.03), transparent 26%),
-    radial-gradient(circle at 74% 70%, rgba(132, 35, 254, 0.03), transparent 22%),
-    linear-gradient(180deg, #FFFEF6 0%, #FDF9E8 44%, #FFFEF6 100%);
+  background: #ffffff;
 }
 
 body {
   overflow-x: clip;
-}
-
-body::before {
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  content: "";
-  background:
-    linear-gradient(
-      125deg,
-      transparent 0%,
-      rgba(0, 56, 241, 0.012) 32%,
-      transparent 54%
-    ),
-    radial-gradient(circle at top, rgba(0, 56, 241, 0.015), transparent 46%);
-  pointer-events: none;
-}
-
-body::after {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  content: "";
-  background-image:
-    linear-gradient(rgba(0, 0, 0, 0.016) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.016) 1px, transparent 1px);
-  background-size: 180px 180px;
-  mask-image: radial-gradient(circle at center, black 28%, transparent 82%);
-  opacity: 0.18;
-  pointer-events: none;
 }
 
 a {
@@ -797,8 +763,8 @@ button {
   overflow: hidden;
   border: 3px solid rgba(10, 15, 30, 0.9);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 254, 246, 0.92)),
-    rgba(255, 254, 246, 0.88);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.92)),
+    rgba(255, 255, 255, 0.88);
   box-shadow:
     0 28px 60px rgba(10, 15, 30, 0.1),
     0 8px 20px rgba(10, 15, 30, 0.06),
