@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 const HEADER_LOGO_PATH = "/brand/paymong-header-logo.svg";
+const HEADER_AUTO_HIDE_SYNC_EVENT = "paymong:header-auto-hide-sync";
 
 type HeaderCategory = {
   name: string;
@@ -198,12 +199,20 @@ export function FixedHeader({
       ticking = true;
       window.requestAnimationFrame(syncVisibility);
     };
+    const handleHeaderSync = (event: Event) => {
+      const hidden = (event as CustomEvent<{ hidden?: boolean }>).detail?.hidden;
+      if (typeof hidden === "boolean") {
+        setIsHidden(hidden);
+      }
+    };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener(HEADER_AUTO_HIDE_SYNC_EVENT, handleHeaderSync as EventListener);
 
     return () => {
       window.cancelAnimationFrame(resetFrame);
       window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener(HEADER_AUTO_HIDE_SYNC_EVENT, handleHeaderSync as EventListener);
     };
   }, [autoHideEnabled]);
 

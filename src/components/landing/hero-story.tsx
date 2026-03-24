@@ -52,6 +52,11 @@ const DESKTOP_FRAME_HEIGHT_RATIO = 0.64;
 const MOBILE_FRAME_HEIGHT_RATIO = 0.56;
 const DESKTOP_FRAME_LIFT = 132;
 const MOBILE_FRAME_LIFT = 92;
+const DESKTOP_FRAME_PEEK = 56;
+const MOBILE_FRAME_PEEK = 40;
+const LAST_KEYWORD_REVEAL_WHEEL_THRESHOLD = 140;
+const LAST_KEYWORD_REVEAL_TOUCH_THRESHOLD = 110;
+const HEADER_AUTO_HIDE_SYNC_EVENT = "paymong:header-auto-hide-sync";
 
 function withAlpha(hex: string, alpha: number) {
   const normalized = hex.replace("#", "");
@@ -312,15 +317,22 @@ export function HeroStory({
   const sectionRef = useRef<HTMLElement | null>(null);
   const heroStageRef = useRef<HTMLDivElement | null>(null);
   const titleBlockRef = useRef<HTMLDivElement | null>(null);
+  const ctaShellRef = useRef<HTMLDivElement | null>(null);
   const ctaRef = useRef<HTMLButtonElement | null>(null);
   const nextSectionRef = useRef<HTMLElement | null>(null);
+  const nextSectionBackgroundRef = useRef<HTMLDivElement | null>(null);
   const frameRef = useRef<HTMLDivElement | null>(null);
   const auraRef = useRef<HTMLDivElement | null>(null);
   const cooldownRef = useRef(false);
   const cooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const revealUnlockUntilRef = useRef(0);
+  const revealIntentRef = useRef(0);
   const touchYRef = useRef<number | null>(null);
   const idxRef = useRef(0);
+  const isCtaDockedRef = useRef(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isCtaDocked, setIsCtaDocked] = useState(false);
+  const [isCtaPreviewActive, setIsCtaPreviewActive] = useState(false);
   const [ctaWidth, setCtaWidth] = useState(0);
   const [viewportWidth, setViewportWidth] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(0);
@@ -328,6 +340,16 @@ export function HeroStory({
   useEffect(() => {
     idxRef.current = activeIndex;
   }, [activeIndex]);
+
+  useEffect(() => {
+    if (activeIndex !== LAST_KEYWORD_INDEX) {
+      revealIntentRef.current = 0;
+    }
+  }, [activeIndex]);
+
+  useEffect(() => {
+    isCtaDockedRef.current = isCtaDocked;
+  }, [isCtaDocked]);
 
   useEffect(() => {
     return () => {
@@ -353,7 +375,25 @@ export function HeroStory({
     if (!cta) return;
 
     const updateWidth = () => {
-      setCtaWidth(cta.getBoundingClientRect().width);
+      const clone = cta.cloneNode(true) as HTMLButtonElement;
+      clone.classList.remove("cta-btn--docked", "cta-btn--preview");
+      clone.style.position = "fixed";
+      clone.style.left = "-9999px";
+      clone.style.top = "0";
+      clone.style.visibility = "hidden";
+      clone.style.pointerEvents = "none";
+      clone.style.inlineSize = "auto";
+      clone.style.width = "auto";
+      clone.style.transition = "none";
+      clone.style.transform = "none";
+      clone.style.setProperty("--cta-expanded-width", "auto");
+      document.body.appendChild(clone);
+      const measuredWidth = clone.getBoundingClientRect().width;
+      clone.remove();
+
+      if (measuredWidth > 0) {
+        setCtaWidth(measuredWidth);
+      }
     };
 
     updateWidth();
@@ -392,8 +432,23 @@ export function HeroStory({
     const section = sectionRef.current;
     if (!section) return;
 
+    const syncHeaderVisibility = (hidden: boolean) => {
+      window.dispatchEvent(
+        new CustomEvent(HEADER_AUTO_HIDE_SYNC_EVENT, {
+          detail: { hidden },
+        }),
+      );
+    };
+
     const stepKeyword = (direction: 1 | -1) => {
       if (cooldownRef.current) return;
+      if (
+        direction === -1 &&
+        isCtaDockedRef.current &&
+        window.performance.now() < revealUnlockUntilRef.current
+      ) {
+        return;
+      }
 
       const nextIndex = idxRef.current + direction;
       if (nextIndex < 0 || nextIndex >= keywordStates.length) return;
@@ -406,6 +461,20 @@ export function HeroStory({
       cooldownTimerRef.current = setTimeout(() => {
         cooldownRef.current = false;
       }, KEYWORD_COOLDOWN_MS);
+
+      if (nextIndex === LAST_KEYWORD_INDEX && direction === 1) {
+        revealUnlockUntilRef.current = window.performance.now() + KEYWORD_COOLDOWN_MS;
+        revealIntentRef.current = 0;
+        syncHeaderVisibility(true);
+      }
+
+      if (nextIndex !== LAST_KEYWORD_INDEX) {
+        isCtaDockedRef.current = false;
+        setIsCtaDocked(false);
+        setIsCtaPreviewActive(false);
+        revealIntentRef.current = 0;
+        syncHeaderVisibility(false);
+      }
 
       idxRef.current = nextIndex;
       setActiveIndex(nextIndex);
@@ -433,6 +502,13 @@ export function HeroStory({
 
     const onWheel = (event: WheelEvent) => {
       if (!isHeroControlling()) return;
+      const now = window.performance.now();
+
+      if (isCtaDockedRef.current && now < revealUnlockUntilRef.current) {
+        event.preventDefault();
+        lockToHeroTop();
+        return;
+      }
 
       if (idxRef.current < LAST_KEYWORD_INDEX) {
         event.preventDefault();
@@ -450,12 +526,43 @@ export function HeroStory({
       }
 
       if (event.deltaY > 0 && isNearHeroStart()) {
+        syncHeaderVisibility(true);
+        if (!isCtaDockedRef.current) {
+          event.preventDefault();
+          lockToHeroTop();
+          revealIntentRef.current = Math.max(0, revealIntentRef.current + event.deltaY);
+
+          if (revealIntentRef.current < LAST_KEYWORD_REVEAL_WHEEL_THRESHOLD) {
+            return;
+          }
+
+          revealIntentRef.current = 0;
+          isCtaDockedRef.current = true;
+          setIsCtaDocked(true);
+          revealUnlockUntilRef.current = now + 1450;
+          return;
+        }
+
+        if (now < revealUnlockUntilRef.current) {
+          event.preventDefault();
+          lockToHeroTop();
+          return;
+        }
+
         event.preventDefault();
         advanceReveal(event.deltaY);
         return;
       }
 
       if (event.deltaY < 0 && idxRef.current > 0 && isNearHeroStart()) {
+        syncHeaderVisibility(false);
+        revealIntentRef.current = 0;
+        if (isCtaDockedRef.current && now < revealUnlockUntilRef.current) {
+          event.preventDefault();
+          lockToHeroTop();
+          return;
+        }
+
         event.preventDefault();
         lockToHeroTop();
         stepKeyword(-1);
@@ -471,7 +578,15 @@ export function HeroStory({
 
       const currentY = event.touches[0].clientY;
       const delta = touchYRef.current - currentY;
+      const now = window.performance.now();
       if (Math.abs(delta) < 30) return;
+
+      if (isCtaDockedRef.current && now < revealUnlockUntilRef.current) {
+        event.preventDefault();
+        lockToHeroTop();
+        touchYRef.current = currentY;
+        return;
+      }
 
       if (idxRef.current < LAST_KEYWORD_INDEX) {
         event.preventDefault();
@@ -490,6 +605,32 @@ export function HeroStory({
       }
 
       if (delta > 0 && isNearHeroStart()) {
+        syncHeaderVisibility(true);
+        if (!isCtaDockedRef.current) {
+          event.preventDefault();
+          lockToHeroTop();
+          revealIntentRef.current = Math.max(0, revealIntentRef.current + delta);
+
+          if (revealIntentRef.current < LAST_KEYWORD_REVEAL_TOUCH_THRESHOLD) {
+            touchYRef.current = currentY;
+            return;
+          }
+
+          revealIntentRef.current = 0;
+          isCtaDockedRef.current = true;
+          setIsCtaDocked(true);
+          revealUnlockUntilRef.current = now + 1450;
+          touchYRef.current = currentY;
+          return;
+        }
+
+        if (now < revealUnlockUntilRef.current) {
+          event.preventDefault();
+          lockToHeroTop();
+          touchYRef.current = currentY;
+          return;
+        }
+
         event.preventDefault();
         advanceReveal(delta);
         touchYRef.current = currentY;
@@ -497,6 +638,15 @@ export function HeroStory({
       }
 
       if (delta < 0 && idxRef.current > 0 && isNearHeroStart()) {
+        syncHeaderVisibility(false);
+        revealIntentRef.current = 0;
+        if (isCtaDockedRef.current && now < revealUnlockUntilRef.current) {
+          event.preventDefault();
+          lockToHeroTop();
+          touchYRef.current = currentY;
+          return;
+        }
+
         event.preventDefault();
         lockToHeroTop();
         stepKeyword(-1);
@@ -526,12 +676,12 @@ export function HeroStory({
     const section = sectionRef.current;
     const heroStage = heroStageRef.current;
     const titleBlock = titleBlockRef.current;
-    const cta = ctaRef.current;
     const nextSection = nextSectionRef.current;
+    const nextSectionBackground = nextSectionBackgroundRef.current;
     const frame = frameRef.current;
     const aura = auraRef.current;
 
-    if (!section || !heroStage || !titleBlock || !cta || !nextSection || !frame || ctaWidth === 0 || viewportHeight === 0) {
+    if (!section || !heroStage || !titleBlock || !nextSection || !nextSectionBackground || !frame || ctaWidth === 0 || viewportHeight === 0) {
       return;
     }
 
@@ -548,20 +698,16 @@ export function HeroStory({
         transformOrigin: "top center",
         willChange: "transform, opacity",
       });
+      gsap.set(nextSectionBackground, {
+        opacity: 0,
+        willChange: "opacity",
+      });
       gsap.set(titleBlock, {
         y: 0,
         scale: 1,
         opacity: 1,
         filter: "blur(0px)",
         transformOrigin: "50% 52%",
-        willChange: "transform, filter, opacity",
-      });
-      gsap.set(cta, {
-        y: 0,
-        scale: 1,
-        opacity: 1,
-        filter: "blur(0px)",
-        transformOrigin: "50% 50%",
         willChange: "transform, filter, opacity",
       });
       gsap.set(heroStage, {
@@ -575,17 +721,29 @@ export function HeroStory({
         });
       }
 
-      if (activeIndex !== LAST_KEYWORD_INDEX) {
+      if (activeIndex !== LAST_KEYWORD_INDEX || !isCtaDocked) {
         return;
       }
+
+      gsap.to(nextSectionBackground, {
+        opacity: 1,
+        ease: "none",
+        scrollTrigger: {
+          trigger: nextSection,
+          start: "top 40%",
+          end: "top top",
+          scrub: 0.8,
+          invalidateOnRefresh: true,
+        },
+      });
 
       gsap.timeline({
         defaults: { ease: "none" },
         scrollTrigger: {
           trigger: nextSection,
           start: "top bottom",
-          end: isMobileView ? "top 26%" : "top 22%",
-          scrub: 1.05,
+          end: isMobileView ? "top 22%" : "top 18%",
+          scrub: 1.2,
           invalidateOnRefresh: true,
         },
       })
@@ -596,33 +754,101 @@ export function HeroStory({
           duration: 1,
         }, 0)
         .to(titleBlock, {
-          y: -68,
-          scale: 0.82,
-          opacity: 0,
-          filter: "blur(20px)",
-          duration: 1,
-        }, 0)
-        .to(cta, {
-          y: -20,
+          y: -18,
           scale: 0.96,
+          opacity: 0.62,
+          filter: "blur(4px)",
+          duration: 0.36,
+        }, 0)
+        .to(titleBlock, {
+          y: -64,
+          scale: 0.78,
           opacity: 0,
-          filter: "blur(12px)",
-          duration: 0.92,
-        }, 0.04)
+          filter: "blur(22px)",
+          duration: 0.64,
+        }, 0.36)
         .to(heroStage, {
-          opacity: 0.08,
-          duration: 1,
+          opacity: 0.68,
+          duration: 0.36,
+        }, 0)
+        .to(heroStage, {
+          opacity: 0.03,
+          duration: 0.64,
+        }, 0.36)
+        .to(aura, {
+          opacity: 0.12,
+          duration: 0.36,
         }, 0)
         .to(aura, {
           opacity: 0,
-          duration: 1,
-        }, 0);
+          duration: 0.64,
+        }, 0.36);
     }, section);
 
     return () => {
       ctx.revert();
     };
-  }, [activeIndex, ctaWidth, viewportHeight, viewportWidth]);
+  }, [activeIndex, ctaWidth, isCtaDocked, viewportHeight, viewportWidth]);
+
+  useEffect(() => {
+    const titleBlock = titleBlockRef.current;
+    const heroStage = heroStageRef.current;
+    const aura = auraRef.current;
+
+    if (!titleBlock || !heroStage || activeIndex !== LAST_KEYWORD_INDEX) {
+      return;
+    }
+
+    if (!isCtaDocked) {
+      gsap.killTweensOf([titleBlock, heroStage, aura].filter(Boolean));
+      gsap.set(titleBlock, {
+        y: 0,
+        scale: 1,
+        opacity: 1,
+        filter: "blur(0px)",
+      });
+      gsap.set(heroStage, {
+        opacity: 1,
+      });
+      if (aura) {
+        gsap.set(aura, {
+          opacity: AURA_OPACITIES[activeIndex],
+        });
+      }
+      return;
+    }
+
+    const fadeTargets = aura ? [titleBlock, heroStage, aura] : [titleBlock, heroStage];
+    gsap.killTweensOf(fadeTargets);
+
+    const tween = gsap.timeline({
+      defaults: {
+        duration: 1,
+        ease: "power2.out",
+      },
+    });
+
+    tween
+      .to(titleBlock, {
+        y: -18,
+        scale: 0.96,
+        opacity: 0.68,
+        filter: "blur(6px)",
+      }, 0)
+      .to(heroStage, {
+        opacity: 0.78,
+      }, 0);
+
+    if (aura) {
+      tween.to(aura, {
+        opacity: Math.max(0.1, AURA_OPACITIES[activeIndex] * 0.6),
+      }, 0);
+    }
+
+    return () => {
+      tween.kill();
+    };
+  }, [activeIndex, isCtaDocked]);
 
   const activeItem = useMemo(() => keywordStates[activeIndex], [activeIndex]);
   const isMobile = viewportWidth > 0 ? viewportWidth < 640 : false;
@@ -634,8 +860,17 @@ export function HeroStory({
     ctaWidth + (isMobile ? 32 : 48),
     isMobile ? 296 : 360,
   );
+  const dockedCtaWidth = isMobile ? 88 : 96;
+  const ctaShellTop = viewportHeight > 0
+    ? Math.round(viewportHeight * (isMobile ? 0.745 : 0.715))
+    : (isMobile ? 560 : 620);
+  const ctaDockedTop = viewportHeight > 0
+    ? viewportHeight - (isMobile ? 82 : 94)
+    : (isMobile ? 730 : 860);
   const nextSectionPaddingBottom = isMobile ? 120 : 180;
-  const nextSectionMinHeight = frameHeight + nextSectionPaddingBottom;
+  const framePeek = isMobile ? MOBILE_FRAME_PEEK : DESKTOP_FRAME_PEEK;
+  const nextSectionOverlap = framePeek + (isMobile ? MOBILE_FRAME_LIFT : DESKTOP_FRAME_LIFT);
+  const nextSectionMinHeight = frameHeight + nextSectionPaddingBottom + nextSectionOverlap;
   const nextShellLayoutStyle = {
     width: isMobile ? "min(100%, calc(100% - 1.5rem))" : "min(1360px, calc(100% - 2rem))",
     marginInline: "auto",
@@ -656,6 +891,7 @@ export function HeroStory({
     transition: "opacity 220ms ease",
   } satisfies CSSProperties;
   const nextShellRegionStyle = {
+    marginTop: `-${nextSectionOverlap}px`,
     minHeight: `${nextSectionMinHeight}px`,
     paddingBottom: `${nextSectionPaddingBottom}px`,
   } satisfies CSSProperties;
@@ -664,10 +900,18 @@ export function HeroStory({
     height: `${frameHeight}px`,
     borderRadius: isMobile ? "22px" : "28px",
   } satisfies CSSProperties;
+  const ctaShellStyle = {
+    ["--cta-shell-top" as string]: `${ctaShellTop}px`,
+    ["--cta-shell-docked-top" as string]: `${ctaDockedTop}px`,
+    ["--cta-docked-width" as string]: `${dockedCtaWidth}px`,
+    ...(ctaWidth > 0
+      ? { ["--cta-expanded-width" as string]: `${ctaWidth}px` }
+      : {}),
+  } satisfies CSSProperties;
 
   return (
-    <section ref={sectionRef} className="relative bg-white">
-      <div className="sticky top-0 z-10 h-svh overflow-hidden">
+    <section ref={sectionRef} className="relative">
+      <div className="sticky top-0 z-30 h-svh overflow-hidden">
         <div className="relative flex h-full items-center justify-center overflow-hidden bg-white">
           <div
             ref={auraRef}
@@ -696,51 +940,75 @@ export function HeroStory({
             <div ref={titleBlockRef} className="relative">
               <HeadlineRotator activeItem={activeItem} />
             </div>
-
-            <button
-              ref={ctaRef}
-              className="cta-btn -mt-24 sm:-mt-28"
-              aria-label={HERO_COPY.cta}
-            >
-              <span className="bg-fill"></span>
-              <svg className="cta-btn__logo" viewBox="0 0 47 29" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <mask id="mask0_2016_717" style={{ maskType: "luminance" }} maskUnits="userSpaceOnUse" x="0" y="0" width="47" height="29">
-                  <path d="M46.2638 0H0V28.8H46.2638V0Z" fill="white"/>
-                </mask>
-                <g mask="url(#mask0_2016_717)">
-                  <path d="M23.1219 7.7976C23.1004 5.112 24.4942 2.5056 26.973 1.0656C30.6517 -1.0656 35.3722 0.201601 37.499 3.8808L45.2084 17.2296C47.3351 20.9088 46.0706 25.6248 42.3919 27.756C38.7132 29.8872 33.9927 28.62 31.866 24.9408L30.8026 23.0976L29.7608 24.912C28.6759 26.7912 26.9227 28.0368 24.9684 28.5336H24.9325C24.9325 28.5336 24.9038 28.5336 24.8966 28.5408C24.3577 28.6776 23.8045 28.7424 23.2584 28.7496H22.9351C22.389 28.7424 21.843 28.6632 21.2969 28.5408C21.2897 28.5408 21.2682 28.5408 21.261 28.5336H21.2251C19.278 28.044 17.5177 26.7912 16.4327 24.912L15.0029 22.4352L23.1578 7.7976H23.1363H23.1219Z" fill="url(#paint0_logo_cta2)"/>
-                  <path d="M23.1219 7.7976C23.1004 5.112 24.4942 2.5056 26.973 1.0656C30.6517 -1.0656 35.3722 0.201601 37.499 3.8808L45.2084 17.2296C47.3351 20.9088 46.0706 25.6248 42.3919 27.756C38.7132 29.8872 33.9927 28.62 31.866 24.9408L30.8026 23.0976L29.7608 24.912C28.6759 26.7912 26.9227 28.0368 24.9684 28.5336H24.9325C24.9325 28.5336 24.9038 28.5336 24.8966 28.5408C24.3577 28.6776 23.8045 28.7424 23.2584 28.7496H22.9351C22.389 28.7424 21.843 28.6632 21.2969 28.5408C21.2897 28.5408 21.2682 28.5408 21.261 28.5336H21.2251C19.278 28.044 17.5177 26.7912 16.4327 24.912L15.0029 22.4352L23.1578 7.7976H23.1363H23.1219Z" fill="url(#paint1_logo_cta2)" fillOpacity="0.8"/>
-                  <path d="M19.2705 1.07279C22.9492 3.20399 24.2137 7.91999 22.087 11.5992L14.3775 24.948C12.2508 28.6272 7.5303 29.8944 3.85161 27.7632C0.172922 25.6392 -1.08444 20.916 1.0423 17.2368L8.74455 3.89519C10.8713 0.201595 15.5846 -1.05121 19.2705 1.07279Z" fill="url(#paint2_logo_cta2)"/>
-                </g>
-                <defs>
-                  <linearGradient id="paint0_logo_cta2" x1="21.8717" y1="10.2672" x2="47.7876" y2="31.2093" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#0038F1"/><stop offset="0.65" stopColor="#008FFC"/>
-                  </linearGradient>
-                  <linearGradient id="paint1_logo_cta2" x1="41.465" y1="29.952" x2="21.439" y2="8.56665" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#AE00FF"/><stop offset="1" stopColor="#AE00FF" stopOpacity="0"/>
-                  </linearGradient>
-                  <linearGradient id="paint2_logo_cta2" x1="19.2489" y1="1.0584" x2="3.83196" y2="27.7569" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#0038F1"/><stop offset="1" stopColor="#00ABFF"/>
-                  </linearGradient>
-                </defs>
-              </svg>
-              <span className="text-box">
-                <span className="text-wrapper">
-                  <span className="text-top">{HERO_COPY.cta}</span>
-                  <span className="text-bottom">{HERO_COPY.cta}</span>
-                </span>
-              </span>
-            </button>
           </div>
+
         </div>
+      </div>
+
+      <div
+        ref={ctaShellRef}
+        className={`hero-cta-shell ${isCtaDocked ? "hero-cta-shell--docked" : ""}`}
+        style={ctaShellStyle}
+      >
+        <button
+          ref={ctaRef}
+          className={`cta-btn ${isCtaDocked ? "cta-btn--docked" : ""} ${isCtaPreviewActive ? "cta-btn--preview" : ""}`}
+          aria-label={HERO_COPY.cta}
+          onMouseEnter={() => {
+            if (isCtaDocked) setIsCtaPreviewActive(true);
+          }}
+          onMouseLeave={() => {
+            if (isCtaDocked) setIsCtaPreviewActive(false);
+          }}
+          onFocus={() => {
+            if (isCtaDocked) setIsCtaPreviewActive(true);
+          }}
+          onBlur={() => {
+            if (isCtaDocked) setIsCtaPreviewActive(false);
+          }}
+        >
+          <span className="bg-fill"></span>
+          <svg className="cta-btn__logo" viewBox="0 0 47 29" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <mask id="mask0_2016_717" style={{ maskType: "luminance" }} maskUnits="userSpaceOnUse" x="0" y="0" width="47" height="29">
+              <path d="M46.2638 0H0V28.8H46.2638V0Z" fill="white"/>
+            </mask>
+            <g mask="url(#mask0_2016_717)">
+              <path d="M23.1219 7.7976C23.1004 5.112 24.4942 2.5056 26.973 1.0656C30.6517 -1.0656 35.3722 0.201601 37.499 3.8808L45.2084 17.2296C47.3351 20.9088 46.0706 25.6248 42.3919 27.756C38.7132 29.8872 33.9927 28.62 31.866 24.9408L30.8026 23.0976L29.7608 24.912C28.6759 26.7912 26.9227 28.0368 24.9684 28.5336H24.9325C24.9325 28.5336 24.9038 28.5336 24.8966 28.5408C24.3577 28.6776 23.8045 28.7424 23.2584 28.7496H22.9351C22.389 28.7424 21.843 28.6632 21.2969 28.5408C21.2897 28.5408 21.2682 28.5408 21.261 28.5336H21.2251C19.278 28.044 17.5177 26.7912 16.4327 24.912L15.0029 22.4352L23.1578 7.7976H23.1363H23.1219Z" fill="url(#paint0_logo_cta2)"/>
+              <path d="M23.1219 7.7976C23.1004 5.112 24.4942 2.5056 26.973 1.0656C30.6517 -1.0656 35.3722 0.201601 37.499 3.8808L45.2084 17.2296C47.3351 20.9088 46.0706 25.6248 42.3919 27.756C38.7132 29.8872 33.9927 28.62 31.866 24.9408L30.8026 23.0976L29.7608 24.912C28.6759 26.7912 26.9227 28.0368 24.9684 28.5336H24.9325C24.9325 28.5336 24.9038 28.5336 24.8966 28.5408C24.3577 28.6776 23.8045 28.7424 23.2584 28.7496H22.9351C22.389 28.7424 21.843 28.6632 21.2969 28.5408C21.2897 28.5408 21.2682 28.5408 21.261 28.5336H21.2251C19.278 28.044 17.5177 26.7912 16.4327 24.912L15.0029 22.4352L23.1578 7.7976H23.1363H23.1219Z" fill="url(#paint1_logo_cta2)" fillOpacity="0.8"/>
+              <path d="M19.2705 1.07279C22.9492 3.20399 24.2137 7.91999 22.087 11.5992L14.3775 24.948C12.2508 28.6272 7.5303 29.8944 3.85161 27.7632C0.172922 25.6392 -1.08444 20.916 1.0423 17.2368L8.74455 3.89519C10.8713 0.201595 15.5846 -1.05121 19.2705 1.07279Z" fill="url(#paint2_logo_cta2)"/>
+            </g>
+            <defs>
+              <linearGradient id="paint0_logo_cta2" x1="21.8717" y1="10.2672" x2="47.7876" y2="31.2093" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#0038F1"/><stop offset="0.65" stopColor="#008FFC"/>
+              </linearGradient>
+              <linearGradient id="paint1_logo_cta2" x1="41.465" y1="29.952" x2="21.439" y2="8.56665" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#AE00FF"/><stop offset="1" stopColor="#AE00FF" stopOpacity="0"/>
+              </linearGradient>
+              <linearGradient id="paint2_logo_cta2" x1="19.2489" y1="1.0584" x2="3.83196" y2="27.7569" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#0038F1"/><stop offset="1" stopColor="#00ABFF"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <span className="text-box" aria-hidden={isCtaDocked}>
+            <span className="text-wrapper">
+              <span className="text-top">{HERO_COPY.cta}</span>
+              <span className="text-bottom">{HERO_COPY.cta}</span>
+            </span>
+          </span>
+        </button>
       </div>
 
       <section
         ref={nextSectionRef}
-        className="hero-next-shell-region relative z-20 overflow-visible bg-white"
+        className="hero-next-shell-region relative z-40 overflow-visible"
         style={nextShellRegionStyle}
       >
-        <div style={nextShellLayoutStyle}>
+        <div
+          ref={nextSectionBackgroundRef}
+          className="pointer-events-none absolute inset-0 bg-white"
+        />
+
+        <div className="relative z-10" style={nextShellLayoutStyle}>
           <div style={nextShellSlotStyle} aria-hidden="true" />
 
           <div style={nextShellCenterStyle}>
