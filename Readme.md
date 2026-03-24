@@ -18,6 +18,48 @@ npm run dev
 
 The app uses Next.js 16 and Turbopack.
 
+## Current interaction flow
+
+### Hero keyword sequence
+
+The hero headline advances through these keywords in order:
+
+1. `rent`
+2. `tuition`
+3. `labor`
+4. `contract`
+
+These map to the localized hero copy shown in the UI.
+
+Before the last keyword, wheel and touch input are consumed by the hero so the page does not move into the next section early.
+
+### Hero-to-next-section transition
+
+At the last keyword, downward scroll starts the next section reveal:
+
+- the next section frame rises into view
+- the hero title and CTA fade, blur, and scale down
+- the frame stays as a single continuous rectangle
+
+The placeholder frame is currently filled with a neutral gray surface until real media is added.
+
+### Header behavior
+
+The fixed header stays fully visible until the hero reaches the last keyword.
+
+From the last keyword onward, auto-hide is enabled:
+
+- scrolling down hides the header upward
+- scrolling up shows the header again
+- near the top, the header remains visible
+
+## Workspace defaults
+
+This repo includes workspace-level UTF-8 defaults:
+
+- `.editorconfig` enforces `utf-8`, `lf`, final newline, and trimmed trailing whitespace
+- `.vscode/settings.json` pins VS Code file encoding to UTF-8 and configures the integrated PowerShell profile for UTF-8 output
+
 ## Design asset paths
 
 ### Header logo

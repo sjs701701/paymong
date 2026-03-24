@@ -628,6 +628,68 @@ button {
   transform: scale(0.96);
 }
 
+.hero-next-shell-region {
+  padding-bottom: clamp(4rem, 10vw, 8rem);
+}
+
+.hero-next-shell-layout {
+  width: min(1360px, calc(100% - 2rem));
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(1rem, 4vw, 4rem);
+}
+
+.hero-next-shell-slot {
+  min-height: 1px;
+}
+
+.hero-next-shell-slot--left,
+.hero-next-shell-slot--right {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.hero-next-shell-center {
+  position: relative;
+  justify-self: center;
+  will-change: transform, opacity;
+}
+
+.hero-next-shell-frame {
+  position: relative;
+  overflow: hidden;
+  border: 3px solid rgba(10, 15, 30, 0.9);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 254, 246, 0.92)),
+    rgba(255, 254, 246, 0.88);
+  box-shadow:
+    0 28px 60px rgba(10, 15, 30, 0.1),
+    0 8px 20px rgba(10, 15, 30, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.86);
+  transform-origin: top center;
+  will-change: transform, opacity;
+}
+
+.hero-next-shell-frame::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 22%;
+  content: "";
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+.hero-next-shell-frame__surface {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.04) 24%, transparent 100%),
+    linear-gradient(180deg, rgba(214, 217, 224, 0.92), rgba(196, 201, 210, 0.96)),
+    #c8ccd4;
+}
+
 .editorial-kicker {
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -687,6 +749,12 @@ button {
   .hero-design-slot__label {
     font-size: 0.62rem;
     padding: 0.32rem 0.58rem;
+  }
+
+  .hero-next-shell-layout {
+    width: min(100%, calc(100% - 1.5rem));
+    grid-template-columns: 0 minmax(0, 1fr) 0;
+    gap: 0;
   }
 }
 
