@@ -54,6 +54,8 @@ const DESKTOP_FRAME_LIFT = 132;
 const MOBILE_FRAME_LIFT = 92;
 const DESKTOP_FRAME_PEEK = 56;
 const MOBILE_FRAME_PEEK = 40;
+const VIDEO_STAGE_PIN_SCROLL = 3000;
+const LAST_KEYWORD_SETTLE_MS = 900;
 const LAST_KEYWORD_REVEAL_WHEEL_THRESHOLD = 140;
 const LAST_KEYWORD_REVEAL_TOUCH_THRESHOLD = 110;
 const HEADER_AUTO_HIDE_SYNC_EVENT = "paymong:header-auto-hide-sync";
@@ -315,6 +317,7 @@ export function HeroStory({
   onLastKeywordStateChange?: (isLastKeyword: boolean) => void;
 }) {
   const sectionRef = useRef<HTMLElement | null>(null);
+  const heroContainerRef = useRef<HTMLDivElement | null>(null);
   const heroStageRef = useRef<HTMLDivElement | null>(null);
   const titleBlockRef = useRef<HTMLDivElement | null>(null);
   const ctaShellRef = useRef<HTMLDivElement | null>(null);
@@ -463,7 +466,7 @@ export function HeroStory({
       }, KEYWORD_COOLDOWN_MS);
 
       if (nextIndex === LAST_KEYWORD_INDEX && direction === 1) {
-        revealUnlockUntilRef.current = window.performance.now() + KEYWORD_COOLDOWN_MS;
+        revealUnlockUntilRef.current = window.performance.now() + LAST_KEYWORD_SETTLE_MS;
         revealIntentRef.current = 0;
         syncHeaderVisibility(true);
       }
@@ -530,6 +533,11 @@ export function HeroStory({
         if (!isCtaDockedRef.current) {
           event.preventDefault();
           lockToHeroTop();
+
+          if (now < revealUnlockUntilRef.current) {
+            return;
+          }
+
           revealIntentRef.current = Math.max(0, revealIntentRef.current + event.deltaY);
 
           if (revealIntentRef.current < LAST_KEYWORD_REVEAL_WHEEL_THRESHOLD) {
@@ -609,6 +617,12 @@ export function HeroStory({
         if (!isCtaDockedRef.current) {
           event.preventDefault();
           lockToHeroTop();
+
+          if (now < revealUnlockUntilRef.current) {
+            touchYRef.current = currentY;
+            return;
+          }
+
           revealIntentRef.current = Math.max(0, revealIntentRef.current + delta);
 
           if (revealIntentRef.current < LAST_KEYWORD_REVEAL_TOUCH_THRESHOLD) {
@@ -681,7 +695,9 @@ export function HeroStory({
     const frame = frameRef.current;
     const aura = auraRef.current;
 
-    if (!section || !heroStage || !titleBlock || !nextSection || !nextSectionBackground || !frame || ctaWidth === 0 || viewportHeight === 0) {
+    const heroContainer = heroContainerRef.current;
+
+    if (!section || !heroContainer || !heroStage || !titleBlock || !nextSection || !nextSectionBackground || !frame || ctaWidth === 0 || viewportHeight === 0) {
       return;
     }
 
@@ -709,6 +725,11 @@ export function HeroStory({
         filter: "blur(0px)",
         transformOrigin: "50% 52%",
         willChange: "transform, filter, opacity",
+      });
+      gsap.set(heroContainer, {
+        opacity: 1,
+        visibility: "visible",
+        willChange: "opacity, visibility",
       });
       gsap.set(heroStage, {
         opacity: 1,
@@ -742,7 +763,7 @@ export function HeroStory({
         scrollTrigger: {
           trigger: nextSection,
           start: "top bottom",
-          end: isMobileView ? "top 22%" : "top 18%",
+          end: "top top",
           scrub: 1.2,
           invalidateOnRefresh: true,
         },
@@ -754,35 +775,43 @@ export function HeroStory({
           duration: 1,
         }, 0)
         .to(titleBlock, {
-          y: -18,
-          scale: 0.96,
-          opacity: 0.62,
-          filter: "blur(4px)",
-          duration: 0.36,
+          y: -24,
+          scale: 0.94,
+          opacity: 0.4,
+          filter: "blur(8px)",
+          duration: 0.1,
         }, 0)
         .to(titleBlock, {
           y: -64,
           scale: 0.78,
           opacity: 0,
           filter: "blur(22px)",
-          duration: 0.64,
-        }, 0.36)
+          duration: 0.18,
+        }, 0.1)
         .to(heroStage, {
-          opacity: 0.68,
-          duration: 0.36,
+          opacity: 0.4,
+          duration: 0.1,
         }, 0)
         .to(heroStage, {
-          opacity: 0.03,
-          duration: 0.64,
-        }, 0.36)
+          opacity: 0,
+          duration: 0.18,
+        }, 0.1)
         .to(aura, {
-          opacity: 0.12,
-          duration: 0.36,
+          opacity: 0.06,
+          duration: 0.1,
         }, 0)
         .to(aura, {
           opacity: 0,
-          duration: 0.64,
-        }, 0.36);
+          duration: 0.18,
+        }, 0.1)
+        .to(heroContainer, {
+          opacity: 0,
+          duration: 0.18,
+        }, 0.1)
+        .to(heroContainer, {
+          visibility: "hidden",
+          duration: 0.01,
+        }, 0.28);
     }, section);
 
     return () => {
@@ -791,16 +820,21 @@ export function HeroStory({
   }, [activeIndex, ctaWidth, isCtaDocked, viewportHeight, viewportWidth]);
 
   useEffect(() => {
+    const heroContainer = heroContainerRef.current;
     const titleBlock = titleBlockRef.current;
     const heroStage = heroStageRef.current;
     const aura = auraRef.current;
 
-    if (!titleBlock || !heroStage || activeIndex !== LAST_KEYWORD_INDEX) {
+    if (!heroContainer || !titleBlock || !heroStage || activeIndex !== LAST_KEYWORD_INDEX) {
       return;
     }
 
     if (!isCtaDocked) {
-      gsap.killTweensOf([titleBlock, heroStage, aura].filter(Boolean));
+      gsap.killTweensOf([heroContainer, titleBlock, heroStage, aura].filter(Boolean));
+      gsap.set(heroContainer, {
+        opacity: 1,
+        visibility: "visible",
+      });
       gsap.set(titleBlock, {
         y: 0,
         scale: 1,
@@ -818,7 +852,7 @@ export function HeroStory({
       return;
     }
 
-    const fadeTargets = aura ? [titleBlock, heroStage, aura] : [titleBlock, heroStage];
+    const fadeTargets = aura ? [heroContainer, titleBlock, heroStage, aura] : [heroContainer, titleBlock, heroStage];
     gsap.killTweensOf(fadeTargets);
 
     const tween = gsap.timeline({
@@ -867,33 +901,14 @@ export function HeroStory({
   const ctaDockedTop = viewportHeight > 0
     ? viewportHeight - (isMobile ? 82 : 94)
     : (isMobile ? 730 : 860);
-  const nextSectionPaddingBottom = isMobile ? 120 : 180;
   const framePeek = isMobile ? MOBILE_FRAME_PEEK : DESKTOP_FRAME_PEEK;
   const nextSectionOverlap = framePeek + (isMobile ? MOBILE_FRAME_LIFT : DESKTOP_FRAME_LIFT);
-  const nextSectionMinHeight = frameHeight + nextSectionPaddingBottom + nextSectionOverlap;
-  const nextShellLayoutStyle = {
-    width: isMobile ? "min(100%, calc(100% - 1.5rem))" : "min(1360px, calc(100% - 2rem))",
-    marginInline: "auto",
-    display: "grid",
-    gridTemplateColumns: isMobile ? "0 minmax(0, 1fr) 0" : "minmax(0, 1fr) auto minmax(0, 1fr)",
-    alignItems: "start",
-    gap: isMobile ? "0" : "clamp(1rem, 4vw, 4rem)",
-  } satisfies CSSProperties;
-  const nextShellSlotStyle = {
-    minHeight: "1px",
-    opacity: 0,
-    pointerEvents: "none",
-  } satisfies CSSProperties;
-  const nextShellCenterStyle = {
-    position: "relative",
-    justifySelf: "center",
-    opacity: activeIndex === LAST_KEYWORD_INDEX ? 1 : 0,
-    transition: "opacity 220ms ease",
-  } satisfies CSSProperties;
+  const videoStageHeight = viewportHeight > 0
+    ? viewportHeight + VIDEO_STAGE_PIN_SCROLL
+    : 0;
   const nextShellRegionStyle = {
     marginTop: `-${nextSectionOverlap}px`,
-    minHeight: `${nextSectionMinHeight}px`,
-    paddingBottom: `${nextSectionPaddingBottom}px`,
+    height: `${videoStageHeight}px`,
   } satisfies CSSProperties;
   const nextFrameStyle = {
     width: `${centerFrameWidth}px`,
@@ -912,7 +927,7 @@ export function HeroStory({
   return (
     <section ref={sectionRef} className="relative">
       <div className="sticky top-0 z-30 h-svh overflow-hidden">
-        <div className="relative flex h-full items-center justify-center overflow-hidden bg-white">
+        <div ref={heroContainerRef} className="relative flex h-full items-center justify-center overflow-hidden bg-white">
           <div
             ref={auraRef}
             className="absolute inset-0 transition-opacity duration-500"
@@ -1000,24 +1015,26 @@ export function HeroStory({
 
       <section
         ref={nextSectionRef}
-        className="hero-next-shell-region relative z-40 overflow-visible"
+        className="relative z-40"
         style={nextShellRegionStyle}
       >
-        <div
-          ref={nextSectionBackgroundRef}
-          className="pointer-events-none absolute inset-0 bg-white"
-        />
+        <div className="sticky top-0 flex h-svh items-center justify-center overflow-hidden">
+          <div
+            ref={nextSectionBackgroundRef}
+            className="pointer-events-none absolute inset-0 bg-white"
+          />
 
-        <div className="relative z-10" style={nextShellLayoutStyle}>
-          <div style={nextShellSlotStyle} aria-hidden="true" />
-
-          <div style={nextShellCenterStyle}>
+          <div
+            className="relative z-10"
+            style={{
+              opacity: activeIndex === LAST_KEYWORD_INDEX ? 1 : 0,
+              transition: "opacity 220ms ease",
+            }}
+          >
             <div ref={frameRef} className="hero-next-shell-frame" style={nextFrameStyle}>
               <div className="hero-next-shell-frame__surface" />
             </div>
           </div>
-
-          <div style={nextShellSlotStyle} aria-hidden="true" />
         </div>
       </section>
     </section>
