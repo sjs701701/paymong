@@ -730,7 +730,7 @@ export function HeroStory({
         ease: "none",
         scrollTrigger: {
           trigger: nextSection,
-          start: "top 40%",
+          start: "top 30%",
           end: "top top",
           scrub: 0.8,
           invalidateOnRefresh: true,
