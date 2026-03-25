@@ -1,5 +1,6 @@
 "use client";
 
+import { useReducedMotion } from "framer-motion";
 import { ReactLenis, useLenis } from "lenis/react";
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
@@ -35,6 +36,13 @@ function LenisGsapSync() {
 }
 
 export function LenisProvider({ children }: { children: React.ReactNode }) {
+  const reducedMotion = useReducedMotion();
+
+  // Keep all hooks above this branch. Adding hooks below this return will break the Rules of Hooks.
+  if (reducedMotion) {
+    return <>{children}</>;
+  }
+
   return (
     <ReactLenis
       root

@@ -2,9 +2,9 @@
 
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useLenis } from "lenis/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { type HeroScrollPhase, useHeroLenisControl } from "@/lib/use-hero-lenis-control";
 
 type KeywordId = "rent" | "tuition" | "labor" | "contract";
 type KeywordDecorSlotId = "orbit" | "ribbon" | "sweep" | "echo";
@@ -60,6 +60,7 @@ const LAST_KEYWORD_SETTLE_MS = 400;
 const LAST_KEYWORD_REVEAL_WHEEL_THRESHOLD = 140;
 const LAST_KEYWORD_REVEAL_TOUCH_THRESHOLD = 110;
 const HEADER_AUTO_HIDE_SYNC_EVENT = "paymong:header-auto-hide-sync";
+const CTA_DOCKED_SCROLL_UNLOCK_MS = 600;
 
 function withAlpha(hex: string, alpha: number) {
   const normalized = hex.replace("#", "");
@@ -334,14 +335,16 @@ export function HeroStory({
   const touchYRef = useRef<number | null>(null);
   const idxRef = useRef(0);
   const isCtaDockedRef = useRef(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const lenisRef = useRef<any>(null);
+  const wasDockedRef = useRef(false);
+  const heroScrollPhaseRef = useRef<HeroScrollPhase>("keyword-sequence");
   const [activeIndex, setActiveIndex] = useState(0);
+  const [heroScrollPhase, setHeroScrollPhase] = useState<HeroScrollPhase>("keyword-sequence");
   const [isCtaDocked, setIsCtaDocked] = useState(false);
   const [isCtaPreviewActive, setIsCtaPreviewActive] = useState(false);
   const [ctaWidth, setCtaWidth] = useState(0);
   const [viewportWidth, setViewportWidth] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(0);
+  useHeroLenisControl(heroScrollPhase);
 
   useEffect(() => {
     idxRef.current = activeIndex;
@@ -355,31 +358,25 @@ export function HeroStory({
 
   useEffect(() => {
     isCtaDockedRef.current = isCtaDocked;
+    if (isCtaDocked) wasDockedRef.current = true;
   }, [isCtaDocked]);
 
-  const lenisInstance = useLenis();
+  useEffect(() => {
+    heroScrollPhaseRef.current = heroScrollPhase;
+  }, [heroScrollPhase]);
 
   useEffect(() => {
-    if (!lenisInstance) return;
-    lenisRef.current = lenisInstance;
-    if (!isCtaDockedRef.current) {
-      lenisInstance.stop();
-    }
-  }, [lenisInstance]);
+    if (heroScrollPhase !== "cta-docked") return;
 
-  useEffect(() => {
-    const lenis = lenisRef.current;
-    if (!lenis) return;
+    const delay = Math.max(0, revealUnlockUntilRef.current - window.performance.now());
+    const timer = window.setTimeout(() => {
+      if (isCtaDockedRef.current) {
+        setHeroScrollPhase("free-scroll");
+      }
+    }, delay);
 
-    if (isCtaDocked) {
-      const timer = setTimeout(() => {
-        lenisRef.current?.start();
-      }, 350);
-      return () => clearTimeout(timer);
-    }
-
-    lenis.stop();
-  }, [isCtaDocked]);
+    return () => window.clearTimeout(timer);
+  }, [heroScrollPhase]);
 
   useEffect(() => {
     return () => {
@@ -469,6 +466,33 @@ export function HeroStory({
         }),
       );
     };
+    const scheduleCooldown = () => {
+      cooldownRef.current = true;
+      if (cooldownTimerRef.current) {
+        clearTimeout(cooldownTimerRef.current);
+      }
+
+      cooldownTimerRef.current = setTimeout(() => {
+        cooldownRef.current = false;
+      }, KEYWORD_COOLDOWN_MS);
+    };
+    const resetDockedState = () => {
+      isCtaDockedRef.current = false;
+      setIsCtaDocked(false);
+      setIsCtaPreviewActive(false);
+      setHeroScrollPhase("keyword-sequence");
+    };
+    const dockCta = (unlockAt: number) => {
+      revealIntentRef.current = 0;
+      isCtaDockedRef.current = true;
+      setIsCtaDocked(true);
+      revealUnlockUntilRef.current = unlockAt;
+      setHeroScrollPhase("cta-docked");
+    };
+    const releaseDockedCta = () => {
+      resetDockedState();
+      scheduleCooldown();
+    };
 
     const stepKeyword = (direction: 1 | -1) => {
       if (cooldownRef.current) return;
@@ -483,14 +507,7 @@ export function HeroStory({
       const nextIndex = idxRef.current + direction;
       if (nextIndex < 0 || nextIndex >= keywordStates.length) return;
 
-      cooldownRef.current = true;
-      if (cooldownTimerRef.current) {
-        clearTimeout(cooldownTimerRef.current);
-      }
-
-      cooldownTimerRef.current = setTimeout(() => {
-        cooldownRef.current = false;
-      }, KEYWORD_COOLDOWN_MS);
+      scheduleCooldown();
 
       if (nextIndex === LAST_KEYWORD_INDEX && direction === 1) {
         revealUnlockUntilRef.current = window.performance.now() + LAST_KEYWORD_SETTLE_MS;
@@ -499,9 +516,7 @@ export function HeroStory({
       }
 
       if (nextIndex !== LAST_KEYWORD_INDEX) {
-        isCtaDockedRef.current = false;
-        setIsCtaDocked(false);
-        setIsCtaPreviewActive(false);
+        resetDockedState();
         revealIntentRef.current = 0;
         syncHeaderVisibility(false);
       }
@@ -569,10 +584,7 @@ export function HeroStory({
             return;
           }
 
-          revealIntentRef.current = 0;
-          isCtaDockedRef.current = true;
-          setIsCtaDocked(true);
-          revealUnlockUntilRef.current = now + 600;
+          dockCta(now + CTA_DOCKED_SCROLL_UNLOCK_MS);
           return;
         }
 
@@ -586,7 +598,6 @@ export function HeroStory({
       }
 
       if (event.deltaY < 0 && idxRef.current > 0 && isNearHeroStart()) {
-        lenisRef.current?.stop();
         syncHeaderVisibility(false);
         revealIntentRef.current = 0;
         if (isCtaDockedRef.current && now < revealUnlockUntilRef.current) {
@@ -598,14 +609,7 @@ export function HeroStory({
         if (isCtaDockedRef.current) {
           event.preventDefault();
           lockToHeroTop();
-          isCtaDockedRef.current = false;
-          setIsCtaDocked(false);
-          setIsCtaPreviewActive(false);
-          cooldownRef.current = true;
-          if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current);
-          cooldownTimerRef.current = setTimeout(() => {
-            cooldownRef.current = false;
-          }, KEYWORD_COOLDOWN_MS);
+          releaseDockedCta();
           return;
         }
 
@@ -668,10 +672,7 @@ export function HeroStory({
             return;
           }
 
-          revealIntentRef.current = 0;
-          isCtaDockedRef.current = true;
-          setIsCtaDocked(true);
-          revealUnlockUntilRef.current = now + 600;
+          dockCta(now + CTA_DOCKED_SCROLL_UNLOCK_MS);
           touchYRef.current = currentY;
           return;
         }
@@ -688,7 +689,6 @@ export function HeroStory({
       }
 
       if (delta < 0 && idxRef.current > 0 && isNearHeroStart()) {
-        lenisRef.current?.stop();
         syncHeaderVisibility(false);
         revealIntentRef.current = 0;
         if (isCtaDockedRef.current && now < revealUnlockUntilRef.current) {
@@ -701,14 +701,7 @@ export function HeroStory({
         if (isCtaDockedRef.current) {
           event.preventDefault();
           lockToHeroTop();
-          isCtaDockedRef.current = false;
-          setIsCtaDocked(false);
-          setIsCtaPreviewActive(false);
-          cooldownRef.current = true;
-          if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current);
-          cooldownTimerRef.current = setTimeout(() => {
-            cooldownRef.current = false;
-          }, KEYWORD_COOLDOWN_MS);
+          releaseDockedCta();
           touchYRef.current = currentY;
           return;
         }
@@ -875,28 +868,49 @@ export function HeroStory({
     }
 
     if (!isCtaDocked) {
+      const returningFromDock = wasDockedRef.current;
+      wasDockedRef.current = false;
+
       gsap.killTweensOf([heroContainer, titleBlock, heroStage, aura, nextSectionBg].filter(Boolean));
-      gsap.set(heroContainer, {
-        opacity: 1,
-        visibility: "visible",
-      });
-      gsap.set(titleBlock, {
-        y: 0,
-        scale: 1,
-        opacity: 1,
-        filter: "blur(0px)",
-      });
-      gsap.set(heroStage, {
-        opacity: 1,
-      });
-      if (aura) {
-        gsap.set(aura, {
-          opacity: AURA_OPACITIES[activeIndex],
+
+      if (returningFromDock) {
+        gsap.set(heroContainer, { opacity: 0, visibility: "visible" });
+        gsap.set(titleBlock, { y: -32, scale: 0.92, opacity: 0, filter: "blur(16px)" });
+        gsap.set(heroStage, { opacity: 0 });
+        if (aura) gsap.set(aura, { opacity: 0 });
+        if (nextSectionBg) gsap.set(nextSectionBg, { opacity: 1 });
+
+        const fadeIn = gsap.timeline({
+          defaults: { duration: 0.6, ease: "power2.out" },
         });
+
+        fadeIn
+          .to(heroContainer, { opacity: 1 }, 0)
+          .to(titleBlock, {
+            y: 0,
+            scale: 1,
+            opacity: 1,
+            filter: "blur(0px)",
+          }, 0)
+          .to(heroStage, { opacity: 1 }, 0);
+
+        if (aura) {
+          fadeIn.to(aura, { opacity: AURA_OPACITIES[activeIndex] }, 0);
+        }
+        if (nextSectionBg) {
+          fadeIn.to(nextSectionBg, { opacity: 0 }, 0);
+        }
+
+        return () => {
+          fadeIn.kill();
+        };
       }
-      if (nextSectionBg) {
-        gsap.set(nextSectionBg, { opacity: 0 });
-      }
+
+      gsap.set(heroContainer, { opacity: 1, visibility: "visible" });
+      gsap.set(titleBlock, { y: 0, scale: 1, opacity: 1, filter: "blur(0px)" });
+      gsap.set(heroStage, { opacity: 1 });
+      if (aura) gsap.set(aura, { opacity: AURA_OPACITIES[activeIndex] });
+      if (nextSectionBg) gsap.set(nextSectionBg, { opacity: 0 });
       return;
     }
 
