@@ -80,7 +80,7 @@ const VIDEO_STEP_SEQUENCE: VideoStep[] = [
     title: "Opening reel",
     summary: "도입 화면",
     detail: "히어로 단계에서 이미 재생되는 첫 번째 영상입니다.",
-    palette: "linear-gradient(135deg, rgba(0, 56, 241, 0.92), rgba(0, 171, 255, 0.82))",
+    palette: "linear-gradient(135deg, rgb(0, 56, 241), rgb(71, 198, 255))",
   },
   {
     id: 2,
@@ -88,7 +88,7 @@ const VIDEO_STEP_SEQUENCE: VideoStep[] = [
     title: "Spend orchestration",
     summary: "계약 기반 비용을 한 화면에서 묶어 관리합니다.",
     detail: "반복적으로 결제되는 지출을 묶고, 결제 맥락을 정리해 운영 흐름을 단순하게 만드는 장면을 가정한 더미 설명입니다.",
-    palette: "linear-gradient(135deg, rgba(0, 171, 255, 0.88), rgba(93, 98, 255, 0.84))",
+    palette: "linear-gradient(135deg, rgb(0, 196, 169), rgb(0, 110, 255))",
   },
   {
     id: 3,
@@ -96,7 +96,7 @@ const VIDEO_STEP_SEQUENCE: VideoStep[] = [
     title: "Approval cadence",
     summary: "승인 흐름을 스크롤 리듬에 맞춰 짧게 보여줍니다.",
     detail: "지출 요청, 승인 체크, 카드 결제 전환까지의 짧은 운영 장면을 순차적으로 보여주는 단계용 더미 카피입니다.",
-    palette: "linear-gradient(135deg, rgba(93, 98, 255, 0.9), rgba(132, 35, 254, 0.82))",
+    palette: "linear-gradient(135deg, rgb(255, 117, 24), rgb(255, 58, 94))",
   },
   {
     id: 4,
@@ -104,7 +104,7 @@ const VIDEO_STEP_SEQUENCE: VideoStep[] = [
     title: "Settlement recap",
     summary: "정산과 추적을 마지막 장면에서 정리합니다.",
     detail: "최종 단계에서는 결제 후 기록과 추적이 자연스럽게 이어지는 흐름을 보여주도록 구성된 더미 상세 설명을 사용합니다.",
-    palette: "linear-gradient(135deg, rgba(132, 35, 254, 0.92), rgba(0, 56, 241, 0.78))",
+    palette: "linear-gradient(135deg, rgb(168, 74, 255), rgb(71, 41, 255))",
   },
 ] as const;
 

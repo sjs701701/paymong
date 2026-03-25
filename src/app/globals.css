@@ -977,9 +977,9 @@ button {
   display: flex;
   align-items: flex-end;
   padding: clamp(1rem, 2.8vw, 1.75rem);
-  opacity: 0;
+  opacity: 1;
   filter: blur(0px);
-  transform: translateY(16%);
+  transform: translateY(118%);
   transition:
     opacity 1.05s cubic-bezier(0.22, 1, 0.36, 1),
     transform 1.05s cubic-bezier(0.22, 1, 0.36, 1),
@@ -990,12 +990,15 @@ button {
   opacity: 1;
   filter: blur(0px);
   transform: translateY(0);
+  transition-delay: 0s;
 }
 
 .hero-video-slot[data-state="past"] {
-  opacity: 1;
-  filter: blur(18px);
-  transform: translateY(-16%);
+  opacity: 0;
+  filter: blur(12px);
+  transform: translateY(-42%);
+  transition-duration: 0s, 1.05s, 1.05s;
+  transition-delay: 0.92s, 0s, 0s;
 }
 
 .hero-video-slot[data-reduced-motion="true"] {
