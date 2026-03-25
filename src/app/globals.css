@@ -150,6 +150,21 @@ button {
   will-change: transform, translate;
 }
 
+.hero-sweep-asset {
+  position: absolute;
+  z-index: 30;
+  top: 7.5%;
+  left: -15%;
+  width: clamp(18.48rem, 36.96vw, 27.72rem);
+  height: auto;
+  display: block;
+  transform: rotate(-9deg);
+  filter: drop-shadow(0 20px 48px rgba(10, 15, 30, 0.08));
+  animation: hero-float 12.6s ease-in-out infinite;
+  animation-delay: -3.4s;
+  will-change: transform, translate;
+}
+
 .hero-design-slot {
   position: absolute;
   display: flex;
@@ -188,17 +203,6 @@ button {
   letter-spacing: 0.01em;
   color: rgba(10, 15, 30, 0.74);
   box-shadow: 0 8px 20px rgba(10, 15, 30, 0.08);
-}
-
-.hero-design-slot--sweep {
-  top: 42%;
-  left: -1%;
-  width: clamp(14rem, 28vw, 21rem);
-  height: clamp(4.8rem, 7vw, 6.6rem);
-  border-radius: 999px;
-  transform: rotate(-12deg);
-  animation-duration: 12.6s;
-  animation-delay: -3.4s;
 }
 
 .hero-design-slot--echo {
@@ -520,12 +524,16 @@ button {
   overflow: hidden;
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
+  contain: layout paint;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, inline-size, opacity;
   transition:
-    inline-size 1.48s cubic-bezier(0.22, 1, 0.36, 1),
-    padding 1.48s cubic-bezier(0.22, 1, 0.36, 1),
-    gap 1.48s cubic-bezier(0.22, 1, 0.36, 1),
-    border-radius 1.48s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 1.48s cubic-bezier(0.22, 1, 0.36, 1),
+    inline-size 0.5s cubic-bezier(.165, .84, .44, 1),
+    padding 1.48s cubic-bezier(.165, .84, .44, 1),
+    gap 1.48s cubic-bezier(.165, .84, .44, 1),
+    border-radius 1.48s cubic-bezier(.165, .84, .44, 1),
+    box-shadow 1.48s cubic-bezier(.165, .84, .44, 1),
     transform 0.2s ease;
 }
 
@@ -557,6 +565,7 @@ button {
   overflow: hidden;
   padding: 3px 0;
   transform-origin: left center;
+  will-change: max-width, opacity;
   transition:
     max-width 1.18s cubic-bezier(0.22, 1, 0.36, 1),
     margin 1.08s cubic-bezier(0.22, 1, 0.36, 1),
@@ -565,7 +574,20 @@ button {
 
 .text-wrapper {
   display: grid;
+  will-change: transform, opacity;
   transition: transform 1.08s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.62s ease;
+}
+
+@keyframes cta-return-text-rise {
+  from {
+    transform: translateY(125%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .text-top,
@@ -639,10 +661,9 @@ button {
   top: var(--cta-shell-top);
   z-index: 80;
   pointer-events: none;
-  transform: translateY(-50%);
-  transition:
-    top 1.56s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 1.56s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translate3d(0, calc(-50% + var(--cta-shell-shift, 0px)), 0);
+  will-change: transform;
+  transition: transform 0.5s linear;
 }
 
 .hero-cta-shell .cta-btn {
@@ -650,9 +671,11 @@ button {
 }
 
 .hero-cta-shell--docked {
-  top: var(--cta-shell-docked-top);
-  transform: translateY(0);
   transition-delay: 0.74s;
+}
+
+.hero-cta-shell--returning {
+  transition-delay: 0s;
 }
 
 .cta-btn--docked {
@@ -706,6 +729,45 @@ button {
 
 .cta-btn:not(.cta-btn--docked) .bg-fill {
   transform: translateY(100%);
+}
+
+.cta-btn--returning {
+  transition:
+    inline-size 0.5s cubic-bezier(.165, .84, .44, 1) 0s,
+    padding 0.5s cubic-bezier(.165, .84, .44, 1) 0s,
+    gap 0.5s cubic-bezier(.165, .84, .44, 1) 0s,
+    border-radius 0.5s cubic-bezier(.165, .84, .44, 1) 0s,
+    box-shadow 0.5s cubic-bezier(.165, .84, .44, 1) 0s,
+    transform 0.2s ease 0s;
+}
+
+.cta-btn--returning .text-box {
+  transition:
+    max-width 0.24s linear 0s,
+    margin 0.24s linear 0s,
+    opacity 0.18s linear 0s;
+}
+
+.cta-btn--returning .text-wrapper {
+  transform: translateY(125%);
+  opacity: 0;
+  transition: none;
+  animation: cta-return-text-rise 0.28s cubic-bezier(.165, .84, .44, 1) 0s forwards;
+}
+
+.cta-btn--returning .text-top,
+.cta-btn--returning .text-bottom {
+  transition: none;
+}
+
+.cta-btn--returning .text-top {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.cta-btn--returning .text-bottom {
+  transform: translateY(120%);
+  opacity: 0;
 }
 
 .cta-btn:not(.cta-btn--docked):is(:hover, :focus-visible) .bg-fill {
@@ -870,7 +932,9 @@ button {
 
 .hero-video-note--summary {
   overflow: hidden;
+  border: none;
   border-radius: 1.45rem;
+  background: var(--video-summary-bg, rgba(255, 255, 255, 0.86));
   padding: 1.1rem 1.15rem;
   filter: blur(0px);
   transition:
@@ -880,6 +944,15 @@ button {
     padding 0.65s cubic-bezier(0.22, 1, 0.36, 1),
     border-radius 0.65s cubic-bezier(0.22, 1, 0.36, 1),
     filter 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hero-video-note--summary .hero-video-note__eyebrow {
+  background: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.hero-video-note--summary .hero-video-note__text {
+  color: rgba(255, 255, 255, 0.94);
 }
 
 .hero-video-note--summary[data-state="active"] {
@@ -1095,18 +1168,11 @@ button {
     height: clamp(4.4rem, 12vw, 5.4rem);
   }
 
-  .hero-design-slot--ribbon {
-    top: 7%;
-    right: 2%;
-    width: clamp(7.5rem, 25vw, 9.5rem);
-    height: clamp(4rem, 11vw, 4.8rem);
-  }
-
-  .hero-design-slot--sweep {
-    top: 47%;
-    left: 0;
-    width: clamp(10rem, 42vw, 13rem);
-    height: clamp(4rem, 11vw, 5rem);
+  .hero-sweep-asset {
+    top: 7.5%;
+    left: -15%;
+    width: clamp(13.2rem, 55.44vw, 17.16rem);
+    height: auto;
   }
 
   .hero-design-slot--echo {

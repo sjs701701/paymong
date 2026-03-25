@@ -72,7 +72,9 @@ const LAST_KEYWORD_REVEAL_WHEEL_THRESHOLD = 140;
 const LAST_KEYWORD_REVEAL_TOUCH_THRESHOLD = 110;
 const HEADER_AUTO_HIDE_SYNC_EVENT = "paymong:header-auto-hide-sync";
 const CTA_DOCKED_SCROLL_UNLOCK_MS = 600;
+const CTA_RETURN_SEQUENCE_MS = 820;
 const SHOW_SIDE_PANELS_FROM_STEP = 2;
+const VIDEO_SUMMARY_COLORS = ["#2268FF", "#73DAFF", "#AF70FF"] as const;
 const VIDEO_STEP_SEQUENCE: VideoStep[] = [
   {
     id: 1,
@@ -215,18 +217,24 @@ function DecorSlot({
 }) {
   const resolvedPath = useResolvedAssetPath(asset.pathBase);
 
-  const slotStyle = {
-    backgroundImage: resolvedPath ? `url("${resolvedPath}")` : "none",
-    borderColor: withAlpha(accentColor, 0.32),
-    boxShadow: `0 20px 48px ${withAlpha(accentColor, 0.08)}`,
-  } satisfies CSSProperties;
+  const slotStyle = asset.slot === "sweep"
+    ? {
+      backgroundImage: resolvedPath ? `url("${resolvedPath}")` : "none",
+    }
+    : {
+      backgroundImage: resolvedPath ? `url("${resolvedPath}")` : "none",
+      borderColor: withAlpha(accentColor, 0.32),
+      boxShadow: `0 20px 48px ${withAlpha(accentColor, 0.08)}`,
+    } satisfies CSSProperties;
 
   return (
     <div
       className={`hero-design-slot hero-design-slot--${asset.slot}`}
       style={slotStyle}
     >
-      <span className="hero-design-slot__label">{asset.label}</span>
+      {asset.slot === "sweep" ? null : (
+        <span className="hero-design-slot__label">{asset.label}</span>
+      )}
     </div>
   );
 }
@@ -267,6 +275,24 @@ function RibbonAssetOverlay({
   );
 }
 
+function SweepAssetOverlay({
+  asset,
+}: {
+  asset: KeywordDecorAsset;
+}) {
+  const resolvedPath = useResolvedAssetPath(asset.pathBase);
+
+  if (!resolvedPath) return null;
+
+  return (
+    <img
+      src={resolvedPath}
+      alt=""
+      className="hero-sweep-asset"
+    />
+  );
+}
+
 function HeadlineRotator({
   activeItem,
 }: {
@@ -275,7 +301,8 @@ function HeadlineRotator({
   const decorAssets = useMemo(() => buildDecorAssets(activeItem.id), [activeItem.id]);
   const orbitAsset = decorAssets.find((asset) => asset.slot === "orbit");
   const ribbonAsset = decorAssets.find((asset) => asset.slot === "ribbon");
-  const baseDecorAssets = decorAssets.filter((asset) => asset.slot !== "orbit" && asset.slot !== "ribbon");
+  const sweepAsset = decorAssets.find((asset) => asset.slot === "sweep");
+  const baseDecorAssets = decorAssets.filter((asset) => asset.slot !== "orbit" && asset.slot !== "ribbon" && asset.slot !== "sweep");
 
   return (
     <div className="hero-title-shell">
@@ -283,9 +310,9 @@ function HeadlineRotator({
         <AnimatePresence mode="wait">
           <motion.div
             key={`${activeItem.id}-decor`}
-            initial={{ opacity: 0, filter: "blur(14px)", scale: 0.98 }}
-            animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
-            exit={{ opacity: 0, filter: "blur(12px)", scale: 1.01 }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.01 }}
             transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
             className="relative h-full w-full"
           >
@@ -307,15 +334,15 @@ function HeadlineRotator({
               <span
                 className="inline-flex h-[1.08em] w-[2.95em] items-center justify-center whitespace-nowrap rounded-full px-[0.12em]"
                 style={{ backgroundColor: activeItem.accentColor }}
-              >
-                <motion.span
-                  key={activeItem.id}
-                  initial={{ opacity: 0, filter: "blur(14px)", y: 36, scale: 0.98 }}
-                  animate={{ opacity: 1, filter: "blur(0px)", y: 0, scale: 1 }}
-                  exit={{ opacity: 0, filter: "blur(10px)", y: -24, scale: 1.015 }}
-                  transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
-                  className={`inline-flex items-center justify-center whitespace-nowrap text-[0.74em] font-[var(--font-display)] font-extrabold leading-none ${activeItem.id === "rent" ? "tracking-[0.08em]" : "tracking-[-0.04em]"}`}
-                  style={{ color: "#fff" }}
+                >
+                  <motion.span
+                    key={activeItem.id}
+                    initial={{ opacity: 0, y: 36, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -24, scale: 1.015 }}
+                    transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
+                    className={`inline-flex items-center justify-center whitespace-nowrap text-[0.74em] font-[var(--font-display)] font-extrabold leading-none ${activeItem.id === "rent" ? "tracking-[0.08em]" : "tracking-[-0.04em]"}`}
+                    style={{ color: "#fff" }}
                 >
                   {activeItem.label}
                 </motion.span>
@@ -324,7 +351,7 @@ function HeadlineRotator({
           </span>
           <span className="shrink-0 tracking-[-0.03em]">{HERO_COPY.suffix}</span>
         </p>
-        <p className="mt-5 w-full max-w-[13.2em] self-end whitespace-nowrap text-right text-[clamp(3rem,7.8vw,7.9rem)] font-semibold leading-[0.98] tracking-[-0.06em] text-[var(--text-primary)]">
+        <p className="mt-5 translate-x-[1.5rem] w-full max-w-[13.2em] self-end whitespace-nowrap text-right text-[clamp(3rem,7.8vw,7.9rem)] font-semibold leading-[0.98] tracking-[-0.06em] text-[var(--text-primary)]">
           {HERO_COPY.statement}
         </p>
       </div>
@@ -334,9 +361,9 @@ function HeadlineRotator({
           <AnimatePresence mode="wait">
             <motion.div
               key={`${activeItem.id}-orbit`}
-              initial={{ opacity: 0, filter: "blur(14px)", scale: 0.98 }}
-              animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
-              exit={{ opacity: 0, filter: "blur(12px)", scale: 1.01 }}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.01 }}
               transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
               className="relative h-full w-full"
             >
@@ -351,13 +378,30 @@ function HeadlineRotator({
           <AnimatePresence mode="wait">
             <motion.div
               key={`${activeItem.id}-ribbon`}
-              initial={{ opacity: 0, filter: "blur(14px)", scale: 0.98 }}
-              animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
-              exit={{ opacity: 0, filter: "blur(12px)", scale: 1.01 }}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.01 }}
               transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
               className="relative h-full w-full"
             >
               <RibbonAssetOverlay asset={ribbonAsset} />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      ) : null}
+
+      {sweepAsset ? (
+        <div className="hero-title-stage hero-title-stage--overlay" aria-hidden="true">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`${activeItem.id}-sweep`}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.01 }}
+              transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+              className="relative h-full w-full"
+            >
+              <SweepAssetOverlay asset={sweepAsset} />
             </motion.div>
           </AnimatePresence>
         </div>
@@ -430,6 +474,7 @@ export function HeroStory({
   const auraRef = useRef<HTMLDivElement | null>(null);
   const cooldownRef = useRef(false);
   const cooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const ctaReturnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const revealUnlockUntilRef = useRef(0);
   const revealIntentRef = useRef(0);
   const touchYRef = useRef<number | null>(null);
@@ -442,6 +487,7 @@ export function HeroStory({
   const [heroScrollPhase, setHeroScrollPhase] = useState<HeroScrollPhase>("keyword-sequence");
   const [isCtaDocked, setIsCtaDocked] = useState(false);
   const [isCtaPreviewActive, setIsCtaPreviewActive] = useState(false);
+  const [isCtaReturning, setIsCtaReturning] = useState(false);
   const [ctaWidth, setCtaWidth] = useState(0);
   const [viewportWidth, setViewportWidth] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(0);
@@ -484,6 +530,9 @@ export function HeroStory({
     return () => {
       if (cooldownTimerRef.current) {
         clearTimeout(cooldownTimerRef.current);
+      }
+      if (ctaReturnTimerRef.current) {
+        clearTimeout(ctaReturnTimerRef.current);
       }
     };
   }, []);
@@ -598,6 +647,10 @@ export function HeroStory({
     };
     const dockCta = (unlockAt: number) => {
       revealIntentRef.current = 0;
+      if (ctaReturnTimerRef.current) {
+        clearTimeout(ctaReturnTimerRef.current);
+      }
+      setIsCtaReturning(false);
       isCtaDockedRef.current = true;
       setIsCtaDocked(true);
       revealUnlockUntilRef.current = unlockAt;
@@ -605,6 +658,13 @@ export function HeroStory({
     };
     const releaseDockedCta = () => {
       resetDockedState();
+      if (ctaReturnTimerRef.current) {
+        clearTimeout(ctaReturnTimerRef.current);
+      }
+      setIsCtaReturning(true);
+      ctaReturnTimerRef.current = window.setTimeout(() => {
+        setIsCtaReturning(false);
+      }, CTA_RETURN_SEQUENCE_MS);
       scheduleCooldown();
     };
 
@@ -862,9 +922,6 @@ export function HeroStory({
 
     gsap.registerPlugin(ScrollTrigger);
 
-    const isMobileView = viewportWidth > 0 ? viewportWidth < 640 : false;
-    const frameLift = isMobileView ? MOBILE_FRAME_LIFT : DESKTOP_FRAME_LIFT;
-
     const ctx = gsap.context(() => {
       gsap.set(frame, {
         y: 0,
@@ -899,69 +956,6 @@ export function HeroStory({
           opacity: AURA_OPACITIES[activeIndex],
           willChange: "opacity",
         });
-      }
-
-      if (activeIndex === LAST_KEYWORD_INDEX && isCtaDocked) {
-        gsap.to(nextSectionBackground, {
-          opacity: 1,
-          ease: "none",
-          scrollTrigger: {
-            trigger: nextSection,
-            start: "top 30%",
-            end: "top top",
-            scrub: 0.8,
-            invalidateOnRefresh: true,
-          },
-        });
-
-        gsap.timeline({
-          defaults: { ease: "none" },
-          scrollTrigger: {
-            trigger: nextSection,
-            start: "top bottom",
-            end: "top top",
-            scrub: 1.2,
-            invalidateOnRefresh: true,
-          },
-        })
-          .to(titleBlock, {
-          y: -24,
-          scale: 0.94,
-          opacity: 0.4,
-          filter: "blur(8px)",
-          duration: 0.1,
-        }, 0)
-        .to(titleBlock, {
-          y: -64,
-          scale: 0.78,
-          opacity: 0,
-          filter: "blur(22px)",
-          duration: 0.18,
-        }, 0.1)
-        .to(heroStage, {
-          opacity: 0.4,
-          duration: 0.1,
-        }, 0)
-        .to(heroStage, {
-          opacity: 0,
-          duration: 0.18,
-        }, 0.1)
-        .to(aura, {
-          opacity: 0.06,
-          duration: 0.1,
-        }, 0)
-        .to(aura, {
-          opacity: 0,
-          duration: 0.18,
-        }, 0.1)
-        .to(heroContainer, {
-          opacity: 0,
-          duration: 0.18,
-        }, 0.1)
-        .to(heroContainer, {
-          visibility: "hidden",
-          duration: 0.01,
-        }, 0.28);
       }
     }, section);
 
@@ -1142,6 +1136,9 @@ export function HeroStory({
   const ctaShellStyle = {
     ["--cta-shell-top" as string]: `${ctaShellTop}px`,
     ["--cta-shell-docked-top" as string]: `${ctaDockedTop}px`,
+    ["--cta-shell-shift" as string]: isCtaDocked
+      ? `${ctaDockedTop - ctaShellTop}px`
+      : "0px",
     ["--cta-docked-width" as string]: `${dockedCtaWidth}px`,
     ...(ctaWidth > 0
       ? { ["--cta-expanded-width" as string]: `${ctaWidth}px` }
@@ -1186,12 +1183,12 @@ export function HeroStory({
 
       <div
         ref={ctaShellRef}
-        className={`hero-cta-shell ${isCtaDocked ? "hero-cta-shell--docked" : ""}`}
+        className={`hero-cta-shell ${isCtaDocked ? "hero-cta-shell--docked" : ""} ${isCtaReturning ? "hero-cta-shell--returning" : ""}`}
         style={ctaShellStyle}
       >
         <button
           ref={ctaRef}
-          className={`cta-btn ${isCtaDocked ? "cta-btn--docked" : ""} ${isCtaPreviewActive ? "cta-btn--preview" : ""}`}
+          className={`cta-btn ${isCtaDocked ? "cta-btn--docked" : ""} ${isCtaPreviewActive ? "cta-btn--preview" : ""} ${isCtaReturning ? "cta-btn--returning" : ""}`}
           aria-label={HERO_COPY.cta}
           onMouseEnter={() => {
             if (isCtaDocked) setIsCtaPreviewActive(true);
@@ -1253,7 +1250,7 @@ export function HeroStory({
               className={`hero-video-side hero-video-side--left ${showSidePanels ? "is-visible" : ""}`}
               aria-hidden={!showSidePanels}
             >
-              {stackedVideoSteps.map((step) => {
+              {stackedVideoSteps.map((step, index) => {
                 const state = step.id === resolvedVideoStep
                   ? "active"
                   : step.id < resolvedVideoStep
@@ -1265,6 +1262,7 @@ export function HeroStory({
                     key={step.id}
                     className="hero-video-note hero-video-note--summary"
                     data-state={state}
+                    style={{ ["--video-summary-bg" as string]: VIDEO_SUMMARY_COLORS[index] ?? VIDEO_SUMMARY_COLORS[0] }}
                   >
                     <span className="hero-video-note__eyebrow">{step.eyebrow}</span>
                     <p className="hero-video-note__text">{step.summary}</p>
