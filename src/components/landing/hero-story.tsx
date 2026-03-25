@@ -2,6 +2,7 @@
 
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useLenis } from "lenis/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -55,7 +56,7 @@ const MOBILE_FRAME_LIFT = 92;
 const DESKTOP_FRAME_PEEK = 140;
 const MOBILE_FRAME_PEEK = 100;
 const VIDEO_STAGE_PIN_SCROLL = 3000;
-const LAST_KEYWORD_SETTLE_MS = 900;
+const LAST_KEYWORD_SETTLE_MS = 400;
 const LAST_KEYWORD_REVEAL_WHEEL_THRESHOLD = 140;
 const LAST_KEYWORD_REVEAL_TOUCH_THRESHOLD = 110;
 const HEADER_AUTO_HIDE_SYNC_EVENT = "paymong:header-auto-hide-sync";
@@ -333,6 +334,8 @@ export function HeroStory({
   const touchYRef = useRef<number | null>(null);
   const idxRef = useRef(0);
   const isCtaDockedRef = useRef(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const lenisRef = useRef<any>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isCtaDocked, setIsCtaDocked] = useState(false);
   const [isCtaPreviewActive, setIsCtaPreviewActive] = useState(false);
@@ -352,6 +355,30 @@ export function HeroStory({
 
   useEffect(() => {
     isCtaDockedRef.current = isCtaDocked;
+  }, [isCtaDocked]);
+
+  const lenisInstance = useLenis();
+
+  useEffect(() => {
+    if (!lenisInstance) return;
+    lenisRef.current = lenisInstance;
+    if (!isCtaDockedRef.current) {
+      lenisInstance.stop();
+    }
+  }, [lenisInstance]);
+
+  useEffect(() => {
+    const lenis = lenisRef.current;
+    if (!lenis) return;
+
+    if (isCtaDocked) {
+      const timer = setTimeout(() => {
+        lenisRef.current?.start();
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+
+    lenis.stop();
   }, [isCtaDocked]);
 
   useEffect(() => {
@@ -488,14 +515,6 @@ export function HeroStory({
         window.scrollTo({ top: section.offsetTop, behavior: "auto" });
       }
     };
-    const advanceReveal = (delta: number) => {
-      window.requestAnimationFrame(() => {
-        window.scrollTo({
-          top: window.scrollY + delta,
-          behavior: "auto",
-        });
-      });
-    };
 
     const isNearHeroStart = () => window.scrollY <= section.offsetTop + 40;
     const isHeroControlling = () => {
@@ -563,17 +582,30 @@ export function HeroStory({
           return;
         }
 
-        event.preventDefault();
-        advanceReveal(event.deltaY);
         return;
       }
 
       if (event.deltaY < 0 && idxRef.current > 0 && isNearHeroStart()) {
+        lenisRef.current?.stop();
         syncHeaderVisibility(false);
         revealIntentRef.current = 0;
         if (isCtaDockedRef.current && now < revealUnlockUntilRef.current) {
           event.preventDefault();
           lockToHeroTop();
+          return;
+        }
+
+        if (isCtaDockedRef.current) {
+          event.preventDefault();
+          lockToHeroTop();
+          isCtaDockedRef.current = false;
+          setIsCtaDocked(false);
+          setIsCtaPreviewActive(false);
+          cooldownRef.current = true;
+          if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current);
+          cooldownTimerRef.current = setTimeout(() => {
+            cooldownRef.current = false;
+          }, KEYWORD_COOLDOWN_MS);
           return;
         }
 
@@ -651,18 +683,32 @@ export function HeroStory({
           return;
         }
 
-        event.preventDefault();
-        advanceReveal(delta);
         touchYRef.current = currentY;
         return;
       }
 
       if (delta < 0 && idxRef.current > 0 && isNearHeroStart()) {
+        lenisRef.current?.stop();
         syncHeaderVisibility(false);
         revealIntentRef.current = 0;
         if (isCtaDockedRef.current && now < revealUnlockUntilRef.current) {
           event.preventDefault();
           lockToHeroTop();
+          touchYRef.current = currentY;
+          return;
+        }
+
+        if (isCtaDockedRef.current) {
+          event.preventDefault();
+          lockToHeroTop();
+          isCtaDockedRef.current = false;
+          setIsCtaDocked(false);
+          setIsCtaPreviewActive(false);
+          cooldownRef.current = true;
+          if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current);
+          cooldownTimerRef.current = setTimeout(() => {
+            cooldownRef.current = false;
+          }, KEYWORD_COOLDOWN_MS);
           touchYRef.current = currentY;
           return;
         }

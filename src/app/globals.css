@@ -1,5 +1,23 @@
 @import "tailwindcss";
 
+/* ── Lenis smooth-scroll ───────────────────────────── */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
 :root {
   --bg: #ffffff;
   --bg-elevated: rgba(255, 255, 255, 0.82);
