@@ -1,7 +1,7 @@
 "use client";
 
-import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { type HeroScrollPhase, useHeroLenisControl } from "@/lib/use-hero-lenis-control";
@@ -24,6 +24,17 @@ type KeywordDecorAsset = {
 type ResolvedAssetState = {
   pathBase: string;
   resolvedPath: string | null;
+};
+
+type VideoStepId = 1 | 2 | 3 | 4;
+
+type VideoStep = {
+  id: VideoStepId;
+  eyebrow: string;
+  title: string;
+  summary: string;
+  detail: string;
+  palette: string;
 };
 
 const HERO_COPY = {
@@ -61,6 +72,48 @@ const LAST_KEYWORD_REVEAL_WHEEL_THRESHOLD = 140;
 const LAST_KEYWORD_REVEAL_TOUCH_THRESHOLD = 110;
 const HEADER_AUTO_HIDE_SYNC_EVENT = "paymong:header-auto-hide-sync";
 const CTA_DOCKED_SCROLL_UNLOCK_MS = 600;
+const SHOW_SIDE_PANELS_FROM_STEP = 2;
+const VIDEO_STEP_SEQUENCE: VideoStep[] = [
+  {
+    id: 1,
+    eyebrow: "Preview 01",
+    title: "Opening reel",
+    summary: "도입 화면",
+    detail: "히어로 단계에서 이미 재생되는 첫 번째 영상입니다.",
+    palette: "linear-gradient(135deg, rgba(0, 56, 241, 0.92), rgba(0, 171, 255, 0.82))",
+  },
+  {
+    id: 2,
+    eyebrow: "Preview 02",
+    title: "Spend orchestration",
+    summary: "계약 기반 비용을 한 화면에서 묶어 관리합니다.",
+    detail: "반복적으로 결제되는 지출을 묶고, 결제 맥락을 정리해 운영 흐름을 단순하게 만드는 장면을 가정한 더미 설명입니다.",
+    palette: "linear-gradient(135deg, rgba(0, 171, 255, 0.88), rgba(93, 98, 255, 0.84))",
+  },
+  {
+    id: 3,
+    eyebrow: "Preview 03",
+    title: "Approval cadence",
+    summary: "승인 흐름을 스크롤 리듬에 맞춰 짧게 보여줍니다.",
+    detail: "지출 요청, 승인 체크, 카드 결제 전환까지의 짧은 운영 장면을 순차적으로 보여주는 단계용 더미 카피입니다.",
+    palette: "linear-gradient(135deg, rgba(93, 98, 255, 0.9), rgba(132, 35, 254, 0.82))",
+  },
+  {
+    id: 4,
+    eyebrow: "Preview 04",
+    title: "Settlement recap",
+    summary: "정산과 추적을 마지막 장면에서 정리합니다.",
+    detail: "최종 단계에서는 결제 후 기록과 추적이 자연스럽게 이어지는 흐름을 보여주도록 구성된 더미 상세 설명을 사용합니다.",
+    palette: "linear-gradient(135deg, rgba(132, 35, 254, 0.92), rgba(0, 56, 241, 0.78))",
+  },
+] as const;
+
+function getVideoStepFromProgress(progress: number): VideoStepId {
+  if (progress <= 0.02) return 1;
+  if (progress < 0.38) return 2;
+  if (progress < 0.7) return 3;
+  return 4;
+}
 
 function withAlpha(hex: string, alpha: number) {
   const normalized = hex.replace("#", "");
@@ -313,6 +366,53 @@ function HeadlineRotator({
   );
 }
 
+function VideoFrameMedia({
+  activeStep,
+  reducedMotion,
+}: {
+  activeStep: VideoStepId;
+  reducedMotion: boolean;
+}) {
+  return (
+    <div className="hero-video-frame-media">
+      {VIDEO_STEP_SEQUENCE.map((step) => {
+        const state = step.id === activeStep
+          ? "active"
+          : step.id < activeStep
+            ? "past"
+            : "future";
+
+        return (
+          <div
+            key={step.id}
+            className="hero-video-slot"
+            data-state={state}
+            data-reduced-motion={reducedMotion ? "true" : "false"}
+            style={{ ["--video-step-palette" as string]: step.palette }}
+          >
+            <video
+              className="hero-video-slot__video"
+              autoPlay
+              muted
+              loop={step.id !== 1}
+              playsInline
+              preload="none"
+              aria-hidden="true"
+            />
+            <div className="hero-video-slot__overlay">
+              <span className="hero-video-slot__eyebrow">{step.eyebrow}</span>
+              <strong className="hero-video-slot__title">{step.title}</strong>
+              <span className="hero-video-slot__caption">
+                Placeholder video surface for step {step.id}
+              </span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function HeroStory({
   onLastKeywordStateChange,
 }: {
@@ -338,12 +438,14 @@ export function HeroStory({
   const wasDockedRef = useRef(false);
   const heroScrollPhaseRef = useRef<HeroScrollPhase>("keyword-sequence");
   const [activeIndex, setActiveIndex] = useState(0);
+  const [activeVideoStep, setActiveVideoStep] = useState<VideoStepId>(1);
   const [heroScrollPhase, setHeroScrollPhase] = useState<HeroScrollPhase>("keyword-sequence");
   const [isCtaDocked, setIsCtaDocked] = useState(false);
   const [isCtaPreviewActive, setIsCtaPreviewActive] = useState(false);
   const [ctaWidth, setCtaWidth] = useState(0);
   const [viewportWidth, setViewportWidth] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(0);
+  const reducedMotion = Boolean(useReducedMotion());
   useHeroLenisControl(heroScrollPhase);
 
   useEffect(() => {
@@ -386,7 +488,7 @@ export function HeroStory({
     };
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const updateViewport = () => {
       setViewportWidth(window.innerWidth);
       setViewportHeight(window.innerHeight);
@@ -397,7 +499,7 @@ export function HeroStory({
     return () => window.removeEventListener("resize", updateViewport);
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const cta = ctaRef.current;
     if (!cta) return;
 
@@ -433,6 +535,18 @@ export function HeroStory({
       window.removeEventListener("resize", updateWidth);
     };
   }, []);
+
+  useEffect(() => {
+    if (viewportHeight === 0 || ctaWidth === 0) return;
+
+    const refreshId = window.requestAnimationFrame(() => {
+      ScrollTrigger.refresh();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(refreshId);
+    };
+  }, [ctaWidth, viewportHeight]);
 
   useEffect(() => {
     document.documentElement.style.setProperty(
@@ -955,16 +1069,55 @@ export function HeroStory({
     };
   }, [activeIndex, isCtaDocked]);
 
+  useEffect(() => {
+    const nextSection = nextSectionRef.current;
+
+    if (!nextSection || activeIndex !== LAST_KEYWORD_INDEX || !isCtaDocked) {
+      return;
+    }
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    const trigger = ScrollTrigger.create({
+      trigger: nextSection,
+      start: "top top",
+      end: `+=${VIDEO_STAGE_PIN_SCROLL}`,
+      scrub: reducedMotion ? false : 0.2,
+      invalidateOnRefresh: true,
+      onUpdate: ({ progress }) => {
+        const nextStep = getVideoStepFromProgress(progress);
+        setActiveVideoStep((current) => (current === nextStep ? current : nextStep));
+      },
+      onLeaveBack: () => {
+        setActiveVideoStep(1);
+      },
+    });
+
+    return () => {
+      trigger.kill();
+    };
+  }, [activeIndex, isCtaDocked, reducedMotion]);
+
   const activeItem = useMemo(() => keywordStates[activeIndex], [activeIndex]);
+  const resolvedVideoStep = activeIndex === LAST_KEYWORD_INDEX && isCtaDocked
+    ? activeVideoStep
+    : 1;
+  const stackedVideoSteps = useMemo(
+    () => VIDEO_STEP_SEQUENCE.filter((step) => step.id >= SHOW_SIDE_PANELS_FROM_STEP),
+    [],
+  );
+  const showSidePanels = resolvedVideoStep >= SHOW_SIDE_PANELS_FROM_STEP;
   const isMobile = viewportWidth > 0 ? viewportWidth < 640 : false;
+  const frameWidthBoost = isMobile ? 24 : 40;
+  const frameHeightBoost = isMobile ? 28 : 44;
   const baseFrameHeight = viewportHeight > 0
     ? viewportHeight * (isMobile ? MOBILE_FRAME_HEIGHT_RATIO : DESKTOP_FRAME_HEIGHT_RATIO)
     : (isMobile ? 520 : 640);
-  const frameHeight = Math.max(baseFrameHeight, isMobile ? 420 : 560);
+  const frameHeight = Math.max(baseFrameHeight, isMobile ? 420 : 560) + frameHeightBoost;
   const centerFrameWidth = Math.max(
     ctaWidth + (isMobile ? 32 : 48),
     isMobile ? 296 : 360,
-  );
+  ) + frameWidthBoost;
   const dockedCtaWidth = isMobile ? 88 : 96;
   const ctaShellTop = viewportHeight > 0
     ? Math.round(viewportHeight * (isMobile ? 0.745 : 0.715))
@@ -1095,11 +1248,53 @@ export function HeroStory({
             className="pointer-events-none absolute inset-0 bg-white"
           />
 
-          <div
-            className="relative z-10"
-          >
-            <div ref={frameRef} className="hero-next-shell-frame" style={nextFrameStyle}>
-              <div className="hero-next-shell-frame__surface" />
+          <div className="hero-video-story-layout relative z-10">
+            <div
+              className={`hero-video-side hero-video-side--left ${showSidePanels ? "is-visible" : ""}`}
+              aria-hidden={!showSidePanels}
+            >
+              {stackedVideoSteps.map((step) => {
+                const state = step.id === resolvedVideoStep
+                  ? "active"
+                  : step.id < resolvedVideoStep
+                    ? "past"
+                    : "future";
+
+                return (
+                  <article
+                    key={step.id}
+                    className="hero-video-note hero-video-note--summary"
+                    data-state={state}
+                  >
+                    <span className="hero-video-note__eyebrow">{step.eyebrow}</span>
+                    <p className="hero-video-note__text">{step.summary}</p>
+                  </article>
+                );
+              })}
+            </div>
+
+            <div className="hero-video-story-layout__center">
+              <div ref={frameRef} className="hero-next-shell-frame" style={nextFrameStyle}>
+                <div className="hero-next-shell-frame__surface" />
+                <VideoFrameMedia activeStep={resolvedVideoStep} reducedMotion={reducedMotion} />
+              </div>
+            </div>
+
+            <div
+              className={`hero-video-side hero-video-side--right ${showSidePanels ? "is-visible" : ""}`}
+              aria-hidden={!showSidePanels}
+            >
+              {stackedVideoSteps.map((step) => (
+                <article
+                  key={step.id}
+                  className="hero-video-note hero-video-note--detail"
+                  data-state={step.id === resolvedVideoStep ? "active" : "inactive"}
+                >
+                  <span className="hero-video-note__eyebrow">{step.eyebrow}</span>
+                  <h3 className="hero-video-note__title">{step.title}</h3>
+                  <p className="hero-video-note__text">{step.detail}</p>
+                </article>
+              ))}
             </div>
           </div>
         </div>
