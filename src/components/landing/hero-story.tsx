@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { type HeroScrollPhase, useHeroLenisControl } from "@/lib/use-hero-lenis-control";
+import { WalletLoopSection } from "@/components/landing/wallet-loop-section";
 
 type KeywordId = "rent" | "tuition" | "labor" | "contract";
 type KeywordDecorSlotId = "orbit" | "ribbon" | "sweep" | "echo";
@@ -1274,7 +1275,7 @@ export function HeroStory({
 
       <section
         ref={nextSectionRef}
-        className="relative z-40"
+        className="relative z-40 border-4 border-blue-500"
         style={nextShellRegionStyle}
       >
         <div className="sticky top-0 flex h-svh items-center justify-center overflow-hidden">
@@ -1333,6 +1334,16 @@ export function HeroStory({
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      <WalletLoopSection />
+
+      <section className="relative z-40 min-h-svh bg-white px-6 py-12 sm:px-10 sm:py-16">
+        <div className="mx-auto flex min-h-[calc(100svh-6rem)] w-full max-w-6xl items-center justify-center sm:min-h-[calc(100svh-8rem)]">
+          <p className="text-center text-2xl font-semibold tracking-[-0.04em] text-[var(--text-primary)] sm:text-4xl">
+            이곳은 네번째 섹션입니다.
+          </p>
         </div>
       </section>
     </section>
