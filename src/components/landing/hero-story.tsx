@@ -38,6 +38,11 @@ type VideoStep = {
   palette: string;
 };
 
+type VideoTransitionState = {
+  step: VideoStepId;
+  direction: 1 | -1;
+};
+
 const HERO_COPY = {
   keywords: [
     "\uC6D4\uC138",
@@ -67,7 +72,7 @@ const DESKTOP_FRAME_LIFT = 132;
 const MOBILE_FRAME_LIFT = 92;
 const DESKTOP_FRAME_PEEK = 140;
 const MOBILE_FRAME_PEEK = 100;
-const VIDEO_STAGE_PIN_SCROLL = 3000;
+const VIDEO_STAGE_PIN_SCROLL = 2200;
 const LAST_KEYWORD_SETTLE_MS = 400;
 const LAST_KEYWORD_REVEAL_WHEEL_THRESHOLD = 140;
 const LAST_KEYWORD_REVEAL_TOUCH_THRESHOLD = 110;
@@ -87,7 +92,7 @@ const VIDEO_STEP_SEQUENCE: VideoStep[] = [
   },
   {
     id: 2,
-    eyebrow: "Preview 02",
+    eyebrow: "편리함",
     title: "Spend orchestration",
     summary: "계약 기반 비용을 한 화면에서 묶어 관리합니다.",
     detail: "반복적으로 결제되는 지출을 묶고, 결제 맥락을 정리해 운영 흐름을 단순하게 만드는 장면을 가정한 더미 설명입니다.",
@@ -95,7 +100,7 @@ const VIDEO_STEP_SEQUENCE: VideoStep[] = [
   },
   {
     id: 3,
-    eyebrow: "Preview 03",
+    eyebrow: "간편함",
     title: "Approval cadence",
     summary: "승인 흐름을 스크롤 리듬에 맞춰 짧게 보여줍니다.",
     detail: "지출 요청, 승인 체크, 카드 결제 전환까지의 짧은 운영 장면을 순차적으로 보여주는 단계용 더미 카피입니다.",
@@ -103,7 +108,7 @@ const VIDEO_STEP_SEQUENCE: VideoStep[] = [
   },
   {
     id: 4,
-    eyebrow: "Preview 04",
+    eyebrow: "안전함",
     title: "Settlement recap",
     summary: "정산과 추적을 마지막 장면에서 정리합니다.",
     detail: "최종 단계에서는 결제 후 기록과 추적이 자연스럽게 이어지는 흐름을 보여주도록 구성된 더미 상세 설명을 사용합니다.",
@@ -113,8 +118,8 @@ const VIDEO_STEP_SEQUENCE: VideoStep[] = [
 
 function getVideoStepFromProgress(progress: number): VideoStepId {
   if (progress <= 0.02) return 1;
-  if (progress < 0.38) return 2;
-  if (progress < 0.7) return 3;
+  if (progress < 0.28) return 2;
+  if (progress < 0.56) return 3;
   return 4;
 }
 
@@ -522,7 +527,7 @@ export function HeroStory({
   const wasDockedRef = useRef(false);
   const heroScrollPhaseRef = useRef<HeroScrollPhase>("keyword-sequence");
   const [activeIndex, setActiveIndex] = useState(0);
-  const [activeVideoStep, setActiveVideoStep] = useState<VideoStepId>(1);
+  const [videoTransition, setVideoTransition] = useState<VideoTransitionState>({ step: 1, direction: 1 });
   const [heroScrollPhase, setHeroScrollPhase] = useState<HeroScrollPhase>("keyword-sequence");
   const [isCtaDocked, setIsCtaDocked] = useState(false);
   const [isCtaPreviewActive, setIsCtaPreviewActive] = useState(false);
@@ -1115,14 +1120,21 @@ export function HeroStory({
       trigger: nextSection,
       start: "top top",
       end: `+=${VIDEO_STAGE_PIN_SCROLL}`,
-      scrub: reducedMotion ? false : 0.2,
+      scrub: reducedMotion ? false : 0.08,
       invalidateOnRefresh: true,
       onUpdate: ({ progress }) => {
         const nextStep = getVideoStepFromProgress(progress);
-        setActiveVideoStep((current) => (current === nextStep ? current : nextStep));
+        setVideoTransition((current) => (
+          current.step === nextStep
+            ? current
+            : {
+              step: nextStep,
+              direction: nextStep > current.step ? 1 : -1,
+            }
+        ));
       },
       onLeaveBack: () => {
-        setActiveVideoStep(1);
+        setVideoTransition({ step: 1, direction: -1 });
       },
     });
 
@@ -1133,13 +1145,19 @@ export function HeroStory({
 
   const activeItem = useMemo(() => keywordStates[activeIndex], [activeIndex]);
   const resolvedVideoStep = activeIndex === LAST_KEYWORD_INDEX && isCtaDocked
-    ? activeVideoStep
+    ? videoTransition.step
     : 1;
   const stackedVideoSteps = useMemo(
     () => VIDEO_STEP_SEQUENCE.filter((step) => step.id >= SHOW_SIDE_PANELS_FROM_STEP),
     [],
   );
   const showSidePanels = resolvedVideoStep >= SHOW_SIDE_PANELS_FROM_STEP;
+  const activeDetailStep = useMemo(
+    () => stackedVideoSteps.find((step) => step.id === resolvedVideoStep) ?? null,
+    [resolvedVideoStep, stackedVideoSteps],
+  );
+  const detailTransitionDirection = videoTransition.direction;
+
   const isMobile = viewportWidth > 0 ? viewportWidth < 640 : false;
   const frameWidthBoost = isMobile ? 24 : 40;
   const frameHeightBoost = isMobile ? 28 : 44;
@@ -1321,17 +1339,22 @@ export function HeroStory({
               className={`hero-video-side hero-video-side--right ${showSidePanels ? "is-visible" : ""}`}
               aria-hidden={!showSidePanels}
             >
-              {stackedVideoSteps.map((step) => (
-                <article
-                  key={step.id}
-                  className="hero-video-note hero-video-note--detail"
-                  data-state={step.id === resolvedVideoStep ? "active" : "inactive"}
-                >
-                  <span className="hero-video-note__eyebrow">{step.eyebrow}</span>
-                  <h3 className="hero-video-note__title">{step.title}</h3>
-                  <p className="hero-video-note__text">{step.detail}</p>
-                </article>
-              ))}
+              <AnimatePresence initial={false} mode="popLayout">
+                {showSidePanels && activeDetailStep ? (
+                  <motion.article
+                    key={activeDetailStep.id}
+                    className="hero-video-note hero-video-note--detail"
+                    initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: detailTransitionDirection > 0 ? 200 : -200, filter: "blur(16px)" }}
+                    animate={reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, filter: "blur(0px)" }}
+                    exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: detailTransitionDirection > 0 ? -120 : 120, filter: "blur(16px)" }}
+                    transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <span className="hero-video-note__eyebrow">{activeDetailStep.eyebrow}</span>
+                    <h3 className="hero-video-note__title">{activeDetailStep.title}</h3>
+                    <p className="hero-video-note__text">{activeDetailStep.detail}</p>
+                  </motion.article>
+                ) : null}
+              </AnimatePresence>
             </div>
           </div>
         </div>
