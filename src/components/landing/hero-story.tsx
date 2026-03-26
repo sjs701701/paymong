@@ -277,6 +277,26 @@ function RibbonAssetOverlay({
 
 function SweepAssetOverlay({
   asset,
+  keywordId,
+}: {
+  asset: KeywordDecorAsset;
+  keywordId: KeywordId;
+}) {
+  const resolvedPath = useResolvedAssetPath(asset.pathBase);
+
+  if (!resolvedPath) return null;
+
+  return (
+    <img
+      src={resolvedPath}
+      alt=""
+      className={`hero-sweep-asset${keywordId === "tuition" ? " hero-sweep-asset--tuition" : ""}`}
+    />
+  );
+}
+
+function EchoAssetOverlay({
+  asset,
 }: {
   asset: KeywordDecorAsset;
 }) {
@@ -288,7 +308,7 @@ function SweepAssetOverlay({
     <img
       src={resolvedPath}
       alt=""
-      className="hero-sweep-asset"
+      className="hero-echo-asset"
     />
   );
 }
@@ -302,7 +322,8 @@ function HeadlineRotator({
   const orbitAsset = decorAssets.find((asset) => asset.slot === "orbit");
   const ribbonAsset = decorAssets.find((asset) => asset.slot === "ribbon");
   const sweepAsset = decorAssets.find((asset) => asset.slot === "sweep");
-  const baseDecorAssets = decorAssets.filter((asset) => asset.slot !== "orbit" && asset.slot !== "ribbon" && asset.slot !== "sweep");
+  const echoAsset = decorAssets.find((asset) => asset.slot === "echo");
+  const baseDecorAssets = decorAssets.filter((asset) => asset.slot !== "orbit" && asset.slot !== "ribbon" && asset.slot !== "sweep" && asset.slot !== "echo");
 
   return (
     <div className="hero-title-shell">
@@ -401,7 +422,24 @@ function HeadlineRotator({
               transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
               className="relative h-full w-full"
             >
-              <SweepAssetOverlay asset={sweepAsset} />
+              <SweepAssetOverlay asset={sweepAsset} keywordId={activeItem.id} />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      ) : null}
+
+      {echoAsset ? (
+        <div className="hero-title-stage hero-title-stage--under-text" aria-hidden="true">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`${activeItem.id}-echo`}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.01 }}
+              transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+              className="relative h-full w-full"
+            >
+              <EchoAssetOverlay asset={echoAsset} />
             </motion.div>
           </AnimatePresence>
         </div>
@@ -473,8 +511,8 @@ export function HeroStory({
   const frameRef = useRef<HTMLDivElement | null>(null);
   const auraRef = useRef<HTMLDivElement | null>(null);
   const cooldownRef = useRef(false);
-  const cooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const ctaReturnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cooldownTimerRef = useRef<number | null>(null);
+  const ctaReturnTimerRef = useRef<number | null>(null);
   const revealUnlockUntilRef = useRef(0);
   const revealIntentRef = useRef(0);
   const touchYRef = useRef<number | null>(null);
@@ -635,7 +673,7 @@ export function HeroStory({
         clearTimeout(cooldownTimerRef.current);
       }
 
-      cooldownTimerRef.current = setTimeout(() => {
+      cooldownTimerRef.current = window.setTimeout(() => {
         cooldownRef.current = false;
       }, KEYWORD_COOLDOWN_MS);
     };
