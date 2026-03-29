@@ -24,11 +24,11 @@ type PillStyle = {
 };
 
 const defaultCategories: HeaderCategory[] = [
-  { name: "프로젝트", href: "#" },
-  { name: "서비스", href: "#" },
-  { name: "아티클", href: "#" },
-  { name: "커뮤니티", href: "#" },
-  { name: "고객지원", href: "#" },
+  { name: "\uCE74\uD14C\uACE0\uB9AC 1", href: "#" },
+  { name: "\uCE74\uD14C\uACE0\uB9AC 2", href: "#" },
+  { name: "\uCE74\uD14C\uACE0\uB9AC 3", href: "#" },
+  { name: "\uCE74\uD14C\uACE0\uB9AC 4", href: "#" },
+  { name: "\uCE74\uD14C\uACE0\uB9AC 5", href: "#" },
 ];
 
 const initialPillStyle: PillStyle = {
@@ -482,20 +482,20 @@ export function FixedHeader({
                 href="/login"
                 className="nav-item rounded-full px-5 py-2 text-[15px] font-medium transition-colors"
               >
-                로그인
+                {"\uB85C\uADF8\uC778"}
               </Link>
               <Link
                 href="/start"
                 className="action-pill rounded-full px-5 py-2 text-[15px] font-medium text-white"
               >
-                시작하기
+                {"\uC2DC\uC791\uD558\uAE30"}
               </Link>
             </div>
 
             <div className="glass-panel flex h-[60px] items-center justify-center px-4 pointer-events-auto lg:hidden">
               <button
                 type="button"
-                aria-label="모바일 메뉴 열기"
+                aria-label="\uBA54\uB274 \uC5F4\uAE30"
                 aria-expanded={isMobileMenuOpen}
                 className="z-10 flex h-6 w-6 flex-col justify-center gap-[5px]"
                 onClick={() => setIsMobileMenuOpen((prev) => !prev)}

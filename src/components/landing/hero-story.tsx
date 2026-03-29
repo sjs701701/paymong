@@ -258,7 +258,7 @@ function OrbitAssetOverlay({
     <img
       src={resolvedPath}
       alt=""
-      className="hero-orbit-asset"
+      className={`hero-orbit-asset ${asset.pathBase.includes("/labor/") ? "hero-orbit-asset--labor" : ""}${asset.pathBase.includes("/tuition/") ? " hero-orbit-asset--tuition" : ""}${asset.pathBase.includes("/contract/") ? " hero-orbit-asset--contract" : ""}`}
     />
   );
 }
@@ -276,7 +276,12 @@ function RibbonAssetOverlay({
     <img
       src={resolvedPath}
       alt=""
-      className="hero-ribbon-asset"
+      className={`hero-ribbon-asset${asset.pathBase.includes("/tuition/") ? " hero-ribbon-asset--tuition" : ""}`}
+      style={asset.pathBase.includes("/tuition/")
+        ? {
+          filter: "drop-shadow(1px 1px 0 rgba(10, 15, 30, 0.5)) drop-shadow(1px 2px 0 rgba(10, 15, 30, 0.4)) drop-shadow(1px 3px 0 rgba(10, 15, 30, 0.3)) drop-shadow(3px 5px 3px rgba(10, 15, 30, 0.26))",
+        }
+        : undefined}
     />
   );
 }
@@ -296,7 +301,16 @@ function SweepAssetOverlay({
     <img
       src={resolvedPath}
       alt=""
-      className={`hero-sweep-asset${keywordId === "tuition" ? " hero-sweep-asset--tuition" : ""}`}
+      className={`hero-sweep-asset${keywordId === "tuition" ? " hero-sweep-asset--tuition" : ""}${keywordId === "contract" ? " hero-sweep-asset--contract" : ""}`}
+      style={keywordId === "tuition"
+        ? {
+          filter: "drop-shadow(5px 1px 0 rgba(10, 15, 30, 0.5)) drop-shadow(5px 2px 0 rgba(10, 15, 30, 0.4)) drop-shadow(5px 3px 0 rgba(10, 15, 30, 0.3)) drop-shadow(10px 5px 3px rgba(10, 15, 30, 0.26))",
+        }
+        : keywordId === "contract"
+          ? {
+            filter: "drop-shadow(5px 1px 0 rgba(10, 15, 30, 0.5)) drop-shadow(5px 2px 0 rgba(10, 15, 30, 0.4)) drop-shadow(5px 3px 0 rgba(10, 15, 30, 0.3)) drop-shadow(10px 5px 3px rgba(10, 15, 30, 0.26))",
+          }
+          : undefined}
     />
   );
 }
@@ -314,7 +328,7 @@ function EchoAssetOverlay({
     <img
       src={resolvedPath}
       alt=""
-      className="hero-echo-asset"
+      className={`hero-echo-asset${asset.pathBase.includes("/tuition/") ? " hero-echo-asset--tuition" : ""}`}
     />
   );
 }
@@ -1293,7 +1307,7 @@ export function HeroStory({
 
       <section
         ref={nextSectionRef}
-        className="relative z-40 border-4 border-blue-500"
+        className="relative z-40"
         style={nextShellRegionStyle}
       >
         <div className="sticky top-0 flex h-svh items-center justify-center overflow-hidden">
