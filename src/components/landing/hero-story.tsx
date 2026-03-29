@@ -1085,7 +1085,7 @@ export function HeroStory({
 
     const tween = gsap.timeline({
       defaults: {
-        duration: 1,
+        duration: 0.5,
         ease: "power2.out",
       },
     });
