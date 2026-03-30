@@ -87,11 +87,11 @@ const VIDEO_SUMMARY_REVEAL_DELAY_RATIO = 0.1;
 const VIDEO_SUMMARY_REVEAL_RATIO = 0.22;
 const VIDEO_SUMMARY_REVEAL_DELAY_RATIO_STEP2 = 0;
 const VIDEO_SUMMARY_REVEAL_RATIO_STEP2 = 0.58;
-const VIDEO_STEP2_COLLAPSE_START_PROGRESS = 0.3153;
+const VIDEO_STEP2_COLLAPSE_START_PROGRESS = 0.38;
 const VIDEO_STEP_PROGRESS_BREAKPOINTS: Record<VideoStepId, number> = {
-  1: 0.14,
-  2: 0.6847,
-  3: 0.8261,
+  1: 0.22,
+  2: 0.50,
+  3: 0.76,
   4: 1,
 };
 const VIDEO_STEP_SEQUENCE: VideoStep[] = [
@@ -242,6 +242,75 @@ function getSummaryCardCollapseProgress(progress: number, stepId: VideoStepId) {
   if (progress >= end) return 1;
 
   return clamp01((progress - holdStart) / Math.max(end - holdStart, 0.0001));
+}
+
+function getDetailCardMotion(progress: number, stepId: VideoStepId) {
+  if (stepId === 1) {
+    return {
+      opacity: 0,
+      translateY: 72,
+      scale: 0.985,
+    };
+  }
+
+  const start = VIDEO_STEP_PROGRESS_BREAKPOINTS[stepId - 1 as VideoStepId];
+  const end = VIDEO_STEP_PROGRESS_BREAKPOINTS[stepId];
+  const interval = Math.max(end - start, 0.0001);
+  const enterEnd = start + interval * (stepId === 2 ? 0.34 : 0.24);
+
+  if (progress <= start) {
+    return {
+      opacity: 0,
+      translateY: 72,
+      scale: 0.985,
+    };
+  }
+
+  if (progress < enterEnd) {
+    const enterProgress = easeInOutSmooth(clamp01((progress - start) / Math.max(enterEnd - start, 0.0001)));
+
+    return {
+      opacity: enterProgress,
+      translateY: (1 - enterProgress) * 72,
+      scale: 0.985 + (0.015 * enterProgress),
+    };
+  }
+
+  if (stepId === 4) {
+    return {
+      opacity: 1,
+      translateY: 0,
+      scale: 1,
+    };
+  }
+
+  const nextStepId = (stepId + 1) as VideoStepId;
+  const nextEnd = VIDEO_STEP_PROGRESS_BREAKPOINTS[nextStepId];
+  const exitEnd = end + Math.max(nextEnd - end, 0.0001) * 0.32;
+
+  if (progress <= end) {
+    return {
+      opacity: 1,
+      translateY: 0,
+      scale: 1,
+    };
+  }
+
+  if (progress >= exitEnd) {
+    return {
+      opacity: 0,
+      translateY: -36,
+      scale: 0.985,
+    };
+  }
+
+  const exitProgress = easeInOutSmooth(clamp01((progress - end) / Math.max(exitEnd - end, 0.0001)));
+
+  return {
+    opacity: 1 - exitProgress,
+    translateY: -36 * exitProgress,
+    scale: 1 - (0.015 * exitProgress),
+  };
 }
 
 function withAlpha(hex: string, alpha: number) {
@@ -1257,7 +1326,7 @@ export function HeroStory({
       trigger: nextSection,
       start: "top top",
       end: `+=${VIDEO_STAGE_PIN_SCROLL}`,
-      scrub: reducedMotion ? false : true,
+      scrub: reducedMotion ? false : 0.12,
       invalidateOnRefresh: true,
       onUpdate: (self) => {
         const { progress } = self;
@@ -1317,12 +1386,7 @@ export function HeroStory({
     () => VIDEO_STEP_SEQUENCE.filter((step) => step.id >= SHOW_SIDE_PANELS_FROM_STEP),
     [],
   );
-  const showSidePanels = resolvedVideoStep >= SHOW_SIDE_PANELS_FROM_STEP;
-  const activeDetailStep = useMemo(
-    () => stackedVideoSteps.find((step) => step.id === resolvedVideoStep) ?? null,
-    [resolvedVideoStep, stackedVideoSteps],
-  );
-  const detailTransitionDirection = videoTransition.direction;
+  const showSidePanels = leftPanelRevealProgress > 0.001;
 
   const isMobile = viewportWidth > 0 ? viewportWidth < 640 : false;
   const frameWidthBoost = isMobile ? 24 : 40;
@@ -1355,6 +1419,9 @@ export function HeroStory({
     width: `${centerFrameWidth}px`,
     height: `${frameHeight}px`,
     borderRadius: isMobile ? "22px" : "28px",
+  } satisfies CSSProperties;
+  const videoStoryLayoutStyle = {
+    ["--video-layout-height" as string]: `${frameHeight}px`,
   } satisfies CSSProperties;
   const ctaShellStyle = {
     ["--cta-shell-top" as string]: `${ctaShellTop}px`,
@@ -1468,13 +1535,15 @@ export function HeroStory({
             className="pointer-events-none absolute inset-0 bg-white"
           />
 
-          <div className="hero-video-story-layout relative z-10">
+          <div className="hero-video-story-layout relative z-10" style={videoStoryLayoutStyle}>
             <div
               className={`hero-video-side hero-video-side--left ${showSidePanels ? "is-visible" : ""}`}
               aria-hidden={!showSidePanels}
               style={{ ["--left-panel-reveal" as string]: leftPanelRevealProgress.toFixed(4) }}
             >
               {stackedVideoSteps.map((step, index) => {
+                const summaryReveal = getSummaryCardRevealProgress(videoScrollProgress, step.id);
+                const summaryCollapse = getSummaryCardCollapseProgress(videoScrollProgress, step.id);
                 const state = step.id === resolvedVideoStep
                   ? "active"
                   : step.id < resolvedVideoStep
@@ -1488,9 +1557,9 @@ export function HeroStory({
                     data-state={state}
                     style={{
                       ["--video-summary-bg" as string]: VIDEO_SUMMARY_COLORS[index] ?? VIDEO_SUMMARY_COLORS[0],
-                      ["--summary-reveal" as string]: getSummaryCardRevealProgress(videoScrollProgress, step.id).toFixed(4),
-                      ["--summary-reveal-opacity" as string]: getSummaryCardRevealProgress(videoScrollProgress, step.id).toFixed(4),
-                      ["--summary-collapse" as string]: getSummaryCardCollapseProgress(videoScrollProgress, step.id).toFixed(4),
+                      ["--summary-reveal" as string]: summaryReveal.toFixed(4),
+                      ["--summary-reveal-opacity" as string]: summaryReveal.toFixed(4),
+                      ["--summary-collapse" as string]: summaryCollapse.toFixed(4),
                       ["--summary-reveal-offset-y" as string]: step.id === 2 ? "320px" : "72px",
                     }}
                   >
@@ -1517,22 +1586,29 @@ export function HeroStory({
               className={`hero-video-side hero-video-side--right ${showSidePanels ? "is-visible" : ""}`}
               aria-hidden={!showSidePanels}
             >
-              <AnimatePresence initial={false} mode="popLayout">
-                {showSidePanels && activeDetailStep ? (
-                  <motion.article
-                    key={activeDetailStep.id}
-                    className="hero-video-note hero-video-note--detail"
-                    initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: detailTransitionDirection > 0 ? 200 : -200 }}
-                    animate={reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-                    exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: detailTransitionDirection > 0 ? -120 : 120 }}
-                    transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-                  >
-                    <span className="hero-video-note__eyebrow">{activeDetailStep.eyebrow}</span>
-                    <h3 className="hero-video-note__title">{activeDetailStep.title}</h3>
-                    <p className="hero-video-note__text">{activeDetailStep.detail}</p>
-                  </motion.article>
-                ) : null}
-              </AnimatePresence>
+              {showSidePanels
+                ? stackedVideoSteps.map((step) => {
+                    const detailMotion = getDetailCardMotion(videoScrollProgress, step.id);
+
+                    return (
+                      <article
+                        key={step.id}
+                        className="hero-video-note hero-video-note--detail"
+                        data-state={step.id === resolvedVideoStep ? "active" : step.id < resolvedVideoStep ? "past" : "future"}
+                        style={{
+                          ["--detail-opacity" as string]: detailMotion.opacity.toFixed(4),
+                          ["--detail-translate-y" as string]: `${detailMotion.translateY.toFixed(2)}px`,
+                          ["--detail-scale" as string]: detailMotion.scale.toFixed(4),
+                          zIndex: step.id === resolvedVideoStep ? 3 : step.id < resolvedVideoStep ? 1 : 2,
+                        }}
+                      >
+                        <span className="hero-video-note__eyebrow">{step.eyebrow}</span>
+                        <h3 className="hero-video-note__title">{step.title}</h3>
+                        <p className="hero-video-note__text">{step.detail}</p>
+                      </article>
+                    );
+                  })
+                : null}
             </div>
           </div>
         </div>
