@@ -31,7 +31,7 @@ const SCROLL_MULTIPLIER = 1.2;
 const LOOP_HEIGHT = REVIEW_DATA.length * ITEM_SPACING;
 const CARD_CENTER = CARD_STAGE_HEIGHT / 2;
 
-export function WalletLoopSection() {
+export function ReviewsSection() {
   const reducedMotion = useReducedMotion();
   const sectionRef = useRef<HTMLElement | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);

@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { type HeroScrollPhase, useHeroLenisControl } from "@/lib/use-hero-lenis-control";
-import { WalletLoopSection } from "@/components/landing/wallet-loop-section";
+import { ReviewsSection } from "@/components/landing/reviews-section";
 
 type KeywordId = "rent" | "tuition" | "labor" | "contract";
 type KeywordDecorSlotId = "orbit" | "ribbon" | "sweep" | "echo";
@@ -72,7 +72,7 @@ const DESKTOP_FRAME_LIFT = 132;
 const MOBILE_FRAME_LIFT = 92;
 const DESKTOP_FRAME_PEEK = 140;
 const MOBILE_FRAME_PEEK = 100;
-const VIDEO_STAGE_PIN_SCROLL = 2200;
+const VIDEO_STAGE_PIN_SCROLL = 3200;
 const LAST_KEYWORD_SETTLE_MS = 400;
 const LAST_KEYWORD_REVEAL_WHEEL_THRESHOLD = 140;
 const LAST_KEYWORD_REVEAL_TOUCH_THRESHOLD = 110;
@@ -81,6 +81,19 @@ const CTA_DOCKED_SCROLL_UNLOCK_MS = 600;
 const CTA_RETURN_SEQUENCE_MS = 820;
 const SHOW_SIDE_PANELS_FROM_STEP = 2;
 const VIDEO_SUMMARY_COLORS = ["#2268FF", "#73DAFF", "#AF70FF"] as const;
+const VIDEO_SUMMARY_COLLAPSE_GAP_RATIO = 0.12;
+const VIDEO_LEFT_PANEL_REVEAL_LEAD_RATIO = 0.4;
+const VIDEO_SUMMARY_REVEAL_DELAY_RATIO = 0.1;
+const VIDEO_SUMMARY_REVEAL_RATIO = 0.22;
+const VIDEO_SUMMARY_REVEAL_DELAY_RATIO_STEP2 = 0;
+const VIDEO_SUMMARY_REVEAL_RATIO_STEP2 = 0.58;
+const VIDEO_STEP2_COLLAPSE_START_PROGRESS = 0.3153;
+const VIDEO_STEP_PROGRESS_BREAKPOINTS: Record<VideoStepId, number> = {
+  1: 0.14,
+  2: 0.6847,
+  3: 0.8261,
+  4: 1,
+};
 const VIDEO_STEP_SEQUENCE: VideoStep[] = [
   {
     id: 1,
@@ -92,7 +105,7 @@ const VIDEO_STEP_SEQUENCE: VideoStep[] = [
   },
   {
     id: 2,
-    eyebrow: "편리함",
+    eyebrow: "간편함",
     title: "Spend orchestration",
     summary: "계약 기반 비용을 한 화면에서 묶어 관리합니다.",
     detail: "반복적으로 결제되는 지출을 묶고, 결제 맥락을 정리해 운영 흐름을 단순하게 만드는 장면을 가정한 더미 설명입니다.",
@@ -100,7 +113,7 @@ const VIDEO_STEP_SEQUENCE: VideoStep[] = [
   },
   {
     id: 3,
-    eyebrow: "간편함",
+    eyebrow: "안전함",
     title: "Approval cadence",
     summary: "승인 흐름을 스크롤 리듬에 맞춰 짧게 보여줍니다.",
     detail: "지출 요청, 승인 체크, 카드 결제 전환까지의 짧은 운영 장면을 순차적으로 보여주는 단계용 더미 카피입니다.",
@@ -108,7 +121,7 @@ const VIDEO_STEP_SEQUENCE: VideoStep[] = [
   },
   {
     id: 4,
-    eyebrow: "안전함",
+    eyebrow: "신속함",
     title: "Settlement recap",
     summary: "정산과 추적을 마지막 장면에서 정리합니다.",
     detail: "최종 단계에서는 결제 후 기록과 추적이 자연스럽게 이어지는 흐름을 보여주도록 구성된 더미 상세 설명을 사용합니다.",
@@ -116,11 +129,119 @@ const VIDEO_STEP_SEQUENCE: VideoStep[] = [
   },
 ] as const;
 
+function getSummaryIconPath(stepId: VideoStepId) {
+  return `/design/video-summary-icons/step-${stepId}.svg`;
+}
+
+function SummaryIconSlot({
+  stepId,
+}: {
+  stepId: VideoStepId;
+}) {
+  const iconPath = getSummaryIconPath(stepId);
+  const [hasIconError, setHasIconError] = useState(false);
+
+  useEffect(() => {
+    setHasIconError(false);
+  }, [iconPath]);
+
+  if (hasIconError) {
+    return null;
+  }
+
+  return (
+    <img
+      src={iconPath}
+      alt=""
+      className="hero-video-note__icon-slot-image"
+      aria-hidden="true"
+      onError={() => setHasIconError(true)}
+    />
+  );
+}
+
 function getVideoStepFromProgress(progress: number): VideoStepId {
-  if (progress <= 0.02) return 1;
-  if (progress < 0.28) return 2;
-  if (progress < 0.56) return 3;
+  if (progress <= VIDEO_STEP_PROGRESS_BREAKPOINTS[1]) return 1;
+  if (progress < VIDEO_STEP_PROGRESS_BREAKPOINTS[2]) return 2;
+  if (progress < VIDEO_STEP_PROGRESS_BREAKPOINTS[3]) return 3;
   return 4;
+}
+
+function clamp01(value: number) {
+  return Math.min(1, Math.max(0, value));
+}
+
+function easeInOutSmooth(value: number) {
+  return value * value * (3 - 2 * value);
+}
+
+function getSummaryRevealTiming(stepId: VideoStepId) {
+  if (stepId === 1) {
+    return { revealStartRatio: 0, revealEndRatio: 0 };
+  }
+
+  if (stepId === 2) {
+    return {
+      revealStartRatio: VIDEO_SUMMARY_REVEAL_DELAY_RATIO_STEP2,
+      revealEndRatio: VIDEO_SUMMARY_REVEAL_DELAY_RATIO_STEP2 + VIDEO_SUMMARY_REVEAL_RATIO_STEP2,
+    };
+  }
+
+  return {
+    revealStartRatio: VIDEO_SUMMARY_REVEAL_DELAY_RATIO,
+    revealEndRatio: VIDEO_SUMMARY_REVEAL_DELAY_RATIO + VIDEO_SUMMARY_REVEAL_RATIO,
+  };
+}
+
+function getSummaryCardRevealProgress(progress: number, stepId: VideoStepId) {
+  if (stepId === 1) return 1;
+
+  const start = VIDEO_STEP_PROGRESS_BREAKPOINTS[stepId - 1 as VideoStepId];
+  const interval = VIDEO_STEP_PROGRESS_BREAKPOINTS[stepId] - start;
+  const { revealStartRatio, revealEndRatio } = getSummaryRevealTiming(stepId);
+  const revealStart = start + interval * revealStartRatio;
+  const revealEnd = start + interval * revealEndRatio;
+
+  if (progress <= revealStart) return 0;
+  if (progress >= revealEnd) return 1;
+
+  return easeInOutSmooth(clamp01((progress - revealStart) / Math.max(revealEnd - revealStart, 0.0001)));
+}
+
+function getLeftPanelRevealProgress(progress: number) {
+  const end = VIDEO_STEP_PROGRESS_BREAKPOINTS[1];
+  const start = end * (1 - VIDEO_LEFT_PANEL_REVEAL_LEAD_RATIO);
+
+  if (progress <= start) return 0;
+  if (progress >= end) return 1;
+
+  return easeInOutSmooth(clamp01((progress - start) / Math.max(end - start, 0.0001)));
+}
+
+function getSummaryCardCollapseProgress(progress: number, stepId: VideoStepId) {
+  if (stepId === 1) return 0;
+
+  const baseStart = VIDEO_STEP_PROGRESS_BREAKPOINTS[stepId - 1 as VideoStepId];
+  const baseEnd = VIDEO_STEP_PROGRESS_BREAKPOINTS[stepId];
+
+  let start = baseStart;
+  let end = baseEnd;
+  let holdStart: number;
+
+  if (stepId === 2) {
+    start = VIDEO_STEP2_COLLAPSE_START_PROGRESS;
+    end = VIDEO_STEP_PROGRESS_BREAKPOINTS[2];
+    holdStart = start;
+  } else {
+    const interval = end - start;
+    const { revealEndRatio } = getSummaryRevealTiming(stepId);
+    holdStart = start + interval * (revealEndRatio + VIDEO_SUMMARY_COLLAPSE_GAP_RATIO);
+  }
+
+  if (progress <= holdStart) return 0;
+  if (progress >= end) return 1;
+
+  return clamp01((progress - holdStart) / Math.max(end - holdStart, 0.0001));
 }
 
 function withAlpha(hex: string, alpha: number) {
@@ -540,8 +661,10 @@ export function HeroStory({
   const isCtaDockedRef = useRef(false);
   const wasDockedRef = useRef(false);
   const heroScrollPhaseRef = useRef<HeroScrollPhase>("keyword-sequence");
+  const lastLoggedVideoProgressRef = useRef<number | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [videoTransition, setVideoTransition] = useState<VideoTransitionState>({ step: 1, direction: 1 });
+  const [videoScrollProgress, setVideoScrollProgress] = useState(0);
   const [heroScrollPhase, setHeroScrollPhase] = useState<HeroScrollPhase>("keyword-sequence");
   const [isCtaDocked, setIsCtaDocked] = useState(false);
   const [isCtaPreviewActive, setIsCtaPreviewActive] = useState(false);
@@ -1134,10 +1257,27 @@ export function HeroStory({
       trigger: nextSection,
       start: "top top",
       end: `+=${VIDEO_STAGE_PIN_SCROLL}`,
-      scrub: reducedMotion ? false : 0.08,
+      scrub: reducedMotion ? false : true,
       invalidateOnRefresh: true,
-      onUpdate: ({ progress }) => {
+      onUpdate: (self) => {
+        const { progress } = self;
+        setVideoScrollProgress(progress);
         const nextStep = getVideoStepFromProgress(progress);
+
+        if (process.env.NODE_ENV !== "production") {
+          const roundedProgress = Math.round(progress * 100) / 100;
+
+          if (lastLoggedVideoProgressRef.current !== roundedProgress) {
+            lastLoggedVideoProgressRef.current = roundedProgress;
+            console.info("[HeroStory][ScrollTrigger]", {
+              progress: roundedProgress,
+              rawProgress: Number(progress.toFixed(4)),
+              step: nextStep,
+              scroll: Math.round(self.scroll()),
+            });
+          }
+        }
+
         setVideoTransition((current) => (
           current.step === nextStep
             ? current
@@ -1148,6 +1288,8 @@ export function HeroStory({
         ));
       },
       onLeaveBack: () => {
+        lastLoggedVideoProgressRef.current = null;
+        setVideoScrollProgress(0);
         setVideoTransition({ step: 1, direction: -1 });
       },
     });
@@ -1157,10 +1299,20 @@ export function HeroStory({
     };
   }, [activeIndex, isCtaDocked, reducedMotion]);
 
+  useEffect(() => {
+    if (activeIndex !== LAST_KEYWORD_INDEX || !isCtaDocked) {
+      lastLoggedVideoProgressRef.current = null;
+      setVideoScrollProgress(0);
+    }
+  }, [activeIndex, isCtaDocked]);
+
   const activeItem = useMemo(() => keywordStates[activeIndex], [activeIndex]);
   const resolvedVideoStep = activeIndex === LAST_KEYWORD_INDEX && isCtaDocked
     ? videoTransition.step
     : 1;
+  const leftPanelRevealProgress = activeIndex === LAST_KEYWORD_INDEX && isCtaDocked
+    ? getLeftPanelRevealProgress(videoScrollProgress)
+    : 0;
   const stackedVideoSteps = useMemo(
     () => VIDEO_STEP_SEQUENCE.filter((step) => step.id >= SHOW_SIDE_PANELS_FROM_STEP),
     [],
@@ -1320,6 +1472,7 @@ export function HeroStory({
             <div
               className={`hero-video-side hero-video-side--left ${showSidePanels ? "is-visible" : ""}`}
               aria-hidden={!showSidePanels}
+              style={{ ["--left-panel-reveal" as string]: leftPanelRevealProgress.toFixed(4) }}
             >
               {stackedVideoSteps.map((step, index) => {
                 const state = step.id === resolvedVideoStep
@@ -1333,10 +1486,21 @@ export function HeroStory({
                     key={step.id}
                     className="hero-video-note hero-video-note--summary"
                     data-state={state}
-                    style={{ ["--video-summary-bg" as string]: VIDEO_SUMMARY_COLORS[index] ?? VIDEO_SUMMARY_COLORS[0] }}
+                    style={{
+                      ["--video-summary-bg" as string]: VIDEO_SUMMARY_COLORS[index] ?? VIDEO_SUMMARY_COLORS[0],
+                      ["--summary-reveal" as string]: getSummaryCardRevealProgress(videoScrollProgress, step.id).toFixed(4),
+                      ["--summary-reveal-opacity" as string]: getSummaryCardRevealProgress(videoScrollProgress, step.id).toFixed(4),
+                      ["--summary-collapse" as string]: getSummaryCardCollapseProgress(videoScrollProgress, step.id).toFixed(4),
+                      ["--summary-reveal-offset-y" as string]: step.id === 2 ? "320px" : "72px",
+                    }}
                   >
-                    <span className="hero-video-note__eyebrow">{step.eyebrow}</span>
-                    <p className="hero-video-note__text">{step.summary}</p>
+                    <div className="hero-video-note__summary-topline">
+                      <span className="hero-video-note__eyebrow">{step.eyebrow}</span>
+                      <SummaryIconSlot stepId={step.id} />
+                    </div>
+                    <div className="hero-video-note__summary-copy">
+                      <p className="hero-video-note__text">{step.summary}</p>
+                    </div>
                   </article>
                 );
               })}
@@ -1358,9 +1522,9 @@ export function HeroStory({
                   <motion.article
                     key={activeDetailStep.id}
                     className="hero-video-note hero-video-note--detail"
-                    initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: detailTransitionDirection > 0 ? 200 : -200, filter: "blur(16px)" }}
-                    animate={reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, filter: "blur(0px)" }}
-                    exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: detailTransitionDirection > 0 ? -120 : 120, filter: "blur(16px)" }}
+                    initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: detailTransitionDirection > 0 ? 200 : -200 }}
+                    animate={reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                    exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: detailTransitionDirection > 0 ? -120 : 120 }}
                     transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
                   >
                     <span className="hero-video-note__eyebrow">{activeDetailStep.eyebrow}</span>
@@ -1374,7 +1538,8 @@ export function HeroStory({
         </div>
       </section>
 
-      <WalletLoopSection />
+      {/* TODO: This is the third section in the current UX flow. Refine the section naming/content together if the reviews concept changes again. */}
+      <ReviewsSection />
 
       <section className="relative z-40 min-h-svh border-4 border-blue-500 bg-white px-6 py-12 sm:px-10 sm:py-16">
         <div className="mx-auto flex min-h-[calc(100svh-6rem)] w-full max-w-6xl items-center justify-center sm:min-h-[calc(100svh-8rem)]">

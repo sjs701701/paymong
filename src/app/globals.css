@@ -944,7 +944,7 @@ button {
   width: min(1440px, calc(100% - 2rem));
   display: grid;
   grid-template-columns: minmax(0, 22rem) auto minmax(0, 22rem);
-  align-items: center;
+  align-items: start;
   gap: clamp(1.25rem, 3vw, 3.5rem);
 }
 
@@ -973,16 +973,22 @@ button {
 }
 
 .hero-video-side--left {
+  --left-panel-reveal: 0;
   display: flex;
   flex-direction: column;
   align-self: start;
   gap: 0.9rem;
-  padding-bottom: 64%;
-  transform: translateY(480px);
-  transition:
-    opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.15s,
-    filter 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.1s;
+  padding-bottom: 44%;
+  opacity: 1;
+  filter: blur(0px);
+  transform: translateY(calc((1 - var(--left-panel-reveal)) * 56px));
+  transition: none;
+}
+
+.hero-video-side--left.is-visible {
+  opacity: 1;
+  filter: blur(0px);
+  transform: translateY(calc((1 - var(--left-panel-reveal)) * 56px));
 }
 
 .hero-video-side--right {
@@ -1004,23 +1010,27 @@ button {
 }
 
 .hero-video-note--summary {
+  --summary-reveal: 1;
+  --summary-reveal-opacity: 1;
+  --summary-collapse: 0;
+  --summary-reveal-offset-y: 72px;
   overflow: hidden;
   border: none;
-  border-radius: 1.45rem;
+  min-height: calc(11rem - 6.25rem * var(--summary-collapse));
+  border-radius: calc(1.6rem - 0.4rem * var(--summary-collapse));
   background: var(--video-summary-bg, rgba(255, 255, 255, 0.86));
-  padding: 1.1rem 1.15rem;
+  opacity: var(--summary-reveal-opacity);
+  padding:
+    1.85rem
+    1.4rem
+    calc(1.55rem - 0.75rem * var(--summary-collapse));
   filter: blur(0px);
-  transition:
-    opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.65s cubic-bezier(0.22, 1, 0.36, 1),
-    min-height 0.65s cubic-bezier(0.22, 1, 0.36, 1),
-    padding 0.65s cubic-bezier(0.22, 1, 0.36, 1),
-    border-radius 0.65s cubic-bezier(0.22, 1, 0.36, 1),
-    filter 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateY(calc((1 - var(--summary-reveal)) * var(--summary-reveal-offset-y)));
+  transition: none;
 }
 
 .hero-video-note--summary .hero-video-note__eyebrow {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.5);
   color: #0a0f1e !important;
 }
 
@@ -1028,27 +1038,47 @@ button {
   color: rgba(255, 255, 255, 0.94);
 }
 
-.hero-video-note--summary[data-state="active"] {
-  min-height: 11rem;
-  padding-block: 1.35rem;
-  border-radius: 1.6rem;
+.hero-video-note__summary-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  margin-bottom: calc(0.8rem - 0.2rem * var(--summary-collapse));
+}
+
+.hero-video-note__summary-copy {
+  overflow: hidden;
+  max-height: calc(5rem * (1 - var(--summary-collapse)));
   opacity: 1;
-  filter: blur(0px);
-  transform: translateY(0);
+  transform: none;
+  transform-origin: top;
+}
+
+.hero-video-note__summary-copy > .hero-video-note__text {
+  min-height: 0;
+  opacity: calc(1 - var(--summary-collapse));
+}
+
+.hero-video-note__icon-slot-image {
+  flex: 0 0 auto;
+  width: 2.48rem;
+  min-width: 2.48rem;
+  height: 2.48rem;
+  min-height: 2.48rem;
+  object-fit: contain;
+}
+
+.hero-video-note--summary[data-state="active"] {
+  pointer-events: auto;
 }
 
 .hero-video-note--summary[data-state="past"] {
-  min-height: 4.75rem;
-  padding-block: 0.85rem;
-  border-radius: 1.2rem;
-  opacity: 1;
-  filter: blur(0px);
-  transform: translateY(0);
+  pointer-events: auto;
 }
 
 .hero-video-note--summary[data-state="future"] {
   opacity: 0;
-  filter: blur(16px);
+  filter: blur(0px);
   transform: translateY(300px);
   pointer-events: none;
 }
@@ -1067,8 +1097,7 @@ button {
   filter: blur(0px);
   transition:
     opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.65s cubic-bezier(0.22, 1, 0.36, 1),
-    filter 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+    transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .hero-video-note__eyebrow {
@@ -1316,8 +1345,8 @@ button {
     min-height: 14rem;
   }
 
-  .hero-video-note--summary[data-state="active"] {
-    min-height: 8.8rem;
+  .hero-video-note--summary {
+    min-height: calc(8.8rem - 4.05rem * var(--summary-collapse));
   }
 
   .cta-btn {
