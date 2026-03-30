@@ -12,16 +12,28 @@ type ReviewItem = {
   stars: number;
 };
 
+type ReviewKeywordPill = {
+  label: string;
+  backgroundColor: string;
+};
+
 const REVIEW_DATA: ReviewItem[] = [
-  { author: "임xx", review: "최고의 경험이었습니다. 다음에도 꼭 다시 이용하고 싶은 서비스입니다.", date: "2024.03.27", amount: "6억 8,000만", stars: 5 },
-  { author: "김xx", review: "상담부터 계약까지 정말 빠르고 친절했어요. 강력 추천합니다.", date: "2024.04.12", amount: "3억 2,000만", stars: 5 },
-  { author: "박xx", review: "복잡한 절차를 깔끔하게 정리해주셔서 너무 편했습니다.", date: "2024.05.08", amount: "5억 1,000만", stars: 5 },
-  { author: "최xx", review: "걱정이 많았는데 페이몽 덕분에 안심하고 진행할 수 있었어요.", date: "2024.06.15", amount: "4억 5,000만", stars: 5 },
-  { author: "이xx", review: "주변에 이미 세 번이나 추천했습니다. 믿고 맡길 수 있어요.", date: "2024.07.03", amount: "7억 2,000만", stars: 5 },
-  { author: "정xx", review: "처음이라 불안했는데 하나하나 설명해주셔서 감사했습니다.", date: "2024.08.20", amount: "2억 9,000만", stars: 5 },
-  { author: "한xx", review: "빠른 응대와 꼼꼼한 처리, 두 마리 토끼를 다 잡은 서비스예요.", date: "2024.09.11", amount: "8억 3,000만", stars: 5 },
-  { author: "윤xx", review: "비용 대비 만족도가 정말 높았습니다. 또 이용할게요.", date: "2024.10.05", amount: "4억 1,000만", stars: 4 },
-  { author: "조xx", review: "계약 전 과정에서 전문성이 느껴졌습니다. 감사합니다.", date: "2024.11.22", amount: "5억 7,000만", stars: 5 },
+  { author: "임xx", review: "최고의 경험이었습니다. 다음에도 꼭 다시 이용하고 싶은 서비스입니다.", date: "2024.03.27", amount: "8,600만", stars: 5 },
+  { author: "김xx", review: "상담부터 계약까지 정말 빠르고 친절했어요. 강력 추천합니다.", date: "2024.04.12", amount: "5,200만", stars: 5 },
+  { author: "박xx", review: "복잡한 절차를 깔끔하게 정리해주셔서 너무 편했습니다.", date: "2024.05.08", amount: "7,100만", stars: 5 },
+  { author: "최xx", review: "걱정이 많았는데 페이몽 덕분에 안심하고 진행할 수 있었어요.", date: "2024.06.15", amount: "6,400만", stars: 5 },
+  { author: "이xx", review: "주변에 이미 세 번이나 추천했습니다. 믿고 맡길 수 있어요.", date: "2024.07.03", amount: "9,300만", stars: 5 },
+  { author: "정xx", review: "처음이라 불안했는데 하나하나 설명해주셔서 감사했습니다.", date: "2024.08.20", amount: "4,700만", stars: 5 },
+  { author: "한xx", review: "빠른 응대와 꼼꼼한 처리, 두 마리 토끼를 다 잡은 서비스예요.", date: "2024.09.11", amount: "8,900만", stars: 5 },
+  { author: "윤xx", review: "비용 대비 만족도가 정말 높았습니다. 또 이용할게요.", date: "2024.10.05", amount: "5,800만", stars: 4 },
+  { author: "조xx", review: "계약 전 과정에서 전문성이 느껴졌습니다. 감사합니다.", date: "2024.11.22", amount: "7,600만", stars: 5 },
+];
+
+const REVIEW_KEYWORD_PILLS: ReviewKeywordPill[] = [
+  { label: "\uC6D4\uC138", backgroundColor: "#0038F1" },
+  { label: "\uAD50\uC721\uBE44", backgroundColor: "#00ABFF" },
+  { label: "\uC778\uAC74\uBE44", backgroundColor: "#5D62FF" },
+  { label: "\uC774\uC0AC\uBE44", backgroundColor: "#8423FE" },
 ];
 
 const ITEM_SPACING = 220;
@@ -30,6 +42,16 @@ const AUTO_ROTATE_SPEED = 1.2;
 const SCROLL_MULTIPLIER = 1.2;
 const LOOP_HEIGHT = REVIEW_DATA.length * ITEM_SPACING;
 const CARD_CENTER = CARD_STAGE_HEIGHT / 2;
+
+function getStablePillIndex(seed: string) {
+  let hash = 0;
+
+  for (let index = 0; index < seed.length; index++) {
+    hash = ((hash << 5) - hash + seed.charCodeAt(index)) | 0;
+  }
+
+  return Math.abs(hash) % REVIEW_KEYWORD_PILLS.length;
+}
 
 export function ReviewsSection() {
   const reducedMotion = useReducedMotion();
@@ -146,19 +168,34 @@ export function ReviewsSection() {
                           <Star key={i} size={16} fill="#fb923c" color="#fb923c" />
                         ))}
                       </div>
-                      <span
-                        style={{
-                          backgroundColor: "#f8fafc",
-                          color: "#64748b",
-                          fontSize: "0.8125rem",
-                          fontWeight: 500,
-                          padding: "0.3rem 1rem",
-                          borderRadius: "9999px",
-                          border: "1px solid rgba(0,0,0,0.04)",
-                        }}
-                      >
-                        {item.author}
-                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
+                        <span
+                          style={{
+                            backgroundColor: "#f8fafc",
+                            color: "#64748b",
+                            fontSize: "0.8125rem",
+                            fontWeight: 500,
+                            padding: "0.3rem 1rem",
+                            borderRadius: "9999px",
+                            border: "1px solid rgba(0,0,0,0.04)",
+                          }}
+                        >
+                          {item.author}
+                        </span>
+                        <span
+                          style={{
+                            backgroundColor: REVIEW_KEYWORD_PILLS[getStablePillIndex(`${item.author}-${item.date}`)].backgroundColor,
+                            color: "#ffffff",
+                            fontSize: "0.8125rem",
+                            fontWeight: 700,
+                            padding: "0.3rem 0.95rem",
+                            borderRadius: "9999px",
+                            boxShadow: "0 8px 18px rgba(10,15,30,0.12)",
+                          }}
+                        >
+                          {REVIEW_KEYWORD_PILLS[getStablePillIndex(`${item.author}-${item.date}`)].label}
+                        </span>
+                      </div>
                     </div>
 
                     {/* 본문 */}

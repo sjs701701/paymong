@@ -466,7 +466,7 @@ function RibbonAssetOverlay({
     <img
       src={resolvedPath}
       alt=""
-      className={`hero-ribbon-asset${asset.pathBase.includes("/tuition/") ? " hero-ribbon-asset--tuition" : ""}`}
+      className={`hero-ribbon-asset${asset.pathBase.includes("/tuition/") ? " hero-ribbon-asset--tuition" : ""}${asset.pathBase.includes("/contract/") ? " hero-ribbon-asset--contract" : ""}`}
       style={asset.pathBase.includes("/tuition/")
         ? {
           filter: "drop-shadow(1px 1px 0 rgba(10, 15, 30, 0.5)) drop-shadow(1px 2px 0 rgba(10, 15, 30, 0.4)) drop-shadow(1px 3px 0 rgba(10, 15, 30, 0.3)) drop-shadow(3px 5px 3px rgba(10, 15, 30, 0.26))",
@@ -1555,6 +1555,7 @@ export function HeroStory({
                     key={step.id}
                     className="hero-video-note hero-video-note--summary"
                     data-state={state}
+                    data-step-id={step.id}
                     style={{
                       ["--video-summary-bg" as string]: VIDEO_SUMMARY_COLORS[index] ?? VIDEO_SUMMARY_COLORS[0],
                       ["--summary-reveal" as string]: summaryReveal.toFixed(4),
