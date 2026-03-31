@@ -3,6 +3,7 @@
 import { Fragment, type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import gsap from "gsap";
+import Lottie from "lottie-react";
 import ReactCanvasConfetti from "react-canvas-confetti";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { type HeroScrollPhase, useHeroLenisControl } from "@/lib/use-hero-lenis-control";
@@ -136,6 +137,9 @@ function getSummaryIconPath(stepId: VideoStepId) {
 
 function getDetailImagePaths(stepId: VideoStepId) {
   return [
+    `/design/video-detail-images/step-${stepId}.json`,
+    `/design/video-detail-images/step-${stepId}.webm`,
+    `/design/video-detail-images/step-${stepId}.mp4`,
     `/design/video-detail-images/step-${stepId}.svg`,
     `/design/video-detail-images/step-${stepId}.png`,
   ] as const;
@@ -173,12 +177,17 @@ function DetailImageSlot({
 }) {
   const imagePaths = getDetailImagePaths(stepId);
   const [imageIndex, setImageIndex] = useState(0);
-  const [isImageLoaded, setIsImageLoaded] = useState(false);
-  const imagePath = imagePaths[imageIndex] ?? null;
+  const [isMediaLoaded, setIsMediaLoaded] = useState(false);
+  const [lottieData, setLottieData] = useState<object | null>(null);
+  const mediaPath = imagePaths[imageIndex] ?? null;
+  const isLottie = mediaPath?.endsWith(".json");
+  const isVideo = mediaPath?.endsWith(".webm") || mediaPath?.endsWith(".mp4");
   const confettiInstanceRef = useRef<((options: Record<string, unknown>) => Promise<null> | null) | null>(null);
   const hasFiredConfettiRef = useRef(false);
 
-  const handleImageError = () => {
+  const handleMediaError = () => {
+    setIsMediaLoaded(false);
+    setLottieData(null);
     setImageIndex((currentIndex) => {
       const nextIndex = currentIndex + 1;
       return nextIndex < imagePaths.length ? nextIndex : currentIndex;
@@ -186,9 +195,46 @@ function DetailImageSlot({
   };
 
   useEffect(() => {
+    if (!isLottie || !mediaPath) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    const loadLottie = async () => {
+      try {
+        const response = await fetch(mediaPath);
+
+        if (!response.ok) {
+          throw new Error(`Failed to load ${mediaPath}`);
+        }
+
+        const data = await response.json();
+
+        if (isCancelled) {
+          return;
+        }
+
+        setLottieData(data);
+        setIsMediaLoaded(true);
+      } catch {
+        if (!isCancelled) {
+          handleMediaError();
+        }
+      }
+    };
+
+    loadLottie();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isLottie, mediaPath]);
+
+  useEffect(() => {
     if (
       stepId !== 2
-      || !isImageLoaded
+      || !isMediaLoaded
       || hasFiredConfettiRef.current
       || revealProgress < 0.995
       || !confettiInstanceRef.current
@@ -203,14 +249,17 @@ function DetailImageSlot({
       gravity: 1.1,
       ticks: 220,
       scalar: 0.82,
-      colors: ["#407CFF", "#73DAFF", "#BE8BFF", "#FFD84D", "#FF8AAE", "#7DFFB3", "#FFFFFF"],
+      colors: ["#0057FF", "#00C2FF", "#A100FF", "#FFCC00", "#FF2D55", "#00E676", "#FFFFFF"],
       origin: { x: 0.5, y: 0.72 },
     });
     hasFiredConfettiRef.current = true;
-  }, [isImageLoaded, revealProgress, stepId]);
+  }, [isMediaLoaded, revealProgress, stepId]);
 
   return (
-    <div className="hero-video-note__detail-media-slot" aria-hidden="true">
+    <div
+      className={`hero-video-note__detail-media-slot ${stepId === 3 ? "hero-video-note__detail-media-slot--compact" : ""}`}
+      aria-hidden="true"
+    >
       <ReactCanvasConfetti
         className="hero-video-note__detail-media-confetti"
         globalOptions={{ resize: true, useWorker: true }}
@@ -218,13 +267,32 @@ function DetailImageSlot({
           confettiInstanceRef.current = confetti as (options: Record<string, unknown>) => Promise<null> | null;
         }}
       />
-      {imagePath ? (
+      {mediaPath && isVideo ? (
+        <video
+          key={mediaPath}
+          src={mediaPath}
+          className="hero-video-note__detail-media-video"
+          autoPlay
+          muted
+          loop
+          playsInline
+          onCanPlayThrough={() => setIsMediaLoaded(true)}
+          onError={handleMediaError}
+        />
+      ) : null}
+      {mediaPath && isLottie && lottieData ? (
+        <div className="hero-video-note__detail-media-lottie">
+          <Lottie animationData={lottieData} loop autoplay />
+        </div>
+      ) : null}
+      {mediaPath && !isVideo && !isLottie ? (
         <img
-          src={imagePath}
+          key={mediaPath}
+          src={mediaPath}
           alt=""
           className="hero-video-note__detail-media-image"
-          onLoad={() => setIsImageLoaded(true)}
-          onError={handleImageError}
+          onLoad={() => setIsMediaLoaded(true)}
+          onError={handleMediaError}
         />
       ) : null}
     </div>

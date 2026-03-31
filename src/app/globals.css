@@ -1172,10 +1172,16 @@ button {
 .hero-video-note__detail-media-slot {
   position: relative;
   width: 100%;
-  min-height: clamp(6.5rem, 11vw, 8.5rem);
+  height: clamp(6.5rem, 11vw, 8.5rem);
+  border: none;
   border-radius: 1.2rem;
   margin-bottom: auto;
   overflow: hidden;
+  outline: none;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .hero-video-note__detail-media-confetti {
@@ -1192,8 +1198,43 @@ button {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.25));
   transform: translateY(calc((1 - var(--detail-media-reveal-progress, 1)) * 88px));
+}
+
+.hero-video-note__detail-media-video {
+  display: block;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: translateY(calc((1 - var(--detail-media-reveal-progress, 1)) * 88px));
+}
+
+.hero-video-note__detail-media-lottie {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  transform: translateY(calc((1 - var(--detail-media-reveal-progress, 1)) * 88px));
+}
+
+.hero-video-note__detail-media-lottie > div {
+  width: 100%;
+  height: 100%;
+}
+
+.hero-video-note__detail-media-slot--compact .hero-video-note__detail-media-image,
+.hero-video-note__detail-media-slot--compact .hero-video-note__detail-media-video {
+  width: 62%;
+  height: 62%;
+  flex: 0 0 auto;
+}
+
+.hero-video-note__detail-media-slot--compact .hero-video-note__detail-media-lottie {
+  width: 132%;
+  height: 132%;
+  flex: 0 0 auto;
 }
 
 .hero-video-note__eyebrow {
