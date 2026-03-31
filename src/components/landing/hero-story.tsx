@@ -1,8 +1,9 @@
 "use client";
 
-import { type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Fragment, type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import gsap from "gsap";
+import ReactCanvasConfetti from "react-canvas-confetti";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { type HeroScrollPhase, useHeroLenisControl } from "@/lib/use-hero-lenis-control";
 import { ReviewsSection } from "@/components/landing/reviews-section";
@@ -80,7 +81,7 @@ const HEADER_AUTO_HIDE_SYNC_EVENT = "paymong:header-auto-hide-sync";
 const CTA_DOCKED_SCROLL_UNLOCK_MS = 600;
 const CTA_RETURN_SEQUENCE_MS = 820;
 const SHOW_SIDE_PANELS_FROM_STEP = 2;
-const VIDEO_SUMMARY_COLORS = ["#2268FF", "#73DAFF", "#AF70FF"] as const;
+const VIDEO_SUMMARY_COLORS = ["#407CFF", "#73DAFF", "#BE8BFF"] as const;
 const VIDEO_SUMMARY_COLLAPSE_GAP_RATIO = 0.12;
 const VIDEO_LEFT_PANEL_REVEAL_LEAD_RATIO = 0.4;
 const VIDEO_SUMMARY_REVEAL_DELAY_RATIO = 0.1;
@@ -107,30 +108,37 @@ const VIDEO_STEP_SEQUENCE: VideoStep[] = [
     id: 2,
     eyebrow: "간편함",
     title: "Spend orchestration",
-    summary: "계약 기반 비용을 한 화면에서 묶어 관리합니다.",
-    detail: "반복적으로 결제되는 지출을 묶고, 결제 맥락을 정리해 운영 흐름을 단순하게 만드는 장면을 가정한 더미 설명입니다.",
+    summary: "휴대폰 번호로<br>간편하게 회원가입",
+    detail: "휴대폰 번호로 본인 인증 시 빠르게 회원가입 처리",
     palette: "linear-gradient(135deg, rgb(0, 196, 169), rgb(0, 110, 255))",
   },
   {
     id: 3,
     eyebrow: "안전함",
     title: "Approval cadence",
-    summary: "승인 흐름을 스크롤 리듬에 맞춰 짧게 보여줍니다.",
-    detail: "지출 요청, 승인 체크, 카드 결제 전환까지의 짧은 운영 장면을 순차적으로 보여주는 단계용 더미 카피입니다.",
+    summary: "실제 계약을 검토하여 승인",
+    detail: "계약 등록 시 제출한 증빙자료 검토 후<br>승인처리",
     palette: "linear-gradient(135deg, rgb(255, 117, 24), rgb(255, 58, 94))",
   },
   {
     id: 4,
     eyebrow: "신속함",
     title: "Settlement recap",
-    summary: "정산과 추적을 마지막 장면에서 정리합니다.",
-    detail: "최종 단계에서는 결제 후 기록과 추적이 자연스럽게 이어지는 흐름을 보여주도록 구성된 더미 상세 설명을 사용합니다.",
+    summary: "등록된 계약, 송금 요청 시 10분 이내 처리",
+    detail: "검수 완료된 계약<br>즉시 송금 요청시<br>10분 이내 송금처리",
     palette: "linear-gradient(135deg, rgb(168, 74, 255), rgb(71, 41, 255))",
   },
 ] as const;
 
 function getSummaryIconPath(stepId: VideoStepId) {
   return `/design/video-summary-icons/step-${stepId}.svg`;
+}
+
+function getDetailImagePaths(stepId: VideoStepId) {
+  return [
+    `/design/video-detail-images/step-${stepId}.svg`,
+    `/design/video-detail-images/step-${stepId}.png`,
+  ] as const;
 }
 
 function SummaryIconSlot({
@@ -140,10 +148,6 @@ function SummaryIconSlot({
 }) {
   const iconPath = getSummaryIconPath(stepId);
   const [hasIconError, setHasIconError] = useState(false);
-
-  useEffect(() => {
-    setHasIconError(false);
-  }, [iconPath]);
 
   if (hasIconError) {
     return null;
@@ -160,6 +164,73 @@ function SummaryIconSlot({
   );
 }
 
+function DetailImageSlot({
+  stepId,
+  revealProgress,
+}: {
+  stepId: VideoStepId;
+  revealProgress: number;
+}) {
+  const imagePaths = getDetailImagePaths(stepId);
+  const [imageIndex, setImageIndex] = useState(0);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const imagePath = imagePaths[imageIndex] ?? null;
+  const confettiInstanceRef = useRef<((options: Record<string, unknown>) => Promise<null> | null) | null>(null);
+  const hasFiredConfettiRef = useRef(false);
+
+  const handleImageError = () => {
+    setImageIndex((currentIndex) => {
+      const nextIndex = currentIndex + 1;
+      return nextIndex < imagePaths.length ? nextIndex : currentIndex;
+    });
+  };
+
+  useEffect(() => {
+    if (
+      stepId !== 2
+      || !isImageLoaded
+      || hasFiredConfettiRef.current
+      || revealProgress < 0.995
+      || !confettiInstanceRef.current
+    ) {
+      return;
+    }
+
+    confettiInstanceRef.current({
+      particleCount: 90,
+      spread: 70,
+      startVelocity: 28,
+      gravity: 1.1,
+      ticks: 220,
+      scalar: 0.82,
+      colors: ["#407CFF", "#73DAFF", "#BE8BFF", "#FFD84D", "#FF8AAE", "#7DFFB3", "#FFFFFF"],
+      origin: { x: 0.5, y: 0.72 },
+    });
+    hasFiredConfettiRef.current = true;
+  }, [isImageLoaded, revealProgress, stepId]);
+
+  return (
+    <div className="hero-video-note__detail-media-slot" aria-hidden="true">
+      <ReactCanvasConfetti
+        className="hero-video-note__detail-media-confetti"
+        globalOptions={{ resize: true, useWorker: true }}
+        onInit={({ confetti }) => {
+          confettiInstanceRef.current = confetti as (options: Record<string, unknown>) => Promise<null> | null;
+        }}
+      />
+      {imagePath ? (
+        <img
+          src={imagePath}
+          alt=""
+          className="hero-video-note__detail-media-image"
+          onLoad={() => setIsImageLoaded(true)}
+          onError={handleImageError}
+        />
+      ) : null}
+    </div>
+  );
+}
+
 function getVideoStepFromProgress(progress: number): VideoStepId {
   if (progress <= VIDEO_STEP_PROGRESS_BREAKPOINTS[1]) return 1;
   if (progress < VIDEO_STEP_PROGRESS_BREAKPOINTS[2]) return 2;
@@ -173,6 +244,15 @@ function clamp01(value: number) {
 
 function easeInOutSmooth(value: number) {
   return value * value * (3 - 2 * value);
+}
+
+function renderSummaryText(summary: string) {
+  return summary.split("<br>").map((part, index, parts) => (
+    <Fragment key={`${part}-${index}`}>
+      {part}
+      {index < parts.length - 1 ? <br /> : null}
+    </Fragment>
+  ));
 }
 
 function getSummaryRevealTiming(stepId: VideoStepId) {
@@ -241,7 +321,7 @@ function getSummaryCardCollapseProgress(progress: number, stepId: VideoStepId) {
   if (progress <= holdStart) return 0;
   if (progress >= end) return 1;
 
-  return clamp01((progress - holdStart) / Math.max(end - holdStart, 0.0001));
+  return easeInOutSmooth(clamp01((progress - holdStart) / Math.max(end - holdStart, 0.0001)));
 }
 
 function getDetailCardMotion(progress: number, stepId: VideoStepId) {
@@ -277,10 +357,22 @@ function getDetailCardMotion(progress: number, stepId: VideoStepId) {
   }
 
   if (stepId === 4) {
+    const exitStart = start + interval * 0.68;
+
+    if (progress <= exitStart) {
+      return {
+        opacity: 1,
+        translateY: 0,
+        scale: 1,
+      };
+    }
+
+    const exitProgress = easeInOutSmooth(clamp01((progress - exitStart) / Math.max(end - exitStart, 0.0001)));
+
     return {
-      opacity: 1,
-      translateY: 0,
-      scale: 1,
+      opacity: 1 - exitProgress,
+      translateY: -36 * exitProgress,
+      scale: 1 - (0.015 * exitProgress),
     };
   }
 
@@ -466,11 +558,15 @@ function RibbonAssetOverlay({
     <img
       src={resolvedPath}
       alt=""
-      className={`hero-ribbon-asset${asset.pathBase.includes("/tuition/") ? " hero-ribbon-asset--tuition" : ""}${asset.pathBase.includes("/contract/") ? " hero-ribbon-asset--contract" : ""}`}
+      className={`hero-ribbon-asset${asset.pathBase.includes("/rent/") ? " hero-ribbon-asset--rent" : ""}${asset.pathBase.includes("/tuition/") ? " hero-ribbon-asset--tuition" : ""}${asset.pathBase.includes("/contract/") ? " hero-ribbon-asset--contract" : ""}`}
       style={asset.pathBase.includes("/tuition/")
         ? {
           filter: "drop-shadow(1px 1px 0 rgba(10, 15, 30, 0.5)) drop-shadow(1px 2px 0 rgba(10, 15, 30, 0.4)) drop-shadow(1px 3px 0 rgba(10, 15, 30, 0.3)) drop-shadow(3px 5px 3px rgba(10, 15, 30, 0.26))",
         }
+        : asset.pathBase.includes("/contract/")
+          ? {
+            filter: "drop-shadow(2px 1px 0 rgba(10, 15, 30, 0.34)) drop-shadow(2px 2px 0 rgba(10, 15, 30, 0.24)) drop-shadow(4px 4px 3px rgba(10, 15, 30, 0.18))",
+          }
         : undefined}
     />
   );
@@ -518,7 +614,7 @@ function EchoAssetOverlay({
     <img
       src={resolvedPath}
       alt=""
-      className={`hero-echo-asset${asset.pathBase.includes("/tuition/") ? " hero-echo-asset--tuition" : ""}`}
+      className={`hero-echo-asset${asset.pathBase.includes("/rent/") ? " hero-echo-asset--rent" : ""}${asset.pathBase.includes("/tuition/") ? " hero-echo-asset--tuition" : ""}`}
     />
   );
 }
@@ -606,18 +702,24 @@ function HeadlineRotator({
 
       {ribbonAsset ? (
         <div className="hero-title-stage" aria-hidden="true">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`${activeItem.id}-ribbon`}
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.01 }}
-              transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-              className="relative h-full w-full"
-            >
+          {activeItem.id === "contract" ? (
+            <div className="relative h-full w-full">
               <RibbonAssetOverlay asset={ribbonAsset} />
-            </motion.div>
-          </AnimatePresence>
+            </div>
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${activeItem.id}-ribbon`}
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.01 }}
+                transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+                className="relative h-full w-full"
+              >
+                <RibbonAssetOverlay asset={ribbonAsset} />
+              </motion.div>
+            </AnimatePresence>
+          )}
         </div>
       ) : null}
 
@@ -730,7 +832,6 @@ export function HeroStory({
   const isCtaDockedRef = useRef(false);
   const wasDockedRef = useRef(false);
   const heroScrollPhaseRef = useRef<HeroScrollPhase>("keyword-sequence");
-  const lastLoggedVideoProgressRef = useRef<number | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [videoTransition, setVideoTransition] = useState<VideoTransitionState>({ step: 1, direction: 1 });
   const [videoScrollProgress, setVideoScrollProgress] = useState(0);
@@ -1333,20 +1434,6 @@ export function HeroStory({
         setVideoScrollProgress(progress);
         const nextStep = getVideoStepFromProgress(progress);
 
-        if (process.env.NODE_ENV !== "production") {
-          const roundedProgress = Math.round(progress * 100) / 100;
-
-          if (lastLoggedVideoProgressRef.current !== roundedProgress) {
-            lastLoggedVideoProgressRef.current = roundedProgress;
-            console.info("[HeroStory][ScrollTrigger]", {
-              progress: roundedProgress,
-              rawProgress: Number(progress.toFixed(4)),
-              step: nextStep,
-              scroll: Math.round(self.scroll()),
-            });
-          }
-        }
-
         setVideoTransition((current) => (
           current.step === nextStep
             ? current
@@ -1357,7 +1444,6 @@ export function HeroStory({
         ));
       },
       onLeaveBack: () => {
-        lastLoggedVideoProgressRef.current = null;
         setVideoScrollProgress(0);
         setVideoTransition({ step: 1, direction: -1 });
       },
@@ -1370,7 +1456,6 @@ export function HeroStory({
 
   useEffect(() => {
     if (activeIndex !== LAST_KEYWORD_INDEX || !isCtaDocked) {
-      lastLoggedVideoProgressRef.current = null;
       setVideoScrollProgress(0);
     }
   }, [activeIndex, isCtaDocked]);
@@ -1420,9 +1505,10 @@ export function HeroStory({
     height: `${frameHeight}px`,
     borderRadius: isMobile ? "22px" : "28px",
   } satisfies CSSProperties;
-  const videoStoryLayoutStyle = {
-    ["--video-layout-height" as string]: `${frameHeight}px`,
-  } satisfies CSSProperties;
+  // TODO(paymong-launch): Re-check section 2 alignment before release.
+  // The video frame height is computed here, while the surrounding left/right layout heights
+  // are also constrained in CSS. Changes to viewport ratios or section timing can reintroduce
+  // the top-cropping issue during the section 1 -> 2 transition.
   const ctaShellStyle = {
     ["--cta-shell-top" as string]: `${ctaShellTop}px`,
     ["--cta-shell-docked-top" as string]: `${ctaDockedTop}px`,
@@ -1526,16 +1612,16 @@ export function HeroStory({
 
       <section
         ref={nextSectionRef}
-        className="relative z-40"
+        className="section-two-onward-font relative z-40"
         style={nextShellRegionStyle}
       >
         <div className="sticky top-0 flex h-svh items-center justify-center overflow-hidden">
           <div
             ref={nextSectionBackgroundRef}
-            className="pointer-events-none absolute inset-0 bg-white"
+            className="hero-video-stage-background pointer-events-none absolute inset-0"
           />
 
-          <div className="hero-video-story-layout relative z-10" style={videoStoryLayoutStyle}>
+          <div className="hero-video-story-layout relative z-10">
             <div
               className={`hero-video-side hero-video-side--left ${showSidePanels ? "is-visible" : ""}`}
               aria-hidden={!showSidePanels}
@@ -1569,7 +1655,7 @@ export function HeroStory({
                       <SummaryIconSlot stepId={step.id} />
                     </div>
                     <div className="hero-video-note__summary-copy">
-                      <p className="hero-video-note__text">{step.summary}</p>
+                      <p className="hero-video-note__text">{renderSummaryText(step.summary)}</p>
                     </div>
                   </article>
                 );
@@ -1590,6 +1676,9 @@ export function HeroStory({
               {showSidePanels
                 ? stackedVideoSteps.map((step) => {
                     const detailMotion = getDetailCardMotion(videoScrollProgress, step.id);
+                    const detailMediaRevealProgress = step.id === 2
+                      ? Math.max(0, Math.min(1, (detailMotion.opacity - 0.28) / 0.72))
+                      : 1;
 
                     return (
                       <article
@@ -1600,12 +1689,12 @@ export function HeroStory({
                           ["--detail-opacity" as string]: detailMotion.opacity.toFixed(4),
                           ["--detail-translate-y" as string]: `${detailMotion.translateY.toFixed(2)}px`,
                           ["--detail-scale" as string]: detailMotion.scale.toFixed(4),
+                          ["--detail-media-reveal-progress" as string]: detailMediaRevealProgress.toFixed(4),
                           zIndex: step.id === resolvedVideoStep ? 3 : step.id < resolvedVideoStep ? 1 : 2,
                         }}
                       >
-                        <span className="hero-video-note__eyebrow">{step.eyebrow}</span>
-                        <h3 className="hero-video-note__title">{step.title}</h3>
-                        <p className="hero-video-note__text">{step.detail}</p>
+                        <DetailImageSlot stepId={step.id} revealProgress={detailMediaRevealProgress} />
+                        <p className="hero-video-note__text">{renderSummaryText(step.detail)}</p>
                       </article>
                     );
                   })
@@ -1618,7 +1707,7 @@ export function HeroStory({
       {/* TODO: This is the third section in the current UX flow. Refine the section naming/content together if the reviews concept changes again. */}
       <ReviewsSection />
 
-      <section className="relative z-40 min-h-svh border-4 border-blue-500 bg-white px-6 py-12 sm:px-10 sm:py-16">
+      <section className="relative z-40 min-h-svh bg-white px-6 py-12 sm:px-10 sm:py-16">
         <div className="mx-auto flex min-h-[calc(100svh-6rem)] w-full max-w-6xl items-center justify-center sm:min-h-[calc(100svh-8rem)]">
           <p className="text-center text-2xl font-semibold tracking-[-0.04em] text-[var(--text-primary)] sm:text-4xl">
             이곳은 네번째 섹션입니다.
