@@ -7,7 +7,9 @@ import Lottie from "lottie-react";
 import ReactCanvasConfetti from "react-canvas-confetti";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { FourthSection } from "@/components/landing/fourth-section";
+import { FifthSection } from "@/components/landing/fifth-section";
 import { SixthSection } from "@/components/landing/sixth-section";
+import { FooterSection } from "@/components/landing/footer-section";
 import { type HeroScrollPhase, useHeroLenisControl } from "@/lib/use-hero-lenis-control";
 import { ReviewsSection } from "@/components/landing/reviews-section";
 
@@ -889,6 +891,7 @@ export function HeroStory({
   const ctaShellRef = useRef<HTMLDivElement | null>(null);
   const ctaRef = useRef<HTMLButtonElement | null>(null);
   const nextSectionRef = useRef<HTMLElement | null>(null);
+  const footerTriggerRef = useRef<HTMLDivElement | null>(null);
   const nextSectionBackgroundRef = useRef<HTMLDivElement | null>(null);
   const frameRef = useRef<HTMLDivElement | null>(null);
   const auraRef = useRef<HTMLDivElement | null>(null);
@@ -908,6 +911,7 @@ export function HeroStory({
   const [heroScrollPhase, setHeroScrollPhase] = useState<HeroScrollPhase>("keyword-sequence");
   const [isCtaDocked, setIsCtaDocked] = useState(false);
   const [isCtaPreviewActive, setIsCtaPreviewActive] = useState(false);
+  const [isFooterInView, setIsFooterInView] = useState(false);
   const [isCtaReturning, setIsCtaReturning] = useState(false);
   const [ctaWidth, setCtaWidth] = useState(0);
   const [viewportWidth, setViewportWidth] = useState(0);
@@ -1530,6 +1534,31 @@ export function HeroStory({
     }
   }, [activeIndex, isCtaDocked]);
 
+  useEffect(() => {
+    const footerTrigger = footerTriggerRef.current;
+
+    if (!footerTrigger) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          setIsFooterInView(entry.isIntersecting);
+        });
+      },
+      {
+        threshold: 0.2,
+      },
+    );
+
+    observer.observe(footerTrigger);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   const activeItem = useMemo(() => keywordStates[activeIndex], [activeIndex]);
   const resolvedVideoStep = activeIndex === LAST_KEYWORD_INDEX && isCtaDocked
     ? videoTransition.step
@@ -1632,12 +1661,12 @@ export function HeroStory({
         className={`hero-cta-shell ${isCtaDocked ? "hero-cta-shell--docked" : ""} ${isCtaReturning ? "hero-cta-shell--returning" : ""}`}
         style={ctaShellStyle}
       >
-        <button
-          ref={ctaRef}
-          className={`cta-btn ${isCtaDocked ? "cta-btn--docked" : ""} ${isCtaPreviewActive ? "cta-btn--preview" : ""} ${isCtaReturning ? "cta-btn--returning" : ""}`}
-          aria-label={HERO_COPY.cta}
-          onMouseEnter={() => {
-            if (isCtaDocked) setIsCtaPreviewActive(true);
+          <button
+            ref={ctaRef}
+            className={`cta-btn ${isCtaDocked ? "cta-btn--docked" : ""} ${isCtaPreviewActive || (isCtaDocked && isFooterInView) ? "cta-btn--preview" : ""} ${isCtaReturning ? "cta-btn--returning" : ""}`}
+            aria-label={HERO_COPY.cta}
+            onMouseEnter={() => {
+              if (isCtaDocked) setIsCtaPreviewActive(true);
           }}
           onMouseLeave={() => {
             if (isCtaDocked) setIsCtaPreviewActive(false);
@@ -1779,7 +1808,13 @@ export function HeroStory({
 
       <FourthSection />
 
+      <FifthSection />
+
       <SixthSection />
+
+      <div ref={footerTriggerRef}>
+        <FooterSection />
+      </div>
     </section>
   );
 }

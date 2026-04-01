@@ -1,278 +1,383 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { BadgeCheck, Building2, FileCheck2, Landmark, ShieldCheck } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { BadgeCheck, Wallet2 } from "lucide-react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-type HorizontalFeatureCard = {
+type SequenceCard = {
   title: string;
   description: string;
-  accentClass: string;
-  renderVisual: () => ReactNode;
+  visual: "fees" | "mileage" | "shop" | "vat" | "magazine";
 };
 
-const FIFTH_SECTION_CARDS: HorizontalFeatureCard[] = [
+const SEQUENCE_CARDS: SequenceCard[] = [
   {
-    title: "계약 등록을 한 화면에서",
-    description: "월세, 교육비, 인건비처럼 성격이 다른 계약도 같은 흐름 안에서 차분하게 정리할 수 있습니다.",
-    accentClass: "from-[#407CFF]/18 to-[#407CFF]/6",
-    renderVisual: () => (
-      <div className="flex h-full flex-col justify-between rounded-[2rem] bg-[#f7f9ff] p-5">
-        <div className="flex items-center justify-between">
-          <span className="rounded-full bg-white px-3 py-1 text-[0.72rem] font-semibold text-slate-500 shadow-sm">
-            계약 유형
-          </span>
-          <span className="text-sm font-semibold text-[#407CFF]">4 categories</span>
+    title: "타사 대비 부담 낮은 수수료",
+    description:
+      "기본 수수료는 3.5% 수준으로 설계되어 있고, 빠른 이체가 필요한 경우에도 4.0% 안에서 이용할 수 있다는 메시지를 담은 카드입니다.",
+    visual: "fees",
+  },
+  {
+    title: "이용 금액 따라 마일리지 적립",
+    description:
+      "계약 진행 금액에 비례해 마일리지가 쌓이도록 구성해, 결제 이후에도 혜택이 계속 이어지는 구조를 보여주는 더미 카드입니다.",
+    visual: "mileage",
+  },
+  {
+    title: "마일리지로 이어지는 전용 샵",
+    description:
+      "적립된 마일리지를 활용해 다양한 기프티콘을 교환할 수 있는 마일리지 샵 운영 예시를 담은 카드입니다.",
+    visual: "shop",
+  },
+  {
+    title: "부가세 공제 처리까지 간편하게",
+    description:
+      "사업자 카드 결제 내역을 기준으로 별도 세금계산서 없이도 부가세 공제 흐름을 이어갈 수 있다는 점을 설명하는 더미 카드입니다.",
+    visual: "vat",
+  },
+  {
+    title: "금융과 시사를 쉽게 보는 매거진",
+    description:
+      "금융, 경제, 시사 이슈를 더 쉽게 이해할 수 있도록 풀어주는 페이몽 매거진의 더미 콘텐츠 영역입니다.",
+    visual: "magazine",
+  },
+];
+
+function SequenceCardVisual({
+  visual,
+}: {
+  visual: SequenceCard["visual"];
+}) {
+  if (visual === "fees") {
+    return (
+      <div className="flex h-full flex-col rounded-[1.8rem] border border-black/5 bg-[#f8f9fb] p-5">
+        <div className="rounded-[1.5rem] bg-white p-5 shadow-[0_12px_28px_rgba(10,15,30,0.06)]">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">
+            Fee compare
+          </div>
+          <div className="mt-4 space-y-4">
+            {[
+              ["PAYMONG", "3.5%", "#3B6FF5", "w-[42%]"],
+              ["FAST TRANSFER", "4.0%", "#73DAFF", "w-[48%]"],
+              ["OTHERS", "5.5%", "#E5E7EB", "w-[68%]"],
+            ].map(([label, value, color, width]) => (
+              <div key={label}>
+                <div className="mb-2 flex items-center justify-between text-sm font-semibold text-slate-700">
+                  <span>{label}</span>
+                  <span>{value}</span>
+                </div>
+                <div className="h-3 rounded-full bg-slate-100">
+                  <div className={`h-3 rounded-full ${width}`} style={{ backgroundColor: color }} />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
+        <div className="mt-4 rounded-[1.5rem] bg-[#0A0F1E] px-5 py-5 text-white shadow-[0_18px_36px_rgba(10,15,30,0.18)]">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/45">
+            Summary
+          </div>
+          <div className="mt-2 text-2xl font-semibold tracking-[-0.05em]">합리적인 수수료 구조</div>
+          <p className="mt-2 text-sm leading-[1.7] text-white/65">
+            동일한 계약 흐름 안에서도 비용 부담을 낮추는 점을 직관적으로 보여주기 위한 예시 영역입니다.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (visual === "mileage") {
+    return (
+      <div className="flex h-full flex-col rounded-[1.8rem] border border-black/5 bg-[#f8f9fb] p-5">
+        <div className="rounded-[1.5rem] bg-white p-5 shadow-[0_12px_28px_rgba(10,15,30,0.06)]">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">
+                Mileage
+              </div>
+              <div className="mt-2 text-3xl font-semibold tracking-[-0.06em] text-slate-950">+28,400P</div>
+            </div>
+            <div className="rounded-full bg-[#E9F4FF] px-3 py-1 text-xs font-semibold text-[#3B6FF5]">
+              누적 적립
+            </div>
+          </div>
+          <div className="mt-5 grid grid-cols-3 gap-3">
+            {["월세", "교육비", "인건비"].map((label) => (
+              <div
+                key={label}
+                className="rounded-[1.2rem] bg-[#F8FBFF] px-3 py-4 text-center shadow-[inset_0_0_0_1px_rgba(59,111,245,0.08)]"
+              >
+                <div className="text-xs font-semibold text-slate-400">{label}</div>
+                <div className="mt-1 text-base font-semibold tracking-[-0.04em] text-slate-900">+1.2%</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="mt-4 flex flex-1 items-center justify-center rounded-[1.5rem] bg-gradient-to-br from-[#EAF6FF] to-[#F7FCFF]">
+          <div className="grid grid-cols-4 gap-3">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div
+                key={index}
+                className="h-12 w-12 rounded-full bg-white shadow-[0_10px_22px_rgba(10,15,30,0.08)]"
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (visual === "shop") {
+    return (
+      <div className="flex h-full flex-col rounded-[1.8rem] border border-black/5 bg-[#f8f9fb] p-5">
         <div className="grid grid-cols-2 gap-3">
           {[
-            ["월세", "#407CFF"],
-            ["교육비", "#73DAFF"],
-            ["인건비", "#5D62FF"],
-            ["이사비", "#8423FE"],
-          ].map(([label, color]) => (
+            ["커피", "3,000P"],
+            ["편의점", "5,000P"],
+            ["배달", "8,000P"],
+            ["영화", "12,000P"],
+          ].map(([label, point]) => (
             <div
               key={label}
-              className="rounded-[1.4rem] bg-white p-4 shadow-[0_14px_30px_rgba(10,15,30,0.06)]"
+              className="rounded-[1.35rem] bg-white p-4 shadow-[0_10px_24px_rgba(10,15,30,0.06)]"
             >
-              <div
-                className="mb-3 h-2.5 w-12 rounded-full"
-                style={{ backgroundColor: color }}
-              />
-              <div className="text-base font-semibold text-slate-900">{label}</div>
-              <div className="mt-1 text-sm text-slate-400">등록 대기</div>
+              <div className="mb-3 h-20 rounded-[1rem] bg-gradient-to-br from-[#FFE7C2] to-[#FFF5E9]" />
+              <div className="text-sm font-semibold text-slate-900">{label} 기프티콘</div>
+              <div className="mt-1 text-xs font-semibold text-[#3B6FF5]">{point}</div>
             </div>
           ))}
         </div>
+        <div className="mt-4 rounded-[1.5rem] bg-[#0A0F1E] px-5 py-5 text-white shadow-[0_18px_36px_rgba(10,15,30,0.18)]">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/45">
+            Shop note
+          </div>
+          <div className="mt-2 text-2xl font-semibold tracking-[-0.05em]">마일리지 활용처까지 연결</div>
+          <p className="mt-2 text-sm leading-[1.7] text-white/65">
+            단순 적립에 그치지 않고 실제 교환 경험까지 이어지는 구조를 보여주는 예시 화면입니다.
+          </p>
+        </div>
       </div>
-    ),
-  },
-  {
-    title: "증빙 검토와 승인 흐름",
-    description: "계약서, 계좌 정보, 증빙 자료를 순서대로 확인하고 승인까지 자연스럽게 이어지는 흐름을 보여주는 더미 영역입니다.",
-    accentClass: "from-[#73DAFF]/20 to-[#73DAFF]/7",
-    renderVisual: () => (
-      <div className="flex h-full flex-col justify-between rounded-[2rem] bg-[#f5fcff] p-5">
-        <div className="rounded-[1.6rem] bg-white p-5 shadow-[0_16px_34px_rgba(10,15,30,0.08)]">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E9F9FF] text-[#00A6E6]">
-                <FileCheck2 size={18} />
+    );
+  }
+
+  if (visual === "vat") {
+    return (
+      <div className="flex h-full flex-col rounded-[1.8rem] border border-black/5 bg-[#f8f9fb] p-5">
+        <div className="rounded-[1.5rem] bg-white p-5 shadow-[0_12px_28px_rgba(10,15,30,0.06)]">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">
+                VAT flow
               </div>
-              <div>
-                <div className="text-sm font-semibold text-slate-900">증빙 자료 확인</div>
-                <div className="text-xs text-slate-400">Review checklist</div>
+              <div className="mt-2 text-xl font-semibold tracking-[-0.05em] text-slate-950">
+                자동 과세자료 제출
               </div>
             </div>
-            <span className="rounded-full bg-[#ECFDF5] px-3 py-1 text-xs font-semibold text-emerald-600">
-              검토 중
-            </span>
+            <div className="rounded-full bg-[#ECFDF5] px-3 py-1 text-xs font-semibold text-emerald-600">
+              처리 완료
+            </div>
           </div>
-          <div className="space-y-3">
+          <div className="mt-5 space-y-3">
             {[
-              "계약서 원본 업로드",
-              "거래 상대방 계좌 검수",
-              "송금 정보 승인 요청",
+              "사업자 카드 결제 내역 수집",
+              "국세청 제출 데이터 정리",
+              "별도 계산서 없이 공제 흐름 연결",
             ].map((label) => (
-              <div key={label} className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
-                <span className="text-sm font-medium text-slate-600">{label}</span>
+              <div
+                key={label}
+                className="flex items-center justify-between rounded-[1.2rem] bg-slate-50 px-4 py-3"
+              >
+                <span className="text-sm font-medium text-slate-700">{label}</span>
                 <BadgeCheck size={16} className="text-[#3B6FF5]" />
               </div>
             ))}
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-3">
-          {["제출", "검수", "승인"].map((label, index) => (
-            <div key={label} className="rounded-[1.2rem] bg-white px-3 py-4 text-center shadow-[0_12px_26px_rgba(10,15,30,0.06)]">
-              <div className="mb-2 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-300">
-                0{index + 1}
-              </div>
-              <div className="text-sm font-semibold text-slate-800">{label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    ),
-  },
-  {
-    title: "안전장치까지 하나의 시스템으로",
-    description: "계약 진행과 보증 체계가 분리되지 않고 이어져, 송금 이후 단계까지도 안심하고 확인할 수 있다는 더미 스토리입니다.",
-    accentClass: "from-[#BE8BFF]/20 to-[#BE8BFF]/7",
-    renderVisual: () => (
-      <div className="flex h-full flex-col justify-between rounded-[2rem] bg-[#fbf7ff] p-5">
-        <div className="rounded-[1.8rem] bg-[#101828] p-5 text-white shadow-[0_20px_40px_rgba(16,24,40,0.24)]">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ShieldCheck size={18} className="text-[#BE8BFF]" />
-              <span className="text-sm font-semibold">지급보증 상태</span>
-            </div>
-            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/80">
-              Active
-            </span>
-          </div>
-          <div className="space-y-3">
-            <div className="rounded-2xl bg-white/8 px-4 py-3">
-              <div className="text-xs text-white/55">보증 파트너</div>
-              <div className="mt-1 flex items-center gap-2 text-sm font-semibold">
-                <Building2 size={16} className="text-[#BE8BFF]" />
-                서울보증보험 연동
-              </div>
-            </div>
-            <div className="rounded-2xl bg-white/8 px-4 py-3">
-              <div className="text-xs text-white/55">거래 투명성</div>
-              <div className="mt-1 flex items-center gap-2 text-sm font-semibold">
-                <Landmark size={16} className="text-[#73DAFF]" />
-                송금 이력 자동 추적
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-[1.5rem] bg-white p-4 shadow-[0_14px_30px_rgba(10,15,30,0.06)]">
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">Confidence</div>
-          <div className="mt-2 text-3xl font-semibold tracking-[-0.06em] text-slate-900">99.2%</div>
-          <div className="mt-1 text-sm text-slate-400">안정적으로 이어지는 거래 흐름</div>
-        </div>
-      </div>
-    ),
-  },
-  {
-    title: "진행 상황도 끝까지 추적",
-    description: "요청, 검수, 승인, 송금 처리까지 이어지는 단계를 한눈에 확인할 수 있는 운영용 더미 카드입니다.",
-    accentClass: "from-[#0A0F1E]/10 to-[#0A0F1E]/4",
-    renderVisual: () => (
-      <div className="flex h-full flex-col justify-between rounded-[2rem] bg-[#f7f7f8] p-5">
-        <div className="space-y-3">
-          {[
-            ["요청 접수", "00:01", true],
-            ["검수 진행", "00:04", true],
-            ["승인 완료", "00:07", true],
-            ["송금 처리", "00:10", false],
-          ].map(([label, time, isDone]) => (
-            <div key={label} className="flex items-center justify-between rounded-[1.35rem] bg-white px-4 py-4 shadow-[0_12px_26px_rgba(10,15,30,0.05)]">
-              <div className="flex items-center gap-3">
-                <div className={`h-2.5 w-2.5 rounded-full ${isDone ? "bg-emerald-500" : "bg-[#3B6FF5]"}`} />
-                <span className="text-sm font-semibold text-slate-800">{label}</span>
-              </div>
-              <span className="text-xs font-semibold text-slate-400">{time}</span>
-            </div>
-          ))}
-        </div>
-        <div className="rounded-[1.5rem] border border-dashed border-slate-200 bg-white/70 px-4 py-5">
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">Status note</div>
-          <p className="mt-2 text-sm leading-relaxed text-slate-500">
-            운영자가 다음 단계와 처리 시점을 바로 읽을 수 있게 정리한 예시 영역입니다.
+        <div className="mt-4 rounded-[1.5rem] border border-dashed border-slate-200 bg-white/75 px-5 py-5">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">Tax note</div>
+          <p className="mt-2 text-sm leading-[1.75] text-slate-500">
+            결제 이후 세무 처리까지 한 번에 이어지는 경험을 보여주기 위해 만든 더미 설명 영역입니다.
           </p>
         </div>
       </div>
-    ),
-  },
-];
+    );
+  }
 
-const HORIZONTAL_TRACK_START_OFFSET = 340;
-const HORIZONTAL_TRACK_SCROLL_OVERSHOOT = 520;
+  return (
+    <div className="flex h-full flex-col rounded-[1.8rem] border border-black/5 bg-[#f8f9fb] p-5">
+      <div className="rounded-[1.5rem] bg-white p-5 shadow-[0_12px_28px_rgba(10,15,30,0.06)]">
+        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">Magazine</div>
+        <div className="mt-4 space-y-3">
+          {[
+            "금융 이슈를 한 장으로 정리한 카드 뉴스",
+            "경제 흐름을 쉽게 읽는 주간 브리핑",
+            "시사 키워드를 풀어내는 페이몽 매거진",
+          ].map((label, index) => (
+            <div key={label} className="rounded-[1.2rem] bg-slate-50 px-4 py-4">
+              <div className="text-xs font-semibold text-slate-300">Article 0{index + 1}</div>
+              <div className="mt-2 text-sm font-semibold leading-[1.5] text-slate-800">{label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="mt-4 flex flex-1 items-center justify-center rounded-[1.5rem] bg-[#0A0F1E] px-5 py-5 text-white shadow-[0_18px_36px_rgba(10,15,30,0.18)]">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/45">Insight</div>
+          <div className="mt-2 text-2xl font-semibold tracking-[-0.05em]">쉽게 읽는 금융 콘텐츠</div>
+          <p className="mt-2 text-sm leading-[1.7] text-white/65">
+            복잡한 금융과 시사 이슈를 더 쉽게 풀어내는 콘텐츠 운영 영역을 상정한 더미 카드입니다.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function FeatureCard({
   card,
 }: {
-  card: HorizontalFeatureCard;
+  card: SequenceCard;
 }) {
   return (
-    <article className="group flex h-[520px] w-[340px] shrink-0 flex-col rounded-[2.3rem] border border-black/5 bg-white p-7 shadow-[0_18px_50px_rgba(10,15,30,0.06)] transition-transform duration-300 hover:scale-[1.02] md:h-[560px] md:w-[390px]">
-      <div>
-        <h3 className="max-w-[14ch] text-[1.9rem] font-semibold leading-[1.02] tracking-[-0.06em] text-slate-950 md:text-[2.2rem]">
-          {card.title}
-        </h3>
-        <p className="mt-3 max-w-[27ch] text-[0.98rem] leading-[1.7] text-slate-500 md:text-[1rem]">
-          {card.description}
-        </p>
-      </div>
-
-      <div className={`mt-6 flex-1 overflow-hidden rounded-[2rem] bg-gradient-to-b ${card.accentClass}`}>
-        {card.renderVisual()}
+    <article className="flex h-[500px] w-[360px] shrink-0 flex-col overflow-hidden rounded-[2rem] border border-black/5 bg-white p-8 shadow-[0_8px_30px_rgba(0,0,0,0.04)] md:w-[420px]">
+      <h3 className="text-2xl font-semibold tracking-[-0.05em] text-slate-950">{card.title}</h3>
+      <p className="mt-2 text-[1rem] leading-[1.7] text-slate-500">{card.description}</p>
+      <div className="mt-6 min-h-0 flex-1">
+        <SequenceCardVisual visual={card.visual} />
       </div>
     </article>
   );
 }
 
 export function FifthSection() {
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const heroTextRef = useRef<HTMLDivElement | null>(null);
+  const cardsContainerRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
-  const [translateX, setTranslateX] = useState(0);
 
   useEffect(() => {
-    let frameId = 0;
+    const section = sectionRef.current;
+    const heroText = heroTextRef.current;
+    const cardsContainer = cardsContainerRef.current;
+    const track = trackRef.current;
 
-    const updateScroll = () => {
-      const wrapper = wrapperRef.current;
-      const track = trackRef.current;
+    if (!section || !heroText || !cardsContainer || !track) {
+      return;
+    }
 
-      if (!wrapper || !track) {
-        return;
-      }
+    gsap.registerPlugin(ScrollTrigger);
 
-      const { top, height } = wrapper.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      const windowWidth = window.innerWidth;
-      const scrollDistance = height - windowHeight;
+    const ctx = gsap.context(() => {
+      const createTimeline = () => {
+        const startOffset = Math.max(160, window.innerWidth * 0.34);
+        const scrollDist = Math.max(0, track.scrollWidth - window.innerWidth + 96);
+        const pinDistance = Math.max(window.innerHeight * 4, scrollDist + window.innerHeight * 2.2);
 
-      if (scrollDistance <= 0) {
-        setTranslateX(0);
-        return;
-      }
+        ScrollTrigger.getById("paymong-fifth-sequence")?.kill();
 
-      const progress = Math.max(0, Math.min(-top / scrollDistance, 1));
-      const maxTranslate = Math.max(
-        0,
-        track.scrollWidth - windowWidth + 160 + HORIZONTAL_TRACK_START_OFFSET + HORIZONTAL_TRACK_SCROLL_OVERSHOOT,
-      );
+        gsap.set(heroText, {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+        });
 
-      setTranslateX(progress * maxTranslate);
-    };
+        gsap.set(cardsContainer, {
+          y: window.innerHeight,
+        });
 
-    const handleScroll = () => {
-      cancelAnimationFrame(frameId);
-      frameId = requestAnimationFrame(updateScroll);
-    };
+        gsap.set(track, {
+          x: startOffset,
+        });
 
-    updateScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", handleScroll);
+        const timeline = gsap.timeline({
+          scrollTrigger: {
+            id: "paymong-fifth-sequence",
+            trigger: section,
+            start: "top top",
+            end: `+=${pinDistance}`,
+            pin: true,
+            scrub: 1,
+            invalidateOnRefresh: true,
+          },
+        });
+
+        timeline
+          .to(
+            heroText,
+            {
+              y: -150,
+              opacity: 0,
+              scale: 0.95,
+              duration: 1,
+              ease: "power1.inOut",
+            },
+            0,
+          )
+          .to(
+            cardsContainer,
+            {
+              y: 0,
+              duration: 1.5,
+              ease: "power2.out",
+            },
+            0.2,
+          )
+          .to(
+            track,
+            {
+              x: -scrollDist,
+              duration: 4,
+              ease: "none",
+            },
+            "+=0.2",
+          );
+      };
+
+      createTimeline();
+      ScrollTrigger.addEventListener("refreshInit", createTimeline);
+
+      return () => {
+        ScrollTrigger.removeEventListener("refreshInit", createTimeline);
+      };
+    }, section);
+
+    ScrollTrigger.refresh();
 
     return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
-      cancelAnimationFrame(frameId);
+      ctx.revert();
     };
   }, []);
 
   return (
-    <section className="section-two-onward-font relative z-40 bg-[#f6f6f4] text-slate-950">
-      <section className="flex flex-col items-center justify-center px-5 pb-12 pt-[18vh] text-center sm:px-8 lg:px-12">
-        <div className="mb-6 flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-[#3B6FF5]" />
-          <span className="text-base font-medium text-slate-500 sm:text-lg">Contract flow, made visible</span>
+    <section
+      ref={sectionRef}
+      className="section-two-onward-font relative z-40 h-screen w-full overflow-hidden bg-[#f6f6f4]"
+    >
+      <div
+        ref={heroTextRef}
+        className="absolute inset-0 flex flex-col items-center justify-center px-5 pt-10 text-center"
+      >
+        <div className="mb-6">
+          <span className="text-base font-medium tracking-wide text-slate-500">
+            다른 곳에선 찾을 수 없는
+          </span>
         </div>
-        <h2 className="text-[clamp(3.4rem,8vw,7.5rem)] font-semibold leading-[0.9] tracking-[-0.08em] text-slate-950">
+        <h2 className="text-[clamp(3.6rem,8vw,7.4rem)] font-semibold leading-[0.95] tracking-[-0.08em] text-black">
           오직 페이몽에서만
         </h2>
-        <p className="mt-7 text-sm font-medium text-slate-400 sm:text-base">
-          아래로 스크롤하며 더미 카드 흐름을 확인하세요
-        </p>
-      </section>
+      </div>
 
-      <div ref={wrapperRef} className="relative h-[300vh] w-full">
-        <div className="sticky top-0 flex h-screen w-full flex-col justify-center overflow-hidden bg-[#f6f6f4]">
-          <div className="pointer-events-none absolute left-6 top-1/2 z-0 -translate-y-1/2 whitespace-nowrap sm:left-10 lg:left-16">
-            <h3 className="text-[90px] font-semibold leading-none tracking-[-0.09em] text-black/[0.05] sm:text-[140px] lg:text-[210px]">
-              Paymong flow
-            </h3>
-          </div>
-
+      <div
+        ref={cardsContainerRef}
+        className="absolute left-0 top-1/2 h-[540px] w-full"
+      >
+        <div className="absolute top-0 h-full w-full -translate-y-1/2">
           <div
             ref={trackRef}
-            className="relative z-10 flex w-max items-center gap-8 px-6 will-change-transform sm:px-10 lg:gap-12 lg:px-16"
-            style={{ transform: `translateX(${HORIZONTAL_TRACK_START_OFFSET - translateX}px)` }}
+            className="flex h-full w-max items-center gap-6 px-12 will-change-transform"
           >
-            {FIFTH_SECTION_CARDS.map((card) => (
+            {SEQUENCE_CARDS.map((card) => (
               <FeatureCard key={card.title} card={card} />
             ))}
           </div>
