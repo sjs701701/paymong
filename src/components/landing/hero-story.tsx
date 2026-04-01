@@ -7,6 +7,7 @@ import Lottie from "lottie-react";
 import ReactCanvasConfetti from "react-canvas-confetti";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { FourthSection } from "@/components/landing/fourth-section";
+import { SixthSection } from "@/components/landing/sixth-section";
 import { type HeroScrollPhase, useHeroLenisControl } from "@/lib/use-hero-lenis-control";
 import { ReviewsSection } from "@/components/landing/reviews-section";
 
@@ -1777,6 +1778,8 @@ export function HeroStory({
       <ReviewsSection />
 
       <FourthSection />
+
+      <SixthSection />
     </section>
   );
 }

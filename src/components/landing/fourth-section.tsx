@@ -74,11 +74,17 @@ function renderMultilineText(value: string) {
 function PublicLottie({
   src,
   className,
+  playOnceWhenInView = false,
 }: {
   src: string;
   className?: string;
+  playOnceWhenInView?: boolean;
 }) {
   const [animationData, setAnimationData] = useState<object | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const lottieRef = useRef<any>(null);
+  const [shouldStartPlayback, setShouldStartPlayback] = useState(!playOnceWhenInView);
+  const hasTriggeredPlaybackRef = useRef(false);
 
   useEffect(() => {
     let isCancelled = false;
@@ -110,13 +116,67 @@ function PublicLottie({
     };
   }, [src]);
 
+  useEffect(() => {
+    if (!playOnceWhenInView || !animationData) {
+      return;
+    }
+
+    const container = containerRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasTriggeredPlaybackRef.current) {
+            hasTriggeredPlaybackRef.current = true;
+            setShouldStartPlayback(true);
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        threshold: 0.45,
+      },
+    );
+
+    observer.observe(container);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [animationData, playOnceWhenInView]);
+
   if (!animationData) {
     return null;
   }
 
   return (
-    <div className={className}>
-      <Lottie animationData={animationData} loop autoplay />
+    <div ref={containerRef} className={className}>
+      {shouldStartPlayback ? (
+        <Lottie
+          lottieRef={lottieRef}
+          animationData={animationData}
+          loop={!playOnceWhenInView}
+          autoplay
+          onComplete={() => {
+            if (!playOnceWhenInView) {
+              return;
+            }
+
+            const animation = lottieRef.current;
+
+            if (!animation) {
+              return;
+            }
+
+            const totalFrames = animation.getDuration(true);
+            animation.goToAndStop(Math.max(0, totalFrames - 1), true);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
@@ -271,7 +331,7 @@ function PhysicsDropMedia({
         Runner.run(runner, engine);
 
         let count = 0;
-        const totalIcons = reducedMotion ? 8 : 18;
+        const totalIcons = reducedMotion ? 9 : 22;
         const spawnQueue = createSpawnQueue(totalIcons);
 
         dropInterval = setInterval(() => {
@@ -286,7 +346,7 @@ function PhysicsDropMedia({
           const queuedTexture = spawnQueue[count];
           Composite.add(engine.world, createObjectFromTexture(queuedTexture));
           count += 1;
-        }, reducedMotion ? 145 : 90);
+        }, reducedMotion ? 135 : 78);
       };
 
       const createObjectFromTexture = (texture: { src: string; width: number; height: number }) => {
@@ -298,7 +358,7 @@ function PhysicsDropMedia({
         return Bodies.circle(x, y, targetSize * 0.44, {
           restitution: 0.3,
           friction: 0.08,
-          frictionAir: 0.016,
+          frictionAir: 0.013,
           density: 0.0012,
           render: {
             sprite: {
@@ -310,17 +370,31 @@ function PhysicsDropMedia({
         });
       };
 
+      const visibilityObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              startDrop();
+              visibilityObserver.unobserve(entry.target);
+            }
+          });
+        },
+        {
+          threshold: 0.45,
+        },
+      );
+
+      visibilityObserver.observe(hostCard);
       hostCard.addEventListener("mousemove", updateHoverPointer);
       hostCard.addEventListener("mouseleave", resetHoverPointer);
-      hostCard.addEventListener("mouseenter", startDrop, { once: true });
 
       renderCleanup = () => {
         if (dropInterval) {
           clearInterval(dropInterval);
         }
+        visibilityObserver.disconnect();
         hostCard.removeEventListener("mousemove", updateHoverPointer);
         hostCard.removeEventListener("mouseleave", resetHoverPointer);
-        hostCard.removeEventListener("mouseenter", startDrop);
         Events.off(engine, "beforeUpdate", applyHoverForce);
         Render.stop(render);
         Runner.stop(runner);
@@ -506,7 +580,11 @@ export function FourthSection() {
                       aria-hidden="true"
                     />
                   ) : (
-                    <PublicLottie src={card.media.src} className="fourth-proof-card__lottie" />
+                    <PublicLottie
+                      src={card.media.src}
+                      className="fourth-proof-card__lottie"
+                      playOnceWhenInView={card.id === "settlement"}
+                    />
                   )}
                 </div>
               </div>
