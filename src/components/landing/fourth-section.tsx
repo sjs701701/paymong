@@ -30,7 +30,7 @@ const FOURTH_SECTION_CARDS: FourthSectionCard[] = [
   },
   {
     id: "review",
-    title: "다양한 계약 유형에<br>유연하게",
+    title: "다양한 계약도<br>유연하게",
     description: "월세, 교육비, 인건비, 이사비 등 다양한 유형의 계약 비용을 페이몽으로 진행할 수 있습니다.",
     accent: "#73DAFF",
     surface: "linear-gradient(180deg, rgba(115, 218, 255, 0.2) 0%, rgba(115, 218, 255, 0.07) 100%)",
@@ -242,7 +242,7 @@ function PhysicsDropMedia({
 
           if (distance < 68) {
             const forceDirection = Vector.normalise(Vector.sub(body.position, pointerPosition));
-            const forceMagnitude = 0.0024 * body.mass;
+            const forceMagnitude = 0.0029 * body.mass;
             Body.applyForce(body, body.position, Vector.mult(forceDirection, forceMagnitude));
           }
         });

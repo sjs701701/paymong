@@ -993,6 +993,7 @@ button {
 
 .fourth-proof-section {
   background: #ffffff;
+  padding-top: clamp(10rem, 14vw, 12.5rem);
 }
 
 .fourth-proof-section__headline {
@@ -1091,6 +1092,7 @@ button {
   font-size: clamp(1.5rem, 2.6vw, 2rem);
   line-height: 1.08;
   letter-spacing: -0.05em;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
