@@ -986,6 +986,169 @@ button {
     linear-gradient(180deg, #ffffff 0%, #ffffff 69%, rgba(0, 56, 241, 0.04) 100%);
 }
 
+.reviews-section-background {
+  background:
+    linear-gradient(180deg, #ffffff 0%, #ffffff 69%, rgba(0, 56, 241, 0.04) 100%);
+}
+
+.fourth-proof-section {
+  background: #ffffff;
+}
+
+.fourth-proof-section__headline {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.14em;
+}
+
+.fourth-proof-section__headline-line {
+  display: block;
+  white-space: nowrap;
+}
+
+.fourth-proof-section__headline-copy {
+  display: inline;
+  letter-spacing: -0.05em;
+  line-height: 1.08;
+}
+
+.fourth-proof-odometer {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0;
+  margin-right: 0.08em;
+  color: #0a0f1e;
+  font-variant-numeric: tabular-nums;
+}
+
+.fourth-proof-odometer__digit {
+  position: relative;
+  display: inline-flex;
+  width: 0.62em;
+  height: 1em;
+  overflow: hidden;
+  line-height: 1;
+  margin-right: -0.1em;
+}
+
+.fourth-proof-odometer__digit-track {
+  display: flex;
+  flex-direction: column;
+  transition: transform 1.65s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.fourth-proof-odometer__digit-cell,
+.fourth-proof-odometer__comma {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1em;
+  line-height: 1;
+}
+
+.fourth-proof-odometer__comma {
+  width: 0.18em;
+}
+
+.fourth-proof-card {
+  position: relative;
+  min-height: 33rem;
+  border-radius: 2rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid rgba(10, 15, 30, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.88)),
+    var(--fourth-card-surface);
+  box-shadow:
+    0 24px 60px rgba(10, 15, 30, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.fourth-proof-card__content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.fourth-proof-card__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+  max-width: 16rem;
+  padding-top: 2rem;
+}
+
+.fourth-proof-card__title {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  line-height: 1.08;
+  letter-spacing: -0.05em;
+  color: var(--text-primary);
+}
+
+.fourth-proof-card__description {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: rgba(10, 15, 30, 0.58);
+}
+
+.fourth-proof-card__media {
+  height: 17rem;
+  border-radius: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.42)),
+      color-mix(in srgb, var(--fourth-card-accent) 12%, white);
+}
+
+.fourth-proof-card__media--hidden {
+  opacity: 0;
+}
+
+.fourth-proof-card__image {
+  display: block;
+  width: 92%;
+  height: 92%;
+  object-fit: contain;
+}
+
+.fourth-proof-card__lottie {
+  width: 100%;
+  height: 100%;
+}
+
+.fourth-proof-card__lottie > div {
+  width: 100%;
+  height: 100%;
+}
+
+.fourth-proof-card__physics-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.fourth-proof-card__physics-layer canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
 .hero-video-side {
   position: relative;
   min-height: 1px;
@@ -1505,6 +1668,14 @@ button {
     min-height: calc(8.8rem - 4.05rem * var(--summary-collapse));
   }
 
+  .fourth-proof-card {
+    min-height: 30rem;
+  }
+
+  .fourth-proof-card__media {
+    height: 14rem;
+  }
+
   .cta-btn {
     padding-inline: 1.9rem;
   }
@@ -1516,6 +1687,11 @@ button {
 
   .cta-btn--docked {
     padding-inline: 0.9rem;
+  }
+
+  .fourth-proof-section__headline-copy {
+    display: inline;
+    margin-top: 0;
   }
 }
 

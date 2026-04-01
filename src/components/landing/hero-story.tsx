@@ -6,6 +6,7 @@ import gsap from "gsap";
 import Lottie from "lottie-react";
 import ReactCanvasConfetti from "react-canvas-confetti";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { FourthSection } from "@/components/landing/fourth-section";
 import { type HeroScrollPhase, useHeroLenisControl } from "@/lib/use-hero-lenis-control";
 import { ReviewsSection } from "@/components/landing/reviews-section";
 
@@ -1775,13 +1776,7 @@ export function HeroStory({
       {/* TODO: This is the third section in the current UX flow. Refine the section naming/content together if the reviews concept changes again. */}
       <ReviewsSection />
 
-      <section className="relative z-40 min-h-svh bg-white px-6 py-12 sm:px-10 sm:py-16">
-        <div className="mx-auto flex min-h-[calc(100svh-6rem)] w-full max-w-6xl items-center justify-center sm:min-h-[calc(100svh-8rem)]">
-          <p className="text-center text-2xl font-semibold tracking-[-0.04em] text-[var(--text-primary)] sm:text-4xl">
-            이곳은 네번째 섹션입니다.
-          </p>
-        </div>
-      </section>
+      <FourthSection />
     </section>
   );
 }

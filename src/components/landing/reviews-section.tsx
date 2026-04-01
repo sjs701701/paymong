@@ -117,7 +117,7 @@ export function ReviewsSection() {
     <section
       id="section3"
       ref={sectionRef}
-      className="section-two-onward-font relative z-40 h-svh w-full overflow-hidden bg-white px-6 py-12 text-slate-900 sm:px-10 lg:px-24"
+      className="reviews-section-background section-two-onward-font relative z-40 h-svh w-full overflow-hidden bg-white px-6 py-12 text-slate-900 sm:px-10 lg:px-24"
     >
       <div className="mx-auto grid h-full w-full max-w-[1440px] grid-cols-1 items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.94fr)] lg:gap-20">
         <div className="relative z-[110] max-w-xl space-y-8">

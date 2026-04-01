@@ -1,0 +1,74 @@
+<svg width="720" height="520" viewBox="0 0 720 520" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="110" y1="34" x2="584" y2="465" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FBFF"/>
+      <stop offset="1" stop-color="#EAF2FF"/>
+    </linearGradient>
+    <linearGradient id="card" x1="226" y1="94" x2="500" y2="385" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F5F9FF"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="155" y1="360" x2="565" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#407CFF"/>
+      <stop offset="1" stop-color="#73DAFF"/>
+    </linearGradient>
+    <filter id="shadow" x="82" y="20" width="558" height="452" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="24"/>
+      <feGaussianBlur stdDeviation="24"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.0509804 0 0 0 0 0.0901961 0 0 0 0 0.176471 0 0 0 0.12 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_1"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_1" result="shape"/>
+    </filter>
+  </defs>
+
+  <rect width="720" height="520" rx="42" fill="url(#bg)"/>
+
+  <g filter="url(#shadow)">
+    <rect x="130" y="68" width="460" height="356" rx="34" fill="url(#card)"/>
+    <rect x="130" y="68" width="460" height="356" rx="34" stroke="rgba(10,15,30,0.08)" stroke-width="2"/>
+  </g>
+
+  <rect x="168" y="104" width="224" height="132" rx="22" fill="#FFFFFF"/>
+  <rect x="168" y="104" width="224" height="132" rx="22" stroke="#DCE7FA" stroke-width="2"/>
+  <rect x="168" y="104" width="224" height="34" rx="22" fill="#407CFF"/>
+  <circle cx="194" cy="121" r="5" fill="#FFFFFF"/>
+  <circle cx="214" cy="121" r="5" fill="#FFFFFF" fill-opacity="0.8"/>
+  <circle cx="234" cy="121" r="5" fill="#FFFFFF" fill-opacity="0.55"/>
+  <rect x="190" y="160" width="40" height="12" rx="6" fill="#D8E5FF"/>
+  <rect x="242" y="160" width="40" height="12" rx="6" fill="#D8E5FF"/>
+  <rect x="294" y="160" width="40" height="12" rx="6" fill="#D8E5FF"/>
+  <rect x="190" y="184" width="40" height="12" rx="6" fill="#D8E5FF"/>
+  <rect x="242" y="184" width="40" height="12" rx="6" fill="#407CFF"/>
+  <rect x="294" y="184" width="40" height="12" rx="6" fill="#D8E5FF"/>
+  <rect x="190" y="208" width="40" height="12" rx="6" fill="#D8E5FF"/>
+  <rect x="242" y="208" width="40" height="12" rx="6" fill="#D8E5FF"/>
+  <rect x="294" y="208" width="40" height="12" rx="6" fill="#D8E5FF"/>
+
+  <g transform="translate(418 118)">
+    <rect width="132" height="176" rx="22" fill="#FFFFFF"/>
+    <rect width="132" height="176" rx="22" stroke="#DCE7FA" stroke-width="2"/>
+    <rect x="24" y="28" width="84" height="10" rx="5" fill="#407CFF" fill-opacity="0.16"/>
+    <rect x="24" y="52" width="54" height="10" rx="5" fill="#407CFF" fill-opacity="0.12"/>
+    <rect x="24" y="76" width="72" height="10" rx="5" fill="#407CFF" fill-opacity="0.12"/>
+    <rect x="24" y="100" width="84" height="10" rx="5" fill="#407CFF" fill-opacity="0.12"/>
+    <rect x="24" y="124" width="48" height="10" rx="5" fill="#407CFF" fill-opacity="0.12"/>
+    <path d="M88 146L101 159L117 137" stroke="#407CFF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <rect x="155" y="328" width="410" height="64" rx="32" fill="url(#accent)"/>
+  <rect x="192" y="356" width="336" height="6" rx="3" fill="white" fill-opacity="0.28"/>
+  <circle cx="222" cy="360" r="14" fill="#FFFFFF"/>
+  <circle cx="306" cy="360" r="14" fill="#FFFFFF"/>
+  <circle cx="390" cy="360" r="14" fill="#FFFFFF"/>
+  <circle cx="474" cy="360" r="14" fill="#FFFFFF"/>
+  <circle cx="222" cy="360" r="6" fill="#407CFF"/>
+  <circle cx="306" cy="360" r="6" fill="#407CFF"/>
+  <circle cx="390" cy="360" r="6" fill="#407CFF"/>
+  <circle cx="474" cy="360" r="6" fill="#407CFF"/>
+
+  <circle cx="568" cy="120" r="12" fill="#407CFF" fill-opacity="0.12"/>
+  <circle cx="136" cy="398" r="10" fill="#73DAFF" fill-opacity="0.2"/>
+  <circle cx="548" cy="298" r="8" fill="#407CFF" fill-opacity="0.16"/>
+</svg>
