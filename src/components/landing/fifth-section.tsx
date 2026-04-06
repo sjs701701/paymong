@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { BadgeCheck, Wallet2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { BadgeCheck } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -43,6 +43,9 @@ const SEQUENCE_CARDS: SequenceCard[] = [
     visual: "magazine",
   },
 ];
+
+const DEFAULT_MASK_PATH =
+  "M 30 170 C 20 170 15 165 15 155 V 60 C 15 45 25 35 40 35 C 48 35 55 40 60 48 L 100 110 L 140 48 C 145 40 152 35 160 35 C 175 35 185 45 185 60 V 155 C 185 165 180 170 170 170 C 160 170 155 165 155 155 V 85 L 115 145 C 108 155 92 155 85 145 L 45 85 V 155 C 45 165 40 170 30 170 Z";
 
 function SequenceCardVisual({
   visual,
@@ -251,138 +254,289 @@ function FeatureCard({
 }
 
 export function FifthSection() {
-  const sectionRef = useRef<HTMLElement | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const trackRef = useRef<HTMLDivElement | null>(null);
   const heroTextRef = useRef<HTMLDivElement | null>(null);
   const cardsContainerRef = useRef<HTMLDivElement | null>(null);
-  const trackRef = useRef<HTMLDivElement | null>(null);
+  const maskGroupRef = useRef<SVGGElement | null>(null);
+  const maskPathRef = useRef<SVGPathElement | null>(null);
+  const maskHoleRef = useRef<SVGCircleElement | null>(null);
+  const maskCenterRef = useRef({ x: 100, y: 102.5 });
+  const [maskPathData, setMaskPathData] = useState(DEFAULT_MASK_PATH);
+  const [maskCenter, setMaskCenter] = useState({ x: 100, y: 102.5 });
 
   useEffect(() => {
-    const section = sectionRef.current;
+    let isCancelled = false;
+
+    const loadMaskShape = async () => {
+      try {
+        const response = await fetch("/design/fifth-section/mask-shape.svg");
+        if (!response.ok) return;
+
+        const svgText = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svgText, "image/svg+xml");
+        const svg = doc.querySelector("svg");
+        const path = doc.querySelector("path");
+        const d = path?.getAttribute("d");
+
+        if (!svg || !d || isCancelled) return;
+
+        const viewBox = svg.getAttribute("viewBox");
+        if (viewBox) {
+          const [minX, minY, width, height] = viewBox.split(/[\s,]+/).map(Number);
+          if ([minX, minY, width, height].every((value) => Number.isFinite(value))) {
+            const nextCenter = {
+              x: minX + width / 2,
+              y: minY + height / 2,
+            };
+            maskCenterRef.current = nextCenter;
+            setMaskCenter(nextCenter);
+          }
+        }
+
+        setMaskPathData(d);
+      } catch {
+        // Keep built-in fallback mask shape.
+      }
+    };
+
+    loadMaskShape();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    const track = trackRef.current;
     const heroText = heroTextRef.current;
     const cardsContainer = cardsContainerRef.current;
-    const track = trackRef.current;
+    const maskGroup = maskGroupRef.current;
+    const maskPath = maskPathRef.current;
+    const maskHole = maskHoleRef.current;
 
-    if (!section || !heroText || !cardsContainer || !track) {
+    if (!wrapper || !track || !heroText || !cardsContainer || !maskGroup || !maskPath || !maskHole) {
       return;
     }
 
     gsap.registerPlugin(ScrollTrigger);
 
+    let targetX = window.innerWidth / 2;
+    let targetY = window.innerHeight / 2;
+
+    const updateMaskPosition = (x: number, y: number) => {
+      const { x: centerX, y: centerY } = maskCenterRef.current;
+      gsap.set(maskGroup, {
+        x: x - centerX,
+        y: y - centerY,
+        transformOrigin: "50% 50%",
+      });
+    };
+
+    const handleMouseMove = (event: MouseEvent) => {
+      targetX = event.clientX;
+      targetY = event.clientY;
+      updateMaskPosition(targetX, targetY);
+    };
+
+    const handleResize = () => {
+      if (targetX === window.innerWidth / 2) {
+        targetX = window.innerWidth / 2;
+        targetY = window.innerHeight / 2;
+      }
+
+      updateMaskPosition(targetX, targetY);
+      ScrollTrigger.refresh();
+    };
+
+    updateMaskPosition(targetX, targetY);
+
     const ctx = gsap.context(() => {
-      const createTimeline = () => {
-        const startOffset = Math.max(160, window.innerWidth * 0.34);
-        const scrollDist = Math.max(0, track.scrollWidth - window.innerWidth + 96);
-        const pinDistance = Math.max(window.innerHeight * 4, scrollDist + window.innerHeight * 2.2);
+      const getStartOffset = () => Math.max(160, window.innerWidth * 0.34);
+      const getMoveDistance = () => {
+        const dist = track.scrollWidth - window.innerWidth + 96;
+        return dist > 0 ? -dist : 0;
+      };
 
-        ScrollTrigger.getById("paymong-fifth-sequence")?.kill();
+      gsap.set(maskGroup, { scale: 0 });
+      gsap.set(maskPath, { strokeWidth: 0 });
+      gsap.set(maskHole, {
+        attr: {
+          cx: maskCenterRef.current.x,
+          cy: maskCenterRef.current.y,
+          r: 0,
+        },
+      });
+      gsap.set(track, { x: getStartOffset() });
+      gsap.set(heroText, { opacity: 1, y: 0, scale: 1 });
+      gsap.set(cardsContainer, { y: window.innerHeight });
 
-        gsap.set(heroText, {
-          y: 0,
-          opacity: 1,
-          scale: 1,
-        });
+      const timeline = gsap.timeline({
+        scrollTrigger: {
+          trigger: wrapper,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 1,
+          invalidateOnRefresh: true,
+        },
+      });
 
-        gsap.set(cardsContainer, {
-          y: window.innerHeight,
-        });
-
-        gsap.set(track, {
-          x: startOffset,
-        });
-
-        const timeline = gsap.timeline({
-          scrollTrigger: {
-            id: "paymong-fifth-sequence",
-            trigger: section,
-            start: "top top",
-            end: `+=${pinDistance}`,
-            pin: true,
-            scrub: 1,
-            invalidateOnRefresh: true,
+      timeline
+        .to(
+          heroText,
+          {
+            y: -150,
+            opacity: 0,
+            scale: 0.95,
+            ease: "power1.inOut",
+            duration: 1,
           },
-        });
+          0,
+        )
+        .to(
+          cardsContainer,
+          {
+            y: 0,
+            duration: 1.5,
+            ease: "power2.out",
+          },
+          0.2,
+        )
+        .to(
+          track,
+          {
+            x: () => getMoveDistance(),
+            ease: "none",
+            duration: 4,
+          },
+          "+=0.2",
+        )
+        .to(
+          maskGroup,
+          {
+            scale: 1,
+            ease: "back.out(1.5)",
+            duration: 0.3,
+          },
+          ">+=0.12",
+        )
+        .add("inflate")
+        .to(
+          maskPath,
+          {
+            strokeWidth: () => Math.max(window.innerWidth, window.innerHeight) * 3,
+            ease: "power3.in",
+            duration: 0.8,
+          },
+          "inflate",
+        )
+        .to(
+          maskHole,
+          {
+            attr: { r: () => Math.max(window.innerWidth, window.innerHeight) * 2 },
+            ease: "power2.in",
+            duration: 0.8,
+          },
+          "inflate",
+        )
+        .to({}, { duration: 1.5 });
+    }, wrapper);
 
-        timeline
-          .to(
-            heroText,
-            {
-              y: -150,
-              opacity: 0,
-              scale: 0.95,
-              duration: 1,
-              ease: "power1.inOut",
-            },
-            0,
-          )
-          .to(
-            cardsContainer,
-            {
-              y: 0,
-              duration: 1.5,
-              ease: "power2.out",
-            },
-            0.2,
-          )
-          .to(
-            track,
-            {
-              x: -scrollDist,
-              duration: 4,
-              ease: "none",
-            },
-            "+=0.2",
-          );
-      };
-
-      createTimeline();
-      ScrollTrigger.addEventListener("refreshInit", createTimeline);
-
-      return () => {
-        ScrollTrigger.removeEventListener("refreshInit", createTimeline);
-      };
-    }, section);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("resize", handleResize);
 
     ScrollTrigger.refresh();
 
     return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("resize", handleResize);
       ctx.revert();
     };
-  }, []);
+  }, [maskPathData]);
 
   return (
-    <section
-      ref={sectionRef}
-      className="section-two-onward-font relative z-40 h-screen w-full overflow-hidden bg-[#f6f6f4]"
-    >
-      <div
-        ref={heroTextRef}
-        className="absolute inset-0 flex flex-col items-center justify-center px-5 pt-10 text-center"
-      >
-        <div className="mb-6">
-          <span className="text-base font-medium tracking-wide text-slate-500">
-            다른 곳에선 찾을 수 없는
-          </span>
-        </div>
-        <h2 className="text-[clamp(3.6rem,8vw,7.4rem)] font-semibold leading-[0.95] tracking-[-0.08em] text-black">
-          오직 페이몽에서만
-        </h2>
-      </div>
-
-      <div
-        ref={cardsContainerRef}
-        className="absolute left-0 top-1/2 h-[540px] w-full"
-      >
-        <div className="absolute top-0 h-full w-full -translate-y-1/2">
+    <div ref={wrapperRef} className="relative h-[400vh] w-full">
+      <div className="sticky top-0 h-screen w-full overflow-hidden">
+        <section className="hero-video-stage-background absolute inset-0 z-10">
           <div
-            ref={trackRef}
-            className="flex h-full w-max items-center gap-6 px-12 will-change-transform"
+            ref={heroTextRef}
+            className="absolute inset-0 z-20 flex flex-col items-center justify-center px-5 pt-10 text-center"
           >
-            {SEQUENCE_CARDS.map((card) => (
-              <FeatureCard key={card.title} card={card} />
-            ))}
+            <div className="mb-6">
+              <span className="text-base font-medium tracking-wide text-slate-500">
+                다른 곳에선 찾을 수 없는
+              </span>
+            </div>
+            <h2 className="text-[clamp(3.6rem,8vw,7.4rem)] font-semibold leading-[0.95] tracking-[-0.08em] text-black">
+              오직 페이몽에서만
+            </h2>
           </div>
-        </div>
+
+          <div
+            ref={cardsContainerRef}
+            className="absolute left-0 top-1/2 z-20 h-[540px] w-full"
+          >
+            <div className="absolute top-0 h-full w-full -translate-y-1/2">
+                <div ref={trackRef} className="flex h-full w-max items-center gap-6 px-12 will-change-transform">
+                {SEQUENCE_CARDS.map((card) => (
+                  <FeatureCard key={card.title} card={card} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <svg className="absolute inset-0 z-20 h-full w-full pointer-events-none" preserveAspectRatio="none">
+          <defs>
+            <mask
+              id="paymong-sixth-mask"
+              maskUnits="userSpaceOnUse"
+              maskContentUnits="userSpaceOnUse"
+              x="-5000"
+              y="-5000"
+              width="10000"
+              height="10000"
+            >
+              <rect x="-5000" y="-5000" width="10000" height="10000" fill="black" />
+              <g ref={maskGroupRef}>
+                <circle
+                  ref={maskHoleRef}
+                  cx={maskCenter.x}
+                  cy={maskCenter.y}
+                  r="0"
+                  fill="white"
+                />
+                <path
+                  ref={maskPathRef}
+                  d={maskPathData}
+                  fill="white"
+                  stroke="white"
+                  strokeWidth="0"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+              </g>
+            </mask>
+          </defs>
+
+          <foreignObject x="0" y="0" width="100%" height="100%" mask="url(#paymong-sixth-mask)">
+            <div xmlns="http://www.w3.org/1999/xhtml" className="flex h-full w-full items-center justify-center bg-[#0a0a0a] px-6 text-white">
+              <div className="text-center">
+                <div className="text-sm font-semibold uppercase tracking-[0.28em] text-white/45">
+                  Section 6
+                </div>
+                <h3 className="mt-5 text-[clamp(3.2rem,7vw,6.6rem)] font-semibold leading-[0.94] tracking-[-0.08em]">
+                  섹션 6 내용이
+                  <br />
+                  들어갈 예정입니다.
+                </h3>
+              </div>
+            </div>
+          </foreignObject>
+        </svg>
       </div>
-    </section>
+    </div>
   );
 }

@@ -9,6 +9,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { FourthSection } from "@/components/landing/fourth-section";
 import { FifthSection } from "@/components/landing/fifth-section";
 import { SixthSection } from "@/components/landing/sixth-section";
+import { FaqSection } from "@/components/landing/faq-section";
 import { FooterSection } from "@/components/landing/footer-section";
 import { type HeroScrollPhase, useHeroLenisControl } from "@/lib/use-hero-lenis-control";
 import { ReviewsSection } from "@/components/landing/reviews-section";
@@ -1663,21 +1664,21 @@ export function HeroStory({
       >
           <button
             ref={ctaRef}
-            className={`cta-btn ${isCtaDocked ? "cta-btn--docked" : ""} ${isCtaPreviewActive || (isCtaDocked && isFooterInView) ? "cta-btn--preview" : ""} ${isCtaReturning ? "cta-btn--returning" : ""}`}
-            aria-label={HERO_COPY.cta}
-            onMouseEnter={() => {
-              if (isCtaDocked) setIsCtaPreviewActive(true);
-          }}
-          onMouseLeave={() => {
-            if (isCtaDocked) setIsCtaPreviewActive(false);
-          }}
-          onFocus={() => {
-            if (isCtaDocked) setIsCtaPreviewActive(true);
-          }}
-          onBlur={() => {
-            if (isCtaDocked) setIsCtaPreviewActive(false);
-          }}
-        >
+              className={`cta-btn ${isCtaDocked ? "cta-btn--docked" : ""} ${isCtaPreviewActive || (isCtaDocked && isFooterInView) ? "cta-btn--preview" : ""} ${isCtaReturning ? "cta-btn--returning" : ""}`}
+              aria-label={HERO_COPY.cta}
+              onMouseEnter={() => {
+                if (isCtaDocked && !isFooterInView) setIsCtaPreviewActive(true);
+              }}
+              onMouseLeave={() => {
+                if (isCtaDocked && !isFooterInView) setIsCtaPreviewActive(false);
+              }}
+              onFocus={() => {
+                if (isCtaDocked && !isFooterInView) setIsCtaPreviewActive(true);
+              }}
+              onBlur={() => {
+                if (isCtaDocked && !isFooterInView) setIsCtaPreviewActive(false);
+              }}
+            >
           <span className="bg-fill"></span>
           <svg className="cta-btn__logo" viewBox="0 0 47 29" fill="none" xmlns="http://www.w3.org/2000/svg">
             <mask id="mask0_2016_717" style={{ maskType: "luminance" }} maskUnits="userSpaceOnUse" x="0" y="0" width="47" height="29">
@@ -1811,6 +1812,8 @@ export function HeroStory({
       <FifthSection />
 
       <SixthSection />
+
+      <FaqSection />
 
       <div ref={footerTriggerRef}>
         <FooterSection />

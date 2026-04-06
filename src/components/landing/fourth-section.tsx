@@ -300,9 +300,9 @@ function PhysicsDropMedia({
           };
           const distance = Vector.magnitude(Vector.sub(body.position, pointerPosition));
 
-          if (distance < 68) {
+          if (distance < 72) {
             const forceDirection = Vector.normalise(Vector.sub(body.position, pointerPosition));
-            const forceMagnitude = 0.0029 * body.mass;
+            const forceMagnitude = 0.0031 * body.mass;
             Body.applyForce(body, body.position, Vector.mult(forceDirection, forceMagnitude));
           }
         });
@@ -380,7 +380,7 @@ function PhysicsDropMedia({
           });
         },
         {
-          threshold: 0.45,
+          threshold: 0.38,
         },
       );
 
