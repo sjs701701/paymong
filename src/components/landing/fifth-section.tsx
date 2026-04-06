@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { BadgeCheck } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { SixthSectionShell, SixthSectionSurface } from "@/components/landing/sixth-section";
 
 type SequenceCard = {
   title: string;
@@ -46,7 +47,6 @@ const SEQUENCE_CARDS: SequenceCard[] = [
 
 const DEFAULT_MASK_PATH =
   "M 30 170 C 20 170 15 165 15 155 V 60 C 15 45 25 35 40 35 C 48 35 55 40 60 48 L 100 110 L 140 48 C 145 40 152 35 160 35 C 175 35 185 45 185 60 V 155 C 185 165 180 170 170 170 C 160 170 155 165 155 155 V 85 L 115 145 C 108 155 92 155 85 145 L 45 85 V 155 C 45 165 40 170 30 170 Z";
-
 function SequenceCardVisual({
   visual,
 }: {
@@ -416,28 +416,28 @@ export function FifthSection() {
         .to(
           maskGroup,
           {
-            scale: 1,
-            ease: "back.out(1.5)",
-            duration: 0.3,
+            scale: 5,
+            ease: "power2.out",
+            duration: 1.2,
           },
           ">+=0.12",
         )
-        .add("inflate")
+        .add("inflate", "-=0.5")
         .to(
           maskPath,
           {
-            strokeWidth: () => Math.max(window.innerWidth, window.innerHeight) * 3,
-            ease: "power3.in",
-            duration: 0.8,
+            strokeWidth: () => Math.max(window.innerWidth, window.innerHeight) * 0.8,
+            ease: "power2.inOut",
+            duration: 1.5,
           },
           "inflate",
         )
         .to(
           maskHole,
           {
-            attr: { r: () => Math.max(window.innerWidth, window.innerHeight) * 2 },
-            ease: "power2.in",
-            duration: 0.8,
+            attr: { r: () => Math.max(window.innerWidth, window.innerHeight) * 0.5 },
+            ease: "power2.inOut",
+            duration: 1.5,
           },
           "inflate",
         )
@@ -457,7 +457,7 @@ export function FifthSection() {
   }, [maskPathData]);
 
   return (
-    <div ref={wrapperRef} className="relative h-[400vh] w-full">
+    <div ref={wrapperRef} className="relative h-[600vh] w-full">
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         <section className="hero-video-stage-background absolute inset-0 z-10">
           <div
@@ -522,17 +522,15 @@ export function FifthSection() {
           </defs>
 
           <foreignObject x="0" y="0" width="100%" height="100%" mask="url(#paymong-sixth-mask)">
-            <div xmlns="http://www.w3.org/1999/xhtml" className="flex h-full w-full items-center justify-center bg-[#0a0a0a] px-6 text-white">
-              <div className="text-center">
-                <div className="text-sm font-semibold uppercase tracking-[0.28em] text-white/45">
-                  Section 6
-                </div>
-                <h3 className="mt-5 text-[clamp(3.2rem,7vw,6.6rem)] font-semibold leading-[0.94] tracking-[-0.08em]">
-                  섹션 6 내용이
-                  <br />
-                  들어갈 예정입니다.
-                </h3>
-              </div>
+            <div xmlns="http://www.w3.org/1999/xhtml" className="h-full w-full">
+              <SixthSectionShell
+                style={{
+                  backgroundSize: "100% 200vh",
+                  backgroundPosition: "0 0",
+                }}
+              >
+                <SixthSectionSurface />
+              </SixthSectionShell>
             </div>
           </foreignObject>
         </svg>
