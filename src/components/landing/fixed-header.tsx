@@ -41,78 +41,7 @@ const initialPillStyle: PillStyle = {
   transition: "all 300ms ease",
 };
 
-function generateDisplacementMap(w: number, h: number): string {
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d");
-
-  if (!ctx) return "";
-
-  const img = ctx.createImageData(w, h);
-  const d = img.data;
-  const cx = w / 2;
-  const cy = h / 2;
-  const ior = 1.45;
-  const thickness = 65;
-  const bezel = 18;
-  const profile: number[] = [];
-  const samples = 128;
-
-  for (let i = 0; i < samples; i += 1) {
-    const t = i / (samples - 1);
-    const surfAngle = Math.asin(t) * (thickness / 100);
-    const sinRef = Math.sin(surfAngle) / ior;
-    const refAngle = Math.asin(Math.min(Math.max(sinRef, -1), 1));
-    profile.push(Math.tan(surfAngle - refAngle) * thickness);
-  }
-
-  const maxD = Math.max(...profile.map((value) => Math.abs(value)), 0.001);
-
-  for (let y = 0; y < h; y += 1) {
-    for (let x = 0; x < w; x += 1) {
-      const dx = x - cx;
-      const dy = y - cy;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const maxR = Math.min(cx, cy) - bezel;
-      const px = (y * w + x) * 4;
-
-      if (dist > maxR + bezel) {
-        d[px] = 128;
-        d[px + 1] = 128;
-        d[px + 2] = 0;
-        d[px + 3] = 255;
-        continue;
-      }
-
-      const norm = dist <= maxR ? dist / maxR : 1;
-      const pIdx = Math.min(Math.floor(norm * (samples - 1)), samples - 1);
-      const disp = profile[pIdx] / maxD;
-      const angle = Math.atan2(dy, dx);
-      const edge = dist > maxR ? Math.max(0, 1 - (dist - maxR) / bezel) : 1;
-
-      d[px] = Math.round(128 + disp * Math.cos(angle) * 127 * edge);
-      d[px + 1] = Math.round(128 + disp * Math.sin(angle) * 127 * edge);
-      d[px + 2] = 0;
-      d[px + 3] = 255;
-    }
-  }
-
-  ctx.putImageData(img, 0, 0);
-  return canvas.toDataURL();
-}
-
 function LiquidGlassFilter() {
-  const imageRef = useRef<SVGFEImageElement>(null);
-
-  useEffect(() => {
-    const dataUrl = generateDisplacementMap(400, 120);
-
-    if (dataUrl) {
-      imageRef.current?.setAttribute("href", dataUrl);
-    }
-  }, []);
-
   return (
     <svg
       aria-hidden
@@ -125,21 +54,35 @@ function LiquidGlassFilter() {
       }}
       xmlns="http://www.w3.org/2000/svg"
     >
-      <filter id="liquid-glass-filter" primitiveUnits="objectBoundingBox">
-        <feImage
-          ref={imageRef}
-          result="map"
-          width="100%"
-          height="100%"
-          x="0"
-          y="0"
+      <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.002 0.002"
+          numOctaves="1"
+          seed="5"
+          result="turbulence"
         />
-        <feGaussianBlur in="SourceGraphic" stdDeviation="0.04" result="blur" />
+        <feComponentTransfer in="turbulence" result="mapped">
+          <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5" />
+          <feFuncG type="gamma" amplitude="0" exponent="1" offset="0" />
+          <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5" />
+        </feComponentTransfer>
+        <feGaussianBlur in="turbulence" stdDeviation="5" result="softMap" />
+        <feSpecularLighting
+          in="softMap"
+          surfaceScale="1.5"
+          specularConstant="1"
+          specularExponent="100"
+          lightingColor="white"
+          result="specLight"
+        >
+          <fePointLight x="-200" y="-200" z="300" />
+        </feSpecularLighting>
+        <feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage" />
         <feDisplacementMap
-          id="disp"
-          in="blur"
-          in2="map"
-          scale="0.5"
+          in="SourceGraphic"
+          in2="softMap"
+          scale="15"
           xChannelSelector="R"
           yChannelSelector="G"
         />
@@ -309,119 +252,84 @@ export function FixedHeader({
       <div className="liquid-header-scope font-sans text-[#224]">
         <style>{`
           .liquid-header-scope {
-            --c-glass: #bbbbbc;
-            --c-light: #fff;
-            --c-dark: #000;
-            --c-content: #224;
-            --c-action: #0052f5;
-            --glass-reflex-dark: 1;
-            --glass-reflex-light: 1;
-            --saturation: 150%;
+            --c-content: #1f2a44;
+            --c-action: rgba(10, 15, 30, 0.86);
           }
 
           .liquid-header-scope .glass-panel {
             border-radius: 99em;
-            background-color: color-mix(in srgb, var(--c-glass) 12%, transparent);
-            backdrop-filter: blur(8px) url(#liquid-glass-filter) saturate(var(--saturation));
-            -webkit-backdrop-filter: blur(8px) saturate(var(--saturation));
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 6px 6px rgba(0, 0, 0, 0.16), 0 0 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+          }
+
+          .liquid-header-scope .glass-effect {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            border-radius: 99em;
+            backdrop-filter: blur(4px);
+            filter: url(#glass-distortion);
+            overflow: hidden;
+            pointer-events: none;
+          }
+
+          .liquid-header-scope .glass-tint {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            border-radius: 99em;
+            background: rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+          }
+
+          .liquid-header-scope .glass-shine {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            border-radius: 99em;
+            overflow: hidden;
             box-shadow:
-              inset 0 0 0 1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 10%), transparent),
-              inset 1.8px 3px 0 -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 90%), transparent),
-              inset -2px -2px 0 -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 80%), transparent),
-              inset -3px -8px 1px -6px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 60%), transparent),
-              inset -0.3px -1px 4px 0 color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 12%), transparent),
-              inset -1.5px 2.5px 0 -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent),
-              inset 0 3px 4px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent),
-              inset 2px -6.5px 1px -4px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent),
-              0 1px 5px 0 color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent),
-              0 6px 16px 0 color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 8%), transparent);
-            transition:
-              background-color 400ms cubic-bezier(1, 0, 0.4, 1),
-              box-shadow 400ms cubic-bezier(1, 0, 0.4, 1);
+              inset 2px 2px 1px 0 rgba(255, 255, 255, 0.5),
+              inset -1px -1px 1px 1px rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+          }
+
+          .liquid-header-scope .glass-content-top {
+            position: relative;
+            z-index: 3;
           }
 
           .liquid-header-scope .nav-item {
-            position: relative;
-            z-index: 2;
-          }
-
-          .liquid-header-scope .nav-item::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            border-radius: 99em;
-            background-color: color-mix(in srgb, var(--c-glass) 36%, transparent);
-            z-index: -1;
-            opacity: 0;
-            transform: scale(0.8);
-            transition: all 300ms cubic-bezier(1, 0, 0.4, 1);
-            box-shadow:
-              inset 0 0 0 1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 10%), transparent),
-              inset 2px 1px 0 -1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 90%), transparent),
-              inset -1.5px -1px 0 -1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 80%), transparent),
-              inset -2px -6px 1px -5px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 60%), transparent),
-              inset -1px 2px 3px -1px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent),
-              inset 0 -4px 1px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent),
-              0 3px 6px 0 color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 8%), transparent);
-          }
-
-          .liquid-header-scope .nav-item:hover::after {
-            opacity: 1;
-            transform: scale(1);
-            animation: scaleToggle 440ms ease;
+            color: rgba(31, 42, 68, 0.82);
           }
 
           .liquid-header-scope .action-pill {
             position: relative;
-            background-color: color-mix(in srgb, var(--c-action) 65%, transparent);
-            backdrop-filter: blur(8px) url(#liquid-glass-filter) saturate(var(--saturation));
-            -webkit-backdrop-filter: blur(8px) saturate(var(--saturation));
-            box-shadow:
-              inset 0 0 0 1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 30%), transparent),
-              inset 1.8px 3px 0 -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 90%), transparent),
-              inset -2px -2px 0 -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 80%), transparent),
-              inset -3px -8px 1px -6px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 60%), transparent),
-              inset -0.3px -1px 4px 0 color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 12%), transparent),
-              inset -1.5px 2.5px 0 -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent),
-              inset 0 3px 4px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent),
-              inset 2px -6.5px 1px -4px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent),
-              0 4px 12px 0 color-mix(in srgb, var(--c-action) 40%, transparent),
-              0 6px 16px 0 color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 8%), transparent);
-            transition:
-              transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1),
-              background-color 300ms ease;
+            background: var(--c-action);
+            color: #ffffff;
+            box-shadow: 0 8px 18px rgba(10, 15, 30, 0.18);
+            transition: all 0.25s ease;
           }
 
           .liquid-header-scope .action-pill:hover {
-            transform: scale(1.05);
-            background-color: color-mix(in srgb, var(--c-action) 85%, transparent);
+            background: rgba(10, 15, 30, 0.95);
           }
 
           .liquid-header-scope .nav-pill {
             position: absolute;
+            top: 50%;
             border-radius: 99em;
-            background-color: color-mix(in srgb, var(--c-glass) 36%, transparent);
-            z-index: 1;
+            background: rgba(0, 0, 0, 0.08);
+            z-index: 2;
             pointer-events: none;
-            box-shadow:
-              inset 0 0 0 1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 10%), transparent),
-              inset 2px 1px 0 -1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 90%), transparent),
-              inset -1.5px -1px 0 -1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 80%), transparent),
-              inset -2px -6px 1px -5px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 60%), transparent),
-              inset -1px 2px 3px -1px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent),
-              inset 0 -4px 1px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent),
-              0 3px 6px 0 color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 8%), transparent);
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2);
           }
 
           .liquid-header-scope .category-item {
             position: relative;
-            z-index: 2;
-          }
-
-          @keyframes scaleToggle {
-            0% { scale: 1 1; }
-            50% { scale: 1.1 1; }
-            100% { scale: 1 1; }
+            z-index: 3;
           }
         `}</style>
 
@@ -436,12 +344,12 @@ export function FixedHeader({
           <div className="mx-auto flex w-full max-w-[1360px] items-center justify-between gap-4">
             <Link
               href="/"
-              className="relative z-10 inline-flex items-center text-[1.02rem] font-semibold tracking-[0.26em] text-[var(--text-primary)] uppercase pointer-events-auto"
+              className="relative z-10 inline-flex items-center pointer-events-auto drop-shadow-md"
             >
               <Image
                 src={HEADER_LOGO_PATH}
                 alt="Paymong"
-                className="h-8 w-auto object-contain"
+                className="h-10 w-auto object-contain transition-transform hover:scale-[1.03]"
                 width={148}
                 height={32}
                 priority
@@ -453,13 +361,17 @@ export function FixedHeader({
               className="glass-panel relative hidden h-[60px] items-center gap-1 px-2 pointer-events-auto lg:flex"
               onMouseLeave={handleMouseLeave}
             >
+              <div className="glass-effect" />
+              <div className="glass-tint" />
+              <div className="glass-shine" />
               <div
                 className="nav-pill"
                 style={{
                   left: pillStyle.left,
-                  top: pillStyle.top,
+                  top: pillStyle.top + pillStyle.height / 2,
                   width: pillStyle.width,
-                  height: pillStyle.height,
+                  height: Math.max(0, pillStyle.height - 16),
+                  marginTop: `-${Math.max(0, pillStyle.height - 16) / 2}px`,
                   opacity: pillStyle.opacity,
                   transform: `scale(${pillStyle.scale})`,
                   transition: pillStyle.transition,
@@ -470,7 +382,7 @@ export function FixedHeader({
                   key={`${category.name}-${category.href}`}
                   href={category.href}
                   onMouseEnter={handleMouseEnter}
-                  className="category-item rounded-full px-5 py-2 text-[15px] font-medium transition-colors"
+                  className="category-item glass-content-top rounded-full px-5 py-2 text-[15px] font-medium transition-colors hover:text-black"
                 >
                   {category.name}
                 </a>
@@ -478,26 +390,32 @@ export function FixedHeader({
             </nav>
 
             <div className="glass-panel hidden h-[60px] items-center gap-2 px-2 pointer-events-auto lg:flex">
+              <div className="glass-effect" />
+              <div className="glass-tint" />
+              <div className="glass-shine" />
               <Link
                 href="/login"
-                className="nav-item rounded-full px-5 py-2 text-[15px] font-medium transition-colors"
+                className="nav-item glass-content-top rounded-full px-5 py-2 text-[15px] font-medium transition-colors hover:bg-black/5"
               >
                 {"\uB85C\uADF8\uC778"}
               </Link>
               <Link
                 href="/start"
-                className="action-pill rounded-full px-5 py-2 text-[15px] font-medium text-white"
+                className="action-pill glass-content-top rounded-full px-5 py-2 text-[15px] font-medium text-white"
               >
                 {"\uC2DC\uC791\uD558\uAE30"}
               </Link>
             </div>
 
             <div className="glass-panel flex h-[60px] items-center justify-center px-4 pointer-events-auto lg:hidden">
+              <div className="glass-effect" />
+              <div className="glass-tint" />
+              <div className="glass-shine" />
               <button
                 type="button"
                 aria-label="\uBA54\uB274 \uC5F4\uAE30"
                 aria-expanded={isMobileMenuOpen}
-                className="z-10 flex h-6 w-6 flex-col justify-center gap-[5px]"
+                className="glass-content-top flex h-6 w-6 flex-col justify-center gap-[5px]"
                 onClick={() => setIsMobileMenuOpen((prev) => !prev)}
               >
                 <span

@@ -14,7 +14,7 @@ type SixthSectionSurfaceProps = {
 };
 
 const SIXTH_SECTION_GRADIENT =
-  "linear-gradient(180deg, #001335 13.46%, #001F58 30.29%, #003B79 42.31%, #006DC7 55.77%, #93E2FF 79.33%, #FFF 96.63%)";
+  "linear-gradient(180deg, #09000A 5.29%, #001F58 31.7%, #003B79 46.22%, #006DC7 60.1%, #93E2FF 79.33%, #FFF 96.63%)";
 
 export function SixthSectionShell({
   className = "",
