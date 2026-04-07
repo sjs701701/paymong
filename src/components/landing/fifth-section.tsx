@@ -4,7 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { BadgeCheck } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { SixthSectionShell, SixthSectionSurface } from "@/components/landing/sixth-section";
+import {
+  SIXTH_ODOMETER_ACTIVATE_EVENT,
+  SixthSectionShell,
+  SixthSectionSurface,
+} from "@/components/landing/sixth-section";
 
 type SequenceCard = {
   title: string;
@@ -440,6 +444,15 @@ export function FifthSection() {
             duration: 1.5,
           },
           "inflate",
+        )
+        .call(
+          () => {
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new Event(SIXTH_ODOMETER_ACTIVATE_EVENT));
+            }
+          },
+          undefined,
+          "inflate+=1.2",
         )
         .to({}, { duration: 1.5 });
     }, wrapper);
