@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Fragment, type CSSProperties, forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import gsap from "gsap";
 import Lottie from "lottie-react";
@@ -136,6 +136,10 @@ const VIDEO_STEP_SEQUENCE: VideoStep[] = [
   },
 ] as const;
 
+const STACKED_VIDEO_STEPS: VideoStep[] = VIDEO_STEP_SEQUENCE.filter(
+  (step) => step.id >= SHOW_SIDE_PANELS_FROM_STEP,
+);
+
 function getSummaryIconPath(stepId: VideoStepId) {
   return `/design/video-summary-icons/step-${stepId}.svg`;
 }
@@ -173,136 +177,145 @@ function SummaryIconSlot({
   );
 }
 
-function DetailImageSlot({
-  stepId,
-  revealProgress,
-}: {
-  stepId: VideoStepId;
-  revealProgress: number;
-}) {
-  const imagePaths = getDetailImagePaths(stepId);
-  const [imageIndex, setImageIndex] = useState(0);
-  const [isMediaLoaded, setIsMediaLoaded] = useState(false);
-  const [lottieData, setLottieData] = useState<object | null>(null);
-  const mediaPath = imagePaths[imageIndex] ?? null;
-  const isLottie = mediaPath?.endsWith(".json");
-  const isVideo = mediaPath?.endsWith(".webm") || mediaPath?.endsWith(".mp4");
-  const confettiInstanceRef = useRef<((options: Record<string, unknown>) => Promise<null> | null) | null>(null);
-  const hasFiredConfettiRef = useRef(false);
+type DetailImageSlotHandle = {
+  tryFireConfetti: () => void;
+};
 
-  const handleMediaError = () => {
-    setIsMediaLoaded(false);
-    setLottieData(null);
-    setImageIndex((currentIndex) => {
-      const nextIndex = currentIndex + 1;
-      return nextIndex < imagePaths.length ? nextIndex : currentIndex;
-    });
-  };
+const DetailImageSlot = forwardRef<DetailImageSlotHandle, { stepId: VideoStepId }>(
+  function DetailImageSlot({ stepId }, ref) {
+    const imagePaths = useMemo(() => getDetailImagePaths(stepId), [stepId]);
+    const [imageIndex, setImageIndex] = useState(0);
+    const [lottieData, setLottieData] = useState<object | null>(null);
+    const isMediaLoadedRef = useRef(false);
+    const mediaPath = imagePaths[imageIndex] ?? null;
+    const isLottie = mediaPath?.endsWith(".json");
+    const isVideo = mediaPath?.endsWith(".webm") || mediaPath?.endsWith(".mp4");
+    const confettiInstanceRef = useRef<((options: Record<string, unknown>) => Promise<null> | null) | null>(null);
+    const hasFiredConfettiRef = useRef(false);
 
-  useEffect(() => {
-    if (!isLottie || !mediaPath) {
-      return;
-    }
+    const handleMediaError = useCallback(() => {
+      isMediaLoadedRef.current = false;
+      setLottieData(null);
+      setImageIndex((currentIndex) => {
+        const nextIndex = currentIndex + 1;
+        return nextIndex < imagePaths.length ? nextIndex : currentIndex;
+      });
+    }, [imagePaths]);
 
-    let isCancelled = false;
-
-    const loadLottie = async () => {
-      try {
-        const response = await fetch(mediaPath);
-
-        if (!response.ok) {
-          throw new Error(`Failed to load ${mediaPath}`);
-        }
-
-        const data = await response.json();
-
-        if (isCancelled) {
-          return;
-        }
-
-        setLottieData(data);
-        setIsMediaLoaded(true);
-      } catch {
-        if (!isCancelled) {
-          handleMediaError();
-        }
+    useEffect(() => {
+      if (!isLottie || !mediaPath) {
+        return;
       }
-    };
 
-    loadLottie();
+      let isCancelled = false;
 
-    return () => {
-      isCancelled = true;
-    };
-  }, [isLottie, mediaPath]);
+      const loadLottie = async () => {
+        try {
+          const response = await fetch(mediaPath);
 
-  useEffect(() => {
-    if (
-      stepId !== 2
-      || !isMediaLoaded
-      || hasFiredConfettiRef.current
-      || revealProgress < 0.995
-      || !confettiInstanceRef.current
-    ) {
-      return;
-    }
+          if (!response.ok) {
+            throw new Error(`Failed to load ${mediaPath}`);
+          }
 
-    confettiInstanceRef.current({
-      particleCount: 90,
-      spread: 70,
-      startVelocity: 28,
-      gravity: 1.1,
-      ticks: 220,
-      scalar: 0.82,
-      colors: ["#0057FF", "#00C2FF", "#A100FF", "#FFCC00", "#FF2D55", "#00E676", "#FFFFFF"],
-      origin: { x: 0.5, y: 0.72 },
-    });
-    hasFiredConfettiRef.current = true;
-  }, [isMediaLoaded, revealProgress, stepId]);
+          const data = await response.json();
 
-  return (
-    <div
-      className={`hero-video-note__detail-media-slot ${stepId === 3 ? "hero-video-note__detail-media-slot--compact" : ""}`}
-      aria-hidden="true"
-    >
-      <ReactCanvasConfetti
-        className="hero-video-note__detail-media-confetti"
-        globalOptions={{ resize: true, useWorker: true }}
-        onInit={({ confetti }) => {
-          confettiInstanceRef.current = confetti as (options: Record<string, unknown>) => Promise<null> | null;
-        }}
-      />
-      {mediaPath && isVideo ? (
-        <video
-          key={mediaPath}
-          src={mediaPath}
-          className="hero-video-note__detail-media-video"
-          autoPlay
-          muted
-          loop
-          playsInline
-          onCanPlayThrough={() => setIsMediaLoaded(true)}
-          onError={handleMediaError}
+          if (isCancelled) {
+            return;
+          }
+
+          setLottieData(data);
+          isMediaLoadedRef.current = true;
+        } catch {
+          if (!isCancelled) {
+            handleMediaError();
+          }
+        }
+      };
+
+      loadLottie();
+
+      return () => {
+        isCancelled = true;
+      };
+    }, [handleMediaError, isLottie, mediaPath]);
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        tryFireConfetti: () => {
+          if (
+            stepId !== 2
+            || hasFiredConfettiRef.current
+            || !isMediaLoadedRef.current
+            || !confettiInstanceRef.current
+          ) {
+            return;
+          }
+
+          confettiInstanceRef.current({
+            particleCount: 90,
+            spread: 70,
+            startVelocity: 28,
+            gravity: 1.1,
+            ticks: 220,
+            scalar: 0.82,
+            colors: ["#0057FF", "#00C2FF", "#A100FF", "#FFCC00", "#FF2D55", "#00E676", "#FFFFFF"],
+            origin: { x: 0.5, y: 0.72 },
+          });
+          hasFiredConfettiRef.current = true;
+        },
+      }),
+      [stepId],
+    );
+
+    return (
+      <div
+        className={`hero-video-note__detail-media-slot ${stepId === 3 ? "hero-video-note__detail-media-slot--compact" : ""}`}
+        aria-hidden="true"
+      >
+        <ReactCanvasConfetti
+          className="hero-video-note__detail-media-confetti"
+          globalOptions={{ resize: true, useWorker: true }}
+          onInit={({ confetti }) => {
+            confettiInstanceRef.current = confetti as (options: Record<string, unknown>) => Promise<null> | null;
+          }}
         />
-      ) : null}
-      {mediaPath && isLottie && lottieData ? (
-        <div className="hero-video-note__detail-media-lottie">
-          <Lottie animationData={lottieData} loop autoplay />
-        </div>
-      ) : null}
-      {mediaPath && !isVideo && !isLottie ? (
-        <img
-          key={mediaPath}
-          src={mediaPath}
-          alt=""
-          className="hero-video-note__detail-media-image"
-          onLoad={() => setIsMediaLoaded(true)}
-          onError={handleMediaError}
-        />
-      ) : null}
-    </div>
-  );
-}
+        {mediaPath && isVideo ? (
+          <video
+            key={mediaPath}
+            src={mediaPath}
+            className="hero-video-note__detail-media-video"
+            autoPlay
+            muted
+            loop
+            playsInline
+            onCanPlayThrough={() => {
+              isMediaLoadedRef.current = true;
+            }}
+            onError={handleMediaError}
+          />
+        ) : null}
+        {mediaPath && isLottie && lottieData ? (
+          <div className="hero-video-note__detail-media-lottie">
+            <Lottie animationData={lottieData} loop autoplay />
+          </div>
+        ) : null}
+        {mediaPath && !isVideo && !isLottie ? (
+          <img
+            key={mediaPath}
+            src={mediaPath}
+            alt=""
+            className="hero-video-note__detail-media-image"
+            onLoad={() => {
+              isMediaLoadedRef.current = true;
+            }}
+            onError={handleMediaError}
+          />
+        ) : null}
+      </div>
+    );
+  },
+);
 
 function getVideoStepFromProgress(progress: number): VideoStepId {
   if (progress <= VIDEO_STEP_PROGRESS_BREAKPOINTS[1]) return 1;
@@ -896,6 +909,13 @@ export function HeroStory({
   const nextSectionBackgroundRef = useRef<HTMLDivElement | null>(null);
   const frameRef = useRef<HTMLDivElement | null>(null);
   const auraRef = useRef<HTMLDivElement | null>(null);
+  const leftPanelRef = useRef<HTMLDivElement | null>(null);
+  const summaryCardRefs = useRef<(HTMLElement | null)[]>([]);
+  const detailCardRefs = useRef<(HTMLElement | null)[]>([]);
+  const detailSlotRefs = useRef<(DetailImageSlotHandle | null)[]>([]);
+  const videoScrollProgressRef = useRef(0);
+  const stepRef = useRef<VideoStepId>(1);
+  const showSidePanelsRef = useRef(false);
   const cooldownRef = useRef(false);
   const cooldownTimerRef = useRef<number | null>(null);
   const ctaReturnTimerRef = useRef<number | null>(null);
@@ -908,7 +928,7 @@ export function HeroStory({
   const heroScrollPhaseRef = useRef<HeroScrollPhase>("keyword-sequence");
   const [activeIndex, setActiveIndex] = useState(0);
   const [videoTransition, setVideoTransition] = useState<VideoTransitionState>({ step: 1, direction: 1 });
-  const [videoScrollProgress, setVideoScrollProgress] = useState(0);
+  const [showSidePanels, setShowSidePanels] = useState(false);
   const [heroScrollPhase, setHeroScrollPhase] = useState<HeroScrollPhase>("keyword-sequence");
   const [isCtaDocked, setIsCtaDocked] = useState(false);
   const [isCtaPreviewActive, setIsCtaPreviewActive] = useState(false);
@@ -919,6 +939,89 @@ export function HeroStory({
   const [viewportHeight, setViewportHeight] = useState(0);
   const reducedMotion = Boolean(useReducedMotion());
   useHeroLenisControl(heroScrollPhase);
+
+  const writeCardStylesForProgress = useCallback((progress: number) => {
+    const leftPanel = leftPanelRef.current;
+    if (leftPanel) {
+      leftPanel.style.setProperty(
+        "--left-panel-reveal",
+        getLeftPanelRevealProgress(progress).toFixed(4),
+      );
+    }
+
+    STACKED_VIDEO_STEPS.forEach((step, index) => {
+      const summaryCard = summaryCardRefs.current[index];
+      if (summaryCard) {
+        const reveal = getSummaryCardRevealProgress(progress, step.id);
+        const collapse = getSummaryCardCollapseProgress(progress, step.id);
+        summaryCard.style.setProperty("--summary-reveal", reveal.toFixed(4));
+        summaryCard.style.setProperty("--summary-reveal-opacity", reveal.toFixed(4));
+        summaryCard.style.setProperty("--summary-collapse", collapse.toFixed(4));
+      }
+
+      const detailCard = detailCardRefs.current[index];
+      if (detailCard) {
+        const motion = getDetailCardMotion(progress, step.id);
+        const detailMediaReveal = step.id === 2
+          ? Math.max(0, Math.min(1, (motion.opacity - 0.28) / 0.72))
+          : 1;
+        detailCard.style.setProperty("--detail-opacity", motion.opacity.toFixed(4));
+        detailCard.style.setProperty("--detail-translate-y", `${motion.translateY.toFixed(2)}px`);
+        detailCard.style.setProperty("--detail-scale", motion.scale.toFixed(4));
+        detailCard.style.setProperty("--detail-media-reveal-progress", detailMediaReveal.toFixed(4));
+      }
+    });
+  }, []);
+
+  const resetVideoStageStyles = useCallback(() => {
+    videoScrollProgressRef.current = 0;
+    writeCardStylesForProgress(0);
+  }, [writeCardStylesForProgress]);
+
+  const setLeftPanelRef = useCallback((element: HTMLDivElement | null) => {
+    leftPanelRef.current = element;
+    if (element) {
+      element.style.setProperty(
+        "--left-panel-reveal",
+        getLeftPanelRevealProgress(videoScrollProgressRef.current).toFixed(4),
+      );
+    }
+  }, []);
+
+  const [cardRefSetters] = useState(() => ({
+    summary: STACKED_VIDEO_STEPS.map((step, index) => (element: HTMLElement | null) => {
+      summaryCardRefs.current[index] = element;
+      if (element) {
+        const progress = videoScrollProgressRef.current;
+        const reveal = getSummaryCardRevealProgress(progress, step.id);
+        const collapse = getSummaryCardCollapseProgress(progress, step.id);
+        element.style.setProperty("--summary-reveal", reveal.toFixed(4));
+        element.style.setProperty("--summary-reveal-opacity", reveal.toFixed(4));
+        element.style.setProperty("--summary-collapse", collapse.toFixed(4));
+      }
+    }),
+    detail: STACKED_VIDEO_STEPS.map((step, index) => (element: HTMLElement | null) => {
+      detailCardRefs.current[index] = element;
+      if (element) {
+        const progress = videoScrollProgressRef.current;
+        const motion = getDetailCardMotion(progress, step.id);
+        const detailMediaReveal = step.id === 2
+          ? Math.max(0, Math.min(1, (motion.opacity - 0.28) / 0.72))
+          : 1;
+        element.style.setProperty("--detail-opacity", motion.opacity.toFixed(4));
+        element.style.setProperty("--detail-translate-y", `${motion.translateY.toFixed(2)}px`);
+        element.style.setProperty("--detail-scale", motion.scale.toFixed(4));
+        element.style.setProperty("--detail-media-reveal-progress", detailMediaReveal.toFixed(4));
+      }
+    }),
+    detailSlot: STACKED_VIDEO_STEPS.map((_, index) => (handle: DetailImageSlotHandle | null) => {
+      detailSlotRefs.current[index] = handle;
+    }),
+  }));
+
+  const summaryCardRefSetters = cardRefSetters.summary;
+  const detailCardRefSetters = cardRefSetters.detail;
+  const detailSlotRefSetters = cardRefSetters.detailSlot;
 
   useEffect(() => {
     idxRef.current = activeIndex;
@@ -1506,34 +1609,71 @@ export function HeroStory({
       invalidateOnRefresh: true,
       onUpdate: (self) => {
         const { progress } = self;
-        setVideoScrollProgress(progress);
-        const nextStep = getVideoStepFromProgress(progress);
+        videoScrollProgressRef.current = progress;
+        writeCardStylesForProgress(progress);
 
-        setVideoTransition((current) => (
-          current.step === nextStep
-            ? current
-            : {
-              step: nextStep,
-              direction: nextStep > current.step ? 1 : -1,
-            }
-        ));
+        const nextStep = getVideoStepFromProgress(progress);
+        if (nextStep !== stepRef.current) {
+          const previousStep = stepRef.current;
+          stepRef.current = nextStep;
+          setVideoTransition({
+            step: nextStep,
+            direction: nextStep > previousStep ? 1 : -1,
+          });
+        }
+
+        const nextShowSidePanels = getLeftPanelRevealProgress(progress) > 0.001;
+        if (nextShowSidePanels !== showSidePanelsRef.current) {
+          showSidePanelsRef.current = nextShowSidePanels;
+          setShowSidePanels(nextShowSidePanels);
+        }
+
+        const step2Motion = getDetailCardMotion(progress, 2);
+        const step2MediaReveal = Math.max(
+          0,
+          Math.min(1, (step2Motion.opacity - 0.28) / 0.72),
+        );
+        if (step2MediaReveal >= 0.995) {
+          detailSlotRefs.current[0]?.tryFireConfetti();
+        }
       },
       onLeaveBack: () => {
-        setVideoScrollProgress(0);
-        setVideoTransition({ step: 1, direction: -1 });
+        resetVideoStageStyles();
+        if (stepRef.current !== 1) {
+          stepRef.current = 1;
+          setVideoTransition({ step: 1, direction: -1 });
+        }
+        if (showSidePanelsRef.current) {
+          showSidePanelsRef.current = false;
+          setShowSidePanels(false);
+        }
       },
     });
 
     return () => {
       trigger.kill();
     };
-  }, [activeIndex, isCtaDocked, reducedMotion]);
+  }, [activeIndex, isCtaDocked, reducedMotion, resetVideoStageStyles, writeCardStylesForProgress]);
 
   useEffect(() => {
     if (activeIndex !== LAST_KEYWORD_INDEX || !isCtaDocked) {
-      setVideoScrollProgress(0);
+      resetVideoStageStyles();
+      const frameId = window.requestAnimationFrame(() => {
+        if (stepRef.current !== 1) {
+          stepRef.current = 1;
+          setVideoTransition({ step: 1, direction: -1 });
+        }
+        if (showSidePanelsRef.current) {
+          showSidePanelsRef.current = false;
+          setShowSidePanels(false);
+        }
+      });
+
+      return () => {
+        window.cancelAnimationFrame(frameId);
+      };
     }
-  }, [activeIndex, isCtaDocked]);
+  }, [activeIndex, isCtaDocked, resetVideoStageStyles]);
 
   useEffect(() => {
     const footerTrigger = footerTriggerRef.current;
@@ -1564,14 +1704,7 @@ export function HeroStory({
   const resolvedVideoStep = activeIndex === LAST_KEYWORD_INDEX && isCtaDocked
     ? videoTransition.step
     : 1;
-  const leftPanelRevealProgress = activeIndex === LAST_KEYWORD_INDEX && isCtaDocked
-    ? getLeftPanelRevealProgress(videoScrollProgress)
-    : 0;
-  const stackedVideoSteps = useMemo(
-    () => VIDEO_STEP_SEQUENCE.filter((step) => step.id >= SHOW_SIDE_PANELS_FROM_STEP),
-    [],
-  );
-  const showSidePanels = leftPanelRevealProgress > 0.001;
+  const stackedVideoSteps = STACKED_VIDEO_STEPS;
 
   const isMobile = viewportWidth > 0 ? viewportWidth < 640 : false;
   const frameWidthBoost = isMobile ? 24 : 40;
@@ -1723,13 +1856,11 @@ export function HeroStory({
 
           <div className="hero-video-story-layout relative z-10">
             <div
+              ref={setLeftPanelRef}
               className={`hero-video-side hero-video-side--left ${showSidePanels ? "is-visible" : ""}`}
               aria-hidden={!showSidePanels}
-              style={{ ["--left-panel-reveal" as string]: leftPanelRevealProgress.toFixed(4) }}
             >
               {stackedVideoSteps.map((step, index) => {
-                const summaryReveal = getSummaryCardRevealProgress(videoScrollProgress, step.id);
-                const summaryCollapse = getSummaryCardCollapseProgress(videoScrollProgress, step.id);
                 const state = step.id === resolvedVideoStep
                   ? "active"
                   : step.id < resolvedVideoStep
@@ -1739,14 +1870,12 @@ export function HeroStory({
                 return (
                   <article
                     key={step.id}
+                    ref={summaryCardRefSetters[index]}
                     className="hero-video-note hero-video-note--summary"
                     data-state={state}
                     data-step-id={step.id}
                     style={{
                       ["--video-summary-bg" as string]: VIDEO_SUMMARY_COLORS[index] ?? VIDEO_SUMMARY_COLORS[0],
-                      ["--summary-reveal" as string]: summaryReveal.toFixed(4),
-                      ["--summary-reveal-opacity" as string]: summaryReveal.toFixed(4),
-                      ["--summary-collapse" as string]: summaryCollapse.toFixed(4),
                       ["--summary-reveal-offset-y" as string]: step.id === 2 ? "320px" : "72px",
                     }}
                   >
@@ -1774,30 +1903,20 @@ export function HeroStory({
               aria-hidden={!showSidePanels}
             >
               {showSidePanels
-                ? stackedVideoSteps.map((step) => {
-                    const detailMotion = getDetailCardMotion(videoScrollProgress, step.id);
-                    const detailMediaRevealProgress = step.id === 2
-                      ? Math.max(0, Math.min(1, (detailMotion.opacity - 0.28) / 0.72))
-                      : 1;
-
-                    return (
-                      <article
-                        key={step.id}
-                        className="hero-video-note hero-video-note--detail"
-                        data-state={step.id === resolvedVideoStep ? "active" : step.id < resolvedVideoStep ? "past" : "future"}
-                        style={{
-                          ["--detail-opacity" as string]: detailMotion.opacity.toFixed(4),
-                          ["--detail-translate-y" as string]: `${detailMotion.translateY.toFixed(2)}px`,
-                          ["--detail-scale" as string]: detailMotion.scale.toFixed(4),
-                          ["--detail-media-reveal-progress" as string]: detailMediaRevealProgress.toFixed(4),
-                          zIndex: step.id === resolvedVideoStep ? 3 : step.id < resolvedVideoStep ? 1 : 2,
-                        }}
-                      >
-                        <DetailImageSlot stepId={step.id} revealProgress={detailMediaRevealProgress} />
-                        <p className="hero-video-note__text">{renderSummaryText(step.detail)}</p>
-                      </article>
-                    );
-                  })
+                ? stackedVideoSteps.map((step, index) => (
+                    <article
+                      key={step.id}
+                      ref={detailCardRefSetters[index]}
+                      className="hero-video-note hero-video-note--detail"
+                      data-state={step.id === resolvedVideoStep ? "active" : step.id < resolvedVideoStep ? "past" : "future"}
+                      style={{
+                        zIndex: step.id === resolvedVideoStep ? 3 : step.id < resolvedVideoStep ? 1 : 2,
+                      }}
+                    >
+                      <DetailImageSlot ref={detailSlotRefSetters[index]} stepId={step.id} />
+                      <p className="hero-video-note__text">{renderSummaryText(step.detail)}</p>
+                    </article>
+                  ))
                 : null}
             </div>
           </div>
