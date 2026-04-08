@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 type SixthSectionShellProps = {
   className?: string;
@@ -141,17 +141,23 @@ function GiftCardItem({ card }: { card: GiftCard }) {
   );
 }
 
-function GiftCardMarquee() {
+function GiftCardMarquee({ reverse = false }: { reverse?: boolean }) {
   const doubled = [...GIFT_CARDS, ...GIFT_CARDS];
   return (
     <div
-      className="paymong-gifticon-marquee-wrapper relative w-full overflow-hidden py-4"
+      className={`paymong-gifticon-marquee-wrapper relative w-full overflow-hidden py-4 ${
+        reverse ? "paymong-gifticon-marquee-wrapper--reverse" : ""
+      }`.trim()}
       style={{
         maskImage: "linear-gradient(to right, transparent, black 6%, black 94%, transparent)",
         WebkitMaskImage: "linear-gradient(to right, transparent, black 6%, black 94%, transparent)",
       }}
     >
-      <div className="paymong-gifticon-marquee flex w-max items-center gap-5">
+      <div
+        className={`paymong-gifticon-marquee flex w-max items-center gap-5 ${
+          reverse ? "paymong-gifticon-marquee--reverse" : ""
+        }`.trim()}
+      >
         {doubled.map((card, index) => (
           <GiftCardItem key={`${card.brand}-${index}`} card={card} />
         ))}
@@ -161,9 +167,16 @@ function GiftCardMarquee() {
           0% { transform: translate3d(0, 0, 0); }
           100% { transform: translate3d(-50%, 0, 0); }
         }
+        @keyframes paymong-gifticon-scroll-reverse {
+          0% { transform: translate3d(-50%, 0, 0); }
+          100% { transform: translate3d(0, 0, 0); }
+        }
         .paymong-gifticon-marquee {
           animation: paymong-gifticon-scroll 50s linear infinite;
           will-change: transform;
+        }
+        .paymong-gifticon-marquee--reverse {
+          animation: paymong-gifticon-scroll-reverse 50s linear infinite;
         }
         .paymong-gifticon-marquee-wrapper:hover .paymong-gifticon-marquee {
           animation-play-state: paused;
@@ -295,17 +308,45 @@ export function SixthSectionSurface({
   );
 }
 
-export const SIXTH_ODOMETER_ACTIVATE_EVENT = "paymong:sixth-odometer-activate";
+export function SixthSectionPreviewSurface({
+  className = "",
+  showOdometer = true,
+}: SixthSectionSurfaceProps) {
+  return (
+    <div className={`mx-auto max-w-[1100px] text-center ${className}`.trim()}>
+      <div className="text-sm font-semibold uppercase tracking-[0.28em] text-white/60">페이몽 추가 혜택</div>
+      <h2 className="mt-6 text-[clamp(2.6rem,5.6vw,5.4rem)] font-semibold leading-[1.06] tracking-[-0.06em] text-white">
+        수수료 아끼기만 하셨나요?
+        <br />
+        페이몽이 2%를 돌려드립니다.
+      </h2>
+      <p className="mx-auto mt-7 whitespace-nowrap text-base leading-[1.75] text-white/72 sm:text-lg">
+        타사에 없는 페이몽만의 혜택. 결제할 때마다 쌓이는 마일리지를 경험해보세요.
+      </p>
+      {showOdometer ? <SixthSectionOdometerBlock className="mx-auto mt-10" /> : null}
+    </div>
+  );
+}
+
+const SIXTH_ODOMETER_TRIGGER_SCROLL_Y = 10539;
 
 function SixthSectionOdometerBlock({
   className = "",
 }: {
   className?: string;
 }) {
+  const odometerBlockRef = useRef<HTMLDivElement | null>(null);
   const [isOdometerActive, setIsOdometerActive] = useState(false);
 
   useEffect(() => {
-    const handleActivate = () => {
+    let hasTriggered = false;
+
+    const triggerOdometer = () => {
+      if (hasTriggered || window.scrollY < SIXTH_ODOMETER_TRIGGER_SCROLL_Y) {
+        return;
+      }
+
+      hasTriggered = true;
       setIsOdometerActive(false);
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -314,14 +355,19 @@ function SixthSectionOdometerBlock({
       });
     };
 
-    window.addEventListener(SIXTH_ODOMETER_ACTIVATE_EVENT, handleActivate);
+    triggerOdometer();
+    window.addEventListener("scroll", triggerOdometer, { passive: true });
+    window.addEventListener("resize", triggerOdometer);
+
     return () => {
-      window.removeEventListener(SIXTH_ODOMETER_ACTIVATE_EVENT, handleActivate);
+      window.removeEventListener("scroll", triggerOdometer);
+      window.removeEventListener("resize", triggerOdometer);
     };
   }, []);
 
   return (
     <div
+      ref={odometerBlockRef}
       className={`inline-flex flex-col items-center rounded-[1.6rem] border border-white/20 bg-white/10 px-7 py-5 backdrop-blur-sm ${className}`.trim()}
     >
       <div className="text-[0.78rem] font-medium tracking-[0.04em] text-white/72 sm:text-[0.84rem]">
@@ -342,6 +388,7 @@ function SixthSectionOdometerBlock({
 export function SixthSection() {
   return (
     <section
+      data-sixth-section-root
       className="section-two-onward-font relative z-20 overflow-hidden"
       style={{
         backgroundColor: "#FFF",
@@ -373,6 +420,7 @@ export function SixthSection() {
 
         <div className="mt-20">
           <GiftCardMarquee />
+          <GiftCardMarquee reverse />
         </div>
       </div>
     </section>

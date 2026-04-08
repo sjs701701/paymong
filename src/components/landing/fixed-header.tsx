@@ -6,7 +6,9 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 const HEADER_LOGO_PATH = "/brand/paymong-header-logo.svg";
+const HEADER_LOGO_WHITE_PATH = "/brand/white-logo/paymong-header-logo-white.svg";
 const HEADER_AUTO_HIDE_SYNC_EVENT = "paymong:header-auto-hide-sync";
+const HEADER_PREVIEW_LOGO_SYNC_EVENT = "paymong:header-preview-logo-sync";
 
 type HeaderCategory = {
   name: string;
@@ -100,9 +102,11 @@ export function FixedHeader({
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
+  const [useWhiteLogo, setUseWhiteLogo] = useState(false);
   const [pillStyle, setPillStyle] = useState<PillStyle>(initialPillStyle);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previousScrollYRef = useRef(0);
+  const previewLogoActiveRef = useRef(false);
 
   useEffect(() => {
     previousScrollYRef.current = window.scrollY;
@@ -164,6 +168,45 @@ export function FixedHeader({
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
+    };
+  }, []);
+
+  useEffect(() => {
+    const evaluateLogoContext = () => {
+      const sixthSection = document.querySelector<HTMLElement>("[data-sixth-section-root]");
+      const faqSection = document.querySelector<HTMLElement>("[data-faq-section-root]");
+      const headerBandBottom = 124;
+      const faqSyncLine = 180;
+      const isSixthSectionUnderHeader = sixthSection
+        ? sixthSection.getBoundingClientRect().top <= headerBandBottom &&
+          sixthSection.getBoundingClientRect().bottom >= 0
+        : false;
+      const isFaqSectionUnderHeader = faqSection
+        ? faqSection.getBoundingClientRect().top <= faqSyncLine &&
+          faqSection.getBoundingClientRect().bottom >= 0
+        : false;
+
+      setUseWhiteLogo((previewLogoActiveRef.current || isSixthSectionUnderHeader) && !isFaqSectionUnderHeader);
+    };
+
+    const handlePreviewSync = (event: Event) => {
+      const active = (event as CustomEvent<{ active?: boolean }>).detail?.active;
+
+      if (typeof active === "boolean") {
+        previewLogoActiveRef.current = active;
+        evaluateLogoContext();
+      }
+    };
+
+    evaluateLogoContext();
+    window.addEventListener("scroll", evaluateLogoContext, { passive: true });
+    window.addEventListener("resize", evaluateLogoContext);
+    window.addEventListener(HEADER_PREVIEW_LOGO_SYNC_EVENT, handlePreviewSync as EventListener);
+
+    return () => {
+      window.removeEventListener("scroll", evaluateLogoContext);
+      window.removeEventListener("resize", evaluateLogoContext);
+      window.removeEventListener(HEADER_PREVIEW_LOGO_SYNC_EVENT, handlePreviewSync as EventListener);
     };
   }, []);
 
@@ -347,7 +390,7 @@ export function FixedHeader({
               className="relative z-10 inline-flex items-center pointer-events-auto drop-shadow-md"
             >
               <Image
-                src={HEADER_LOGO_PATH}
+                src={useWhiteLogo ? HEADER_LOGO_WHITE_PATH : HEADER_LOGO_PATH}
                 alt="Paymong"
                 className="h-10 w-auto object-contain transition-transform hover:scale-[1.03]"
                 width={148}

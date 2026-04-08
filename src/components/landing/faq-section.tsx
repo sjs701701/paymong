@@ -31,7 +31,10 @@ export function FaqSection() {
   const [openIndex, setOpenIndex] = useState<number>(0);
 
   return (
-    <section className="section-two-onward-font hero-video-stage-background relative z-40 px-5 py-24 text-slate-950 sm:px-8 lg:px-16 lg:py-32">
+    <section
+      data-faq-section-root
+      className="section-two-onward-font hero-video-stage-background relative z-40 px-5 py-24 text-slate-950 sm:px-8 lg:px-16 lg:py-32"
+    >
       <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-14 lg:flex-row lg:gap-24">
         <div className="lg:w-[34%]">
           <div className="mb-4 flex items-center gap-2">

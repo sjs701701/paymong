@@ -5,9 +5,8 @@ import { BadgeCheck } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
-  SIXTH_ODOMETER_ACTIVATE_EVENT,
   SixthSectionShell,
-  SixthSectionSurface,
+  SixthSectionPreviewSurface,
 } from "@/components/landing/sixth-section";
 
 type SequenceCard = {
@@ -51,6 +50,8 @@ const SEQUENCE_CARDS: SequenceCard[] = [
 
 const DEFAULT_MASK_PATH =
   "M 30 170 C 20 170 15 165 15 155 V 60 C 15 45 25 35 40 35 C 48 35 55 40 60 48 L 100 110 L 140 48 C 145 40 152 35 160 35 C 175 35 185 45 185 60 V 155 C 185 165 180 170 170 170 C 160 170 155 165 155 155 V 85 L 115 145 C 108 155 92 155 85 145 L 45 85 V 155 C 45 165 40 170 30 170 Z";
+const HEADER_PREVIEW_LOGO_SYNC_EVENT = "paymong:header-preview-logo-sync";
+
 function SequenceCardVisual({
   visual,
 }: {
@@ -358,6 +359,8 @@ export function FifthSection() {
     updateMaskPosition(targetX, targetY);
 
     const ctx = gsap.context(() => {
+      let lastPreviewActive = false;
+      let maskStartProgress = 1;
       const getStartOffset = () => Math.max(160, window.innerWidth * 0.34);
       const getMoveDistance = () => {
         const dist = track.scrollWidth - window.innerWidth + 96;
@@ -384,6 +387,20 @@ export function FifthSection() {
           end: "bottom bottom",
           scrub: 1,
           invalidateOnRefresh: true,
+          onUpdate: (self) => {
+            const previewActive = self.progress >= maskStartProgress;
+
+            if (previewActive === lastPreviewActive) {
+              return;
+            }
+
+            lastPreviewActive = previewActive;
+            window.dispatchEvent(
+              new CustomEvent(HEADER_PREVIEW_LOGO_SYNC_EVENT, {
+                detail: { active: previewActive },
+              }),
+            );
+          },
         },
       });
 
@@ -417,6 +434,7 @@ export function FifthSection() {
           },
           "+=0.2",
         )
+        .add("maskStart")
         .to(
           maskGroup,
           {
@@ -445,16 +463,9 @@ export function FifthSection() {
           },
           "inflate",
         )
-        .call(
-          () => {
-            if (typeof window !== "undefined") {
-              window.dispatchEvent(new Event(SIXTH_ODOMETER_ACTIVATE_EVENT));
-            }
-          },
-          undefined,
-          "inflate+=1.2",
-        )
         .to({}, { duration: 1.5 });
+
+      maskStartProgress = timeline.labels.maskStart / timeline.totalDuration();
     }, wrapper);
 
     window.addEventListener("mousemove", handleMouseMove);
@@ -463,6 +474,11 @@ export function FifthSection() {
     ScrollTrigger.refresh();
 
     return () => {
+      window.dispatchEvent(
+        new CustomEvent(HEADER_PREVIEW_LOGO_SYNC_EVENT, {
+          detail: { active: false },
+        }),
+      );
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("resize", handleResize);
       ctx.revert();
@@ -542,7 +558,7 @@ export function FifthSection() {
                   backgroundPosition: "0 0",
                 }}
               >
-                <SixthSectionSurface />
+                <SixthSectionPreviewSurface />
               </SixthSectionShell>
             </div>
           </foreignObject>
