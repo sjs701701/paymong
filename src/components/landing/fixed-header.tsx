@@ -26,11 +26,11 @@ type PillStyle = {
 };
 
 const defaultCategories: HeaderCategory[] = [
-  { name: "\uCE74\uD14C\uACE0\uB9AC 1", href: "#" },
-  { name: "\uCE74\uD14C\uACE0\uB9AC 2", href: "#" },
-  { name: "\uCE74\uD14C\uACE0\uB9AC 3", href: "#" },
-  { name: "\uCE74\uD14C\uACE0\uB9AC 4", href: "#" },
-  { name: "\uCE74\uD14C\uACE0\uB9AC 5", href: "#" },
+  { name: "\uACE0\uAC1D\uC13C\uD130", href: "#" },
+  { name: "\uC774\uC6A9\uAC00\uC774\uB4DC", href: "#" },
+  { name: "\uC774\uC6A9\uD6C4\uAE30", href: "#" },
+  { name: "\uB9C8\uC77C\uB9AC\uC9C0\uC0F5", href: "#" },
+  { name: "\uC138\uAE08\uACC4\uC0B0\uC11C/\uBD80\uAC00\uC138", href: "#" },
 ];
 
 const initialPillStyle: PillStyle = {
