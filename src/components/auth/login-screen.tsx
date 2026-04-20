@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 type ImageColumnProps = {
   direction: "up" | "down";
@@ -10,12 +11,21 @@ type ImageColumnProps = {
 };
 
 const customStyles = `
+  .login-marquee-column {
+    --login-card-height: 400px;
+    --login-card-gap: 1.5rem;
+    --login-card-count: 6;
+    --login-loop-height: calc(
+      (var(--login-card-height) * var(--login-card-count)) +
+      (var(--login-card-gap) * var(--login-card-count))
+    );
+  }
   @keyframes slide-up {
     0% { transform: translateY(0); }
-    100% { transform: translateY(-50%); }
+    100% { transform: translateY(calc(-1 * var(--login-loop-height))); }
   }
   @keyframes slide-down {
-    0% { transform: translateY(-50%); }
+    0% { transform: translateY(calc(-1 * var(--login-loop-height))); }
     100% { transform: translateY(0); }
   }
   .login-animate-slide-up {
@@ -66,22 +76,26 @@ function buildColumnImages(seed: number) {
 }
 
 function ImageColumn({ direction, duration, delay, seed }: ImageColumnProps) {
-  const columnImages = buildColumnImages(seed);
+  const columnImages = buildColumnImages(seed).slice(0, images.length);
 
   return (
     <div
-      className={`flex w-64 flex-col gap-6 ${
+      className={`login-marquee-column flex w-64 flex-col gap-6 will-change-transform ${
         direction === "up" ? "login-animate-slide-up" : "login-animate-slide-down"
       }`}
       style={{ animationDuration: duration, animationDelay: delay }}
     >
-      {columnImages.map((src, index) => (
-        <div
-          key={`${seed}-${index}`}
-          className="h-[400px] w-full flex-shrink-0 overflow-hidden rounded-[1.75rem] bg-gray-200 shadow-[0_20px_40px_rgba(15,23,42,0.12)]"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={src} alt="" className="h-full w-full object-cover" />
+      {[0, 1].map((groupIndex) => (
+        <div key={`${seed}-group-${groupIndex}`} className="flex flex-col gap-6">
+          {columnImages.map((src, index) => (
+            <div
+              key={`${seed}-${groupIndex}-${index}`}
+              className="h-[400px] w-full flex-shrink-0 overflow-hidden rounded-[1.75rem] bg-gray-200 shadow-[0_20px_40px_rgba(15,23,42,0.12)]"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={src} alt="" className="h-full w-full object-cover" />
+            </div>
+          ))}
         </div>
       ))}
     </div>
@@ -106,6 +120,51 @@ export function LoginScreen() {
               Welcome back
             </h1>
 
+            <form className="flex w-full flex-col gap-3" onSubmit={(e) => e.preventDefault()}>
+              <input
+                type="tel"
+                inputMode="numeric"
+                placeholder="휴대폰 번호 (-없이 숫자만 입력)"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 transition-colors focus:border-black focus:bg-white focus:outline-none"
+                required
+              />
+              <button
+                type="submit"
+                className="group relative w-full overflow-hidden rounded-xl bg-black px-4 py-3 font-medium text-white"
+                onMouseEnter={(event) => {
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  event.currentTarget.style.setProperty("--pointer-x", `${event.clientX - rect.left}px`);
+                  event.currentTarget.style.setProperty("--pointer-y", `${event.clientY - rect.top}px`);
+                }}
+                onMouseMove={(event) => {
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  event.currentTarget.style.setProperty("--pointer-x", `${event.clientX - rect.left}px`);
+                  event.currentTarget.style.setProperty("--pointer-y", `${event.clientY - rect.top}px`);
+                }}
+              >
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-[var(--pointer-x,50%)] top-[var(--pointer-y,50%)] h-[56rem] w-[56rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#0038F1] scale-0 transition-transform duration-500 ease-out group-hover:scale-100"
+                />
+                <span className="relative z-10">인증문자 받기</span>
+              </button>
+
+              <label className="mt-1 flex items-center justify-between px-1 py-1">
+                <span className="text-sm font-medium text-slate-700">자동로그인</span>
+                <span className="relative inline-flex items-center">
+                  <input type="checkbox" className="peer sr-only" />
+                  <span className="h-7 w-12 rounded-full bg-slate-200 transition-colors peer-checked:bg-[#0038F1]" />
+                  <span className="pointer-events-none absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5" />
+                </span>
+              </label>
+            </form>
+
+            <div className="my-6 flex w-full items-center">
+              <hr className="flex-grow border-gray-100" />
+              <span className="px-4 text-sm text-gray-400">or</span>
+              <hr className="flex-grow border-gray-100" />
+            </div>
+
             <div className="space-y-3">
               {authProviders.map((provider) => (
                 <button
@@ -121,28 +180,6 @@ export function LoginScreen() {
               ))}
             </div>
 
-            <div className="my-6 flex w-full items-center">
-              <hr className="flex-grow border-gray-100" />
-              <span className="px-4 text-sm text-gray-400">or</span>
-              <hr className="flex-grow border-gray-100" />
-            </div>
-
-            <form className="flex w-full flex-col gap-3" onSubmit={(e) => e.preventDefault()}>
-              <input
-                type="tel"
-                inputMode="numeric"
-                placeholder="휴대폰 번호 (-없이 숫자만 입력)"
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 transition-colors focus:border-black focus:bg-white focus:outline-none"
-                required
-              />
-              <button
-                type="submit"
-                className="w-full rounded-xl bg-black px-4 py-3 font-medium text-white transition-colors hover:bg-gray-900"
-              >
-                Continue
-              </button>
-            </form>
-
             <p className="mt-6 text-center text-xs text-gray-400">
               By continuing, you agree to our{" "}
               <a href="#" className="underline transition-colors hover:text-gray-600">
@@ -154,13 +191,23 @@ export function LoginScreen() {
               </a>
               .
             </p>
+
+            <p className="mt-4 text-center text-sm text-slate-500">
+              아직 계정이 없으신가요?{" "}
+              <Link
+                href="/signup"
+                className="relative inline-block font-bold text-slate-950 transition-colors hover:text-slate-700 after:absolute after:left-0 after:bottom-[-2px] after:h-[1px] after:w-full after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-200 after:ease-out hover:after:scale-x-100"
+              >
+                회원가입 하러가기
+              </Link>
+            </p>
           </div>
         </div>
 
         <div className="relative hidden border-l border-gray-100 bg-gray-50 lg:block lg:w-1/2">
           <div
             className="absolute left-1/2 top-1/2 flex h-[200%] w-[150%] gap-6"
-            style={{ transform: "translate(-50%, -50%) rotate(-15deg)" }}
+            style={{ transform: "translate(-50%, -50%) rotate(15deg)" }}
           >
             <ImageColumn direction="up" duration="40s" delay="0s" seed={0} />
             <ImageColumn direction="down" duration="45s" delay="-10s" seed={1} />
