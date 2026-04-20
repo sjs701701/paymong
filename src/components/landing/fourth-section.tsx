@@ -138,7 +138,7 @@ function PublicLottie({
         });
       },
       {
-        threshold: 0.25,
+        threshold: 0.05,
       },
     );
 
