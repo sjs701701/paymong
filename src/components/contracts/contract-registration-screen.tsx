@@ -403,7 +403,7 @@ export function ContractRegistrationScreen() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#f5f8ff] font-sans text-[#151515]">
+    <div className="relative min-h-screen overflow-x-clip bg-[#f5f8ff] font-sans text-[#151515]">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-[340px]"
