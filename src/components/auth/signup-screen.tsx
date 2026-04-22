@@ -1,10 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
 export function SignupScreen() {
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const isPhoneValid = phoneNumber.length === 11;
+
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-[#f6f6f6] font-sans text-[#151515]">
       <div
@@ -62,17 +66,33 @@ export function SignupScreen() {
             <input
               type="tel"
               inputMode="numeric"
+              value={phoneNumber}
+              onChange={(e) => {
+                const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 11);
+                setPhoneNumber(digitsOnly);
+              }}
               className="block w-full rounded-[8px] border border-[#E0E0E0] bg-white px-4 py-[14px] text-[15px] transition-shadow focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               placeholder="휴대폰번호"
+              maxLength={11}
               required
             />
 
-            <button
-              type="submit"
-              className="w-full rounded-[8px] bg-blue-600 py-[14px] text-[15px] font-semibold text-white transition-colors hover:bg-blue-700 shadow-sm"
-            >
-              본인인증 진행
-            </button>
+            {isPhoneValid ? (
+              <Link
+                href="/signup/complete"
+                className="block w-full rounded-[8px] bg-blue-600 py-[14px] text-center text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+              >
+                본인인증 진행
+              </Link>
+            ) : (
+              <button
+                type="submit"
+                disabled
+                className="w-full cursor-not-allowed rounded-[8px] bg-[#D9DDE3] py-[14px] text-[15px] font-semibold text-[#5F6773]"
+              >
+                본인인증 진행
+              </button>
+            )}
           </form>
 
           <div className="my-7 flex items-center">

@@ -4,6 +4,7 @@ import { Fragment, type CSSProperties, forwardRef, useCallback, useEffect, useIm
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import gsap from "gsap";
 import Lottie from "lottie-react";
+import { useRouter } from "next/navigation";
 import ReactCanvasConfetti from "react-canvas-confetti";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { FourthSection } from "@/components/landing/fourth-section";
@@ -898,6 +899,7 @@ export function HeroStory({
 }: {
   onLastKeywordStateChange?: (isLastKeyword: boolean) => void;
 }) {
+  const router = useRouter();
   const sectionRef = useRef<HTMLElement | null>(null);
   const heroContainerRef = useRef<HTMLDivElement | null>(null);
   const heroStageRef = useRef<HTMLDivElement | null>(null);
@@ -1797,8 +1799,10 @@ export function HeroStory({
       >
           <button
             ref={ctaRef}
+              type="button"
               className={`cta-btn ${isCtaDocked ? "cta-btn--docked" : ""} ${isCtaPreviewActive || (isCtaDocked && isFooterInView) ? "cta-btn--preview" : ""} ${isCtaReturning ? "cta-btn--returning" : ""}`}
               aria-label={HERO_COPY.cta}
+              onClick={() => router.push("/login")}
               onMouseEnter={() => {
                 if (isCtaDocked && !isFooterInView) setIsCtaPreviewActive(true);
               }}

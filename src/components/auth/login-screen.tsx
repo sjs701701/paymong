@@ -1,7 +1,9 @@
 "use client";
 
+import { type KeyboardEvent, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type ImageColumnProps = {
   direction: "up" | "down";
@@ -103,6 +105,60 @@ function ImageColumn({ direction, duration, delay, seed }: ImageColumnProps) {
 }
 
 export function LoginScreen() {
+  const router = useRouter();
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [verificationCode, setVerificationCode] = useState(["", "", "", "", "", ""]);
+  const [isVerificationVisible, setIsVerificationVisible] = useState(false);
+  const [isVerificationErrorOpen, setIsVerificationErrorOpen] = useState(false);
+  const verificationInputRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const isPhoneValid = phoneNumber.length === 11;
+
+  const closeVerificationError = () => {
+    setIsVerificationErrorOpen(false);
+    setVerificationCode(["", "", "", "", "", ""]);
+    requestAnimationFrame(() => {
+      verificationInputRefs.current[0]?.focus();
+    });
+  };
+
+  const validateVerificationCode = (codeDigits: string[]) => {
+    const joinedCode = codeDigits.join("");
+
+    // TODO(paymong-auth): Replace this temporary hard-coded OTP check
+    // with the real verification module/API once the auth integration is ready.
+    if (joinedCode === "000000") {
+      router.push("/mypage");
+      return;
+    }
+
+    setIsVerificationErrorOpen(true);
+  };
+
+  const handleVerificationDigitChange = (index: number, value: string) => {
+    const nextValue = value.replace(/\D/g, "").slice(0, 1);
+    const nextCode = [...verificationCode];
+    nextCode[index] = nextValue;
+
+    setVerificationCode(nextCode);
+
+    if (nextValue && index < verificationInputRefs.current.length - 1) {
+      verificationInputRefs.current[index + 1]?.focus();
+    }
+
+    if (nextCode.every((digit) => digit.length === 1)) {
+      validateVerificationCode(nextCode);
+    }
+  };
+
+  const handleVerificationKeyDown = (
+    index: number,
+    event: KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (event.key === "Backspace" && !verificationCode[index] && index > 0) {
+      verificationInputRefs.current[index - 1]?.focus();
+    }
+  };
+
   return (
     <>
       <style>{customStyles}</style>
@@ -120,23 +176,51 @@ export function LoginScreen() {
               Welcome back
             </h1>
 
-            <form className="flex w-full flex-col gap-3" onSubmit={(e) => e.preventDefault()}>
+            <form
+              className="flex w-full flex-col gap-3"
+              onSubmit={(event) => {
+                event.preventDefault();
+
+                if (!isPhoneValid) {
+                  return;
+                }
+
+                setVerificationCode(["", "", "", "", "", ""]);
+                setIsVerificationVisible(true);
+                requestAnimationFrame(() => {
+                  verificationInputRefs.current[0]?.focus();
+                });
+              }}
+            >
               <input
                 type="tel"
                 inputMode="numeric"
+                value={phoneNumber}
+                onChange={(event) => {
+                  const digitsOnly = event.target.value.replace(/\D/g, "").slice(0, 11);
+                  setPhoneNumber(digitsOnly);
+                }}
                 placeholder="휴대폰 번호 (-없이 숫자만 입력)"
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 transition-colors focus:border-black focus:bg-white focus:outline-none"
+                maxLength={11}
                 required
               />
               <button
                 type="submit"
-                className="group relative w-full overflow-hidden rounded-xl bg-black px-4 py-3 font-medium text-white"
+                disabled={!isPhoneValid}
+                className={`group relative w-full overflow-hidden rounded-xl px-4 py-3 font-medium transition-colors ${
+                  isPhoneValid
+                    ? "bg-black text-white"
+                    : "cursor-not-allowed bg-[#D9DDE3] text-[#5F6773]"
+                }`}
                 onMouseEnter={(event) => {
+                  if (!isPhoneValid) return;
                   const rect = event.currentTarget.getBoundingClientRect();
                   event.currentTarget.style.setProperty("--pointer-x", `${event.clientX - rect.left}px`);
                   event.currentTarget.style.setProperty("--pointer-y", `${event.clientY - rect.top}px`);
                 }}
                 onMouseMove={(event) => {
+                  if (!isPhoneValid) return;
                   const rect = event.currentTarget.getBoundingClientRect();
                   event.currentTarget.style.setProperty("--pointer-x", `${event.clientX - rect.left}px`);
                   event.currentTarget.style.setProperty("--pointer-y", `${event.clientY - rect.top}px`);
@@ -144,10 +228,45 @@ export function LoginScreen() {
               >
                 <span
                   aria-hidden="true"
-                  className="pointer-events-none absolute left-[var(--pointer-x,50%)] top-[var(--pointer-y,50%)] h-[56rem] w-[56rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#0038F1] scale-0 transition-transform duration-500 ease-out group-hover:scale-100"
+                  className={`pointer-events-none absolute left-[var(--pointer-x,50%)] top-[var(--pointer-y,50%)] h-[56rem] w-[56rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#0038F1] scale-0 transition-transform duration-500 ease-out ${
+                    isPhoneValid ? "group-hover:scale-100" : ""
+                  }`}
                 />
                 <span className="relative z-10">인증문자 받기</span>
               </button>
+
+              {isVerificationVisible ? (
+                <div className="mt-3 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-slate-700">인증번호 입력</p>
+                    <button
+                      type="button"
+                      className="text-sm font-medium text-[#0038F1] transition-colors hover:text-[#002ec8]"
+                    >
+                      재전송
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-6 gap-2">
+                    {verificationCode.map((digit, index) => (
+                      <input
+                        key={`verification-digit-${index}`}
+                        ref={(element) => {
+                          verificationInputRefs.current[index] = element;
+                        }}
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(event) => handleVerificationDigitChange(index, event.target.value)}
+                        onKeyDown={(event) => handleVerificationKeyDown(index, event)}
+                        className="h-12 w-full rounded-xl border border-gray-200 bg-white text-center text-lg font-semibold text-slate-950 transition-colors focus:border-[#0038F1] focus:outline-none focus:ring-1 focus:ring-[#0038F1]"
+                        aria-label={`인증번호 ${index + 1}번째 자리`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
 
               <label className="mt-1 flex items-center justify-between px-1 py-1">
                 <span className="text-sm font-medium text-slate-700">자동로그인</span>
@@ -215,9 +334,31 @@ export function LoginScreen() {
             <ImageColumn direction="down" duration="50s" delay="-20s" seed={3} />
             <ImageColumn direction="up" duration="42s" delay="-15s" seed={4} />
           </div>
-
         </div>
       </div>
+
+      {isVerificationErrorOpen ? (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/20 px-4">
+          <div className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-white/40 bg-white/25 p-6 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] backdrop-blur-[16px]">
+            <div className="pointer-events-none absolute left-0 top-0 h-1/3 w-full bg-gradient-to-b from-white/30 to-transparent" />
+            <h2 className="relative z-10 text-lg font-semibold text-slate-950">
+              인증번호를 다시 확인해주세요
+            </h2>
+            <p className="relative z-10 mt-2 text-sm font-medium leading-6 text-black">
+              입력한 인증번호가 올바르지 않습니다. 다시 입력해 주세요.
+            </p>
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={closeVerificationError}
+                className="relative z-10 rounded-xl border border-[#6ea8ff]/50 bg-[#0038F1]/80 px-4 py-2 text-sm font-semibold text-white backdrop-blur-md transition-all duration-200 hover:bg-[#002ec8]/85 hover:shadow-lg"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

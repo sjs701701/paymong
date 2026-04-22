@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Lottie from "lottie-react";
+import type { LottieRefCurrentProps } from "lottie-react";
 import { motion, useReducedMotion } from "framer-motion";
 
 type FourthSectionCard = {
@@ -82,7 +83,7 @@ function PublicLottie({
 }) {
   const [animationData, setAnimationData] = useState<object | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const lottieRef = useRef<any>(null);
+  const lottieRef = useRef<LottieRefCurrentProps | null>(null);
   const [shouldStartPlayback, setShouldStartPlayback] = useState(!playOnceWhenInView);
   const hasTriggeredPlaybackRef = useRef(false);
 
