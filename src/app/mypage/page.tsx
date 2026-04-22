@@ -15,7 +15,7 @@ import {
 
 import { CustomScrollArea } from "@/components/ui/custom-scroll-area";
 
-type ContractStatus = "검토중" | "이용중" | "반려" | string;
+type ContractStatus = "검토중" | "이용중" | "반려";
 
 type ContractItem = {
   id: number;
@@ -73,7 +73,7 @@ const SAMPLE_CONTRACTS: ContractItem[] = [
     type: "보증금계약",
     name: "광화문 디타워 오피스 12층 A호",
     amount: "120,000,000",
-    status: "추가확인중",
+    status: "검토중",
   },
   {
     id: 8,
@@ -108,7 +108,7 @@ const SAMPLE_CONTRACTS: ContractItem[] = [
     type: "월세계약",
     name: "수원 광교중흥S클래스 220동 1101호",
     amount: "1,850,000",
-    status: "계약만료예정",
+    status: "반려",
   },
 ];
 
@@ -315,13 +315,13 @@ export default function MyPage() {
             </CustomScrollArea>
 
             <div className="mt-5 shrink-0 pt-1">
-              <button
-                type="button"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-4 text-base font-bold text-white shadow-sm transition-all hover:bg-black hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 sm:text-lg"
+              <Link
+                href="/contracts/new"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-4 text-base font-bold text-white shadow-sm transition-all hover:bg-black hover:text-white visited:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 sm:text-lg"
               >
                 <Plus size={22} />
                 계약 등록하기
-              </button>
+              </Link>
             </div>
           </main>
         </div>

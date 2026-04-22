@@ -58,12 +58,12 @@ export function SignupCompleteScreen() {
             축하드립니다.
           </h1>
 
-          <button
-            type="button"
-            className="mt-10 w-full rounded-[8px] bg-blue-600 py-[18px] text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+          <Link
+            href="/contracts/new"
+            className="mt-10 inline-flex w-full items-center justify-center rounded-[8px] bg-blue-600 py-[18px] text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 hover:text-white visited:text-white"
           >
             계약 등록하기
-          </button>
+          </Link>
 
           <Link
             href="/"
