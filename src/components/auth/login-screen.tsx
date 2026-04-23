@@ -127,7 +127,7 @@ export function LoginScreen() {
     // TODO(paymong-auth): Replace this temporary hard-coded OTP check
     // with the real verification module/API once the auth integration is ready.
     if (joinedCode === "000000") {
-      router.push("/mypage");
+      router.push("/mypage-v2");
       return;
     }
 

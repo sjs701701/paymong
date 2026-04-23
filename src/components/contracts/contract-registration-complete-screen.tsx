@@ -68,7 +68,7 @@ export function ContractRegistrationCompleteScreen() {
           </p>
 
           <Link
-            href="/mypage"
+            href="/mypage-v2"
             className="mt-10 inline-flex w-full items-center justify-center rounded-[18px] bg-[#0038F1] py-[18px] text-[15px] font-semibold text-white shadow-[0_16px_32px_rgba(0,56,241,0.24)] transition-colors hover:bg-[#002fd0]"
           >
             계약리스트로 돌아가기

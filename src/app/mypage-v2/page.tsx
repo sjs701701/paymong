@@ -1,5 +1,9 @@
 "use client";
 
+// NOTE(paymong-navigation): /mypage-v2 is the current primary contract list
+// and my page route. Keep /mypage as the legacy comparison screen until the
+// v2 flow is finalized.
+
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";

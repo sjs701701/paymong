@@ -602,7 +602,7 @@ export function ContractRegistrationScreen() {
       <main className="relative z-10 px-4 pb-[160px] pt-2 sm:px-6 lg:px-8 lg:pb-16">
         <div className="mx-auto max-w-[1200px]">
           <Link
-            href="/mypage"
+            href="/mypage-v2"
             className="group mb-6 inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-950"
           >
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />

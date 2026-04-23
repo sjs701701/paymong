@@ -1,5 +1,9 @@
 "use client";
 
+// NOTE(paymong-navigation): This /mypage screen is kept as the legacy
+// contract list for comparison only. The active user flow now points to
+// /mypage-v2 unless the team decides otherwise later.
+
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
