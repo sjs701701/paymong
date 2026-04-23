@@ -317,7 +317,7 @@ export default function MyPage() {
             <div className="mt-5 shrink-0 pt-1">
               <Link
                 href="/contracts/new"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-4 text-base font-bold text-white shadow-sm transition-all hover:bg-black hover:text-white visited:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 sm:text-lg"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-4 text-base font-bold text-white! shadow-sm transition-all hover:bg-black hover:text-white! visited:text-white! focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 sm:text-lg"
               >
                 <Plus size={22} />
                 계약 등록하기
