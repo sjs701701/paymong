@@ -116,13 +116,8 @@ export default function MyPageV2() {
         </div>
       </header>
 
-      <section className="relative flex min-h-0 flex-1">
-        <div
-          className={cn(
-            "flex min-h-0 w-full flex-col bg-white lg:w-[380px] lg:shrink-0 lg:border-r lg:border-slate-200 xl:w-[420px]",
-            view === "list" ? "flex" : "hidden lg:flex",
-          )}
-        >
+      <section className="relative flex min-h-0 flex-1 overflow-hidden">
+        <div className="flex min-h-0 w-full flex-col bg-white lg:w-[380px] lg:shrink-0 lg:border-r lg:border-slate-200 xl:w-[420px]">
           <ContractList
             contracts={filteredContracts}
             selectedId={selectedContractId}
@@ -138,8 +133,9 @@ export default function MyPageV2() {
 
         <div
           className={cn(
-            "relative min-h-0 flex-1 flex-col bg-[#eef2fa]",
-            view === "list" ? "hidden lg:flex" : "flex",
+            "absolute inset-0 z-10 flex min-h-0 flex-col bg-[#eef2fa] transition-transform duration-300 ease-out",
+            view === "list" ? "translate-x-full" : "translate-x-0",
+            "lg:static lg:z-0 lg:flex-1 lg:translate-x-0 lg:transition-none",
           )}
         >
           {selectedContract && selectedContract.status !== "이용중" ? (

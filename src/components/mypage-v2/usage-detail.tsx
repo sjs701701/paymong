@@ -148,7 +148,7 @@ export function UsageDetailView({
         <span className="w-7 shrink-0" aria-hidden />
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto animate-in fade-in-0 slide-in-from-bottom-16 duration-300 ease-out lg:animate-none">
         <div className="space-y-4 px-4 pt-4 pb-6 sm:px-6 sm:pt-5 sm:pb-6">
           {receipt ? (
             <>
