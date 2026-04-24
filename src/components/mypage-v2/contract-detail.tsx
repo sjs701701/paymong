@@ -4,6 +4,7 @@ import { ArrowLeft, Ban, ReceiptText, Wallet } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { UserMenu } from "@/components/shared/user-menu";
 import {
   Card,
   CardContent,
@@ -40,16 +41,28 @@ export function ContractDetailView({
 }: ContractDetailViewProps) {
   const remaining = Math.max(detail.monthlyLimit - detail.usedThisMonth, 0);
   const isLimitClosed = remaining <= 0;
+  const isMonthlyRentContract = contract.type.includes("월세");
   const usedPercent = detail.monthlyLimit
     ? Math.min(
         100,
         Math.round((detail.usedThisMonth / detail.monthlyLimit) * 100),
       )
     : 0;
+  const isLimitWarning = !isLimitClosed && usedPercent >= 80;
+  const limitBadgeText = isLimitClosed
+    ? "한도마감"
+    : isMonthlyRentContract
+      ? "매월 1일 초기화"
+      : "초기화 없음";
+  const limitProgressText = isLimitClosed
+    ? "사용 불가"
+    : isLimitWarning
+      ? "주의"
+      : "사용 가능";
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center gap-3 border-b border-slate-200 bg-white/70 px-4 py-3 backdrop-blur-sm sm:px-6">
+      <div className="flex items-center gap-3 border-b border-slate-200 bg-white/70 px-4 py-4 backdrop-blur-sm sm:px-6 lg:py-3">
         <Button
           variant="ghost"
           size="icon-sm"
@@ -68,57 +81,89 @@ export function ContractDetailView({
             예금주 {detail.counterparty.holder}
           </p>
         </div>
-        <span className="w-7 shrink-0 lg:hidden" aria-hidden />
+        <UserMenu trigger="icon" className="shrink-0 lg:hidden" />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4 px-4 pt-4 pb-4 sm:px-6 sm:pt-5 sm:pb-5">
-        <Card className="relative shrink-0 gap-4 overflow-hidden rounded-2xl border-0 bg-[#000d36] py-5 shadow-none ring-0">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pt-3 pb-4 sm:px-6 sm:pt-5 sm:pb-5 lg:gap-4 lg:pt-4">
+        <Card
+          className={cn(
+            "relative shrink-0 gap-3 overflow-hidden rounded-2xl border-0 py-4 shadow-none ring-0 lg:gap-4 lg:py-5",
+            isLimitClosed
+              ? "bg-slate-800"
+              : isLimitWarning
+                ? "bg-[#18120a]"
+                : "bg-[#000d36]",
+          )}
+        >
           <div
             aria-hidden
             className="pointer-events-none absolute -right-14 -top-14 h-44 w-44 rounded-full bg-white/5 blur-2xl"
           />
-          <CardHeader className="relative gap-1 px-5">
+          <CardHeader className="relative gap-1 px-4 lg:px-5">
             <div className="flex items-center justify-between">
               <span className="inline-flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#00abff]" />
-                <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#00abff]">
-                  이번 달 남은 한도
+                <span
+                  className={cn(
+                    "h-1.5 w-1.5 rounded-full",
+                    isLimitClosed
+                      ? "bg-slate-300"
+                      : isLimitWarning
+                        ? "bg-amber-300"
+                        : "bg-[#00abff]",
+                  )}
+                />
+                <span
+                  className={cn(
+                    "text-[11px] font-bold uppercase tracking-[0.16em] lg:text-xs lg:tracking-[0.18em]",
+                    isLimitClosed
+                      ? "text-slate-200"
+                      : isLimitWarning
+                        ? "text-amber-200"
+                        : "text-[#00abff]",
+                  )}
+                >
+                  남은 한도
                 </span>
               </span>
-              <span className="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-medium text-white/85 ring-1 ring-white/15">
-                매월 1일 초기화
+              <span
+                className={cn(
+                  "rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-medium text-white/85 ring-1 ring-white/15 lg:px-2.5 lg:py-1 lg:text-[11px]",
+                  isLimitClosed && "bg-white/10 text-white/90",
+                  isLimitWarning && "bg-amber-300/15 text-amber-100 ring-amber-200/20",
+                )}
+              >
+                {limitBadgeText}
               </span>
             </div>
           </CardHeader>
-          <CardContent className="relative space-y-3 px-5">
-            <div className="flex items-baseline justify-between gap-2">
-              <div className="min-w-0">
-                <p className="text-3xl font-bold tracking-[-0.02em] text-white">
-                  ₩{formatWon(remaining)}
-                </p>
-              </div>
-              <div className="text-right text-xs text-white/80">
-                <p>
-                  사용{" "}
-                  <span className="font-semibold text-white">
-                    ₩{formatWon(detail.usedThisMonth)}
-                  </span>
-                </p>
-                <p>
-                  총{" "}
-                  <span className="font-semibold text-white">
-                    ₩{formatWon(detail.monthlyLimit)}
-                  </span>
-                </p>
-              </div>
-            </div>
+          <CardContent className="relative space-y-2.5 px-4 lg:space-y-3 lg:px-5">
+            <p className="truncate text-[1.65rem] font-bold leading-none tracking-[-0.02em] text-white lg:text-3xl lg:leading-normal">
+              ₩{formatWon(remaining)}
+            </p>
+            <p className="truncate text-[11px] font-medium text-white/75 lg:text-xs">
+              사용됨{" "}
+              <span className="font-semibold text-white">
+                ₩{formatWon(detail.usedThisMonth)}
+              </span>{" "}
+              / 전체한도{" "}
+              <span className="font-semibold text-white">
+                ₩{formatWon(detail.monthlyLimit)}
+              </span>
+            </p>
             <div className="relative">
               <Progress
                 value={usedPercent}
-                className="gap-0 [&>[data-slot=progress-track]]:h-7 [&>[data-slot=progress-track]]:bg-white/10 [&>[data-slot=progress-track]]:ring-1 [&>[data-slot=progress-track]]:ring-white/5 [&_[data-slot=progress-indicator]]:bg-gradient-to-r [&_[data-slot=progress-indicator]]:from-[#00abff] [&_[data-slot=progress-indicator]]:to-[#0038F1] [&_[data-slot=progress-indicator]]:shadow-[0_0_18px_rgba(0,171,255,0.55)]"
+                className={cn(
+                  "gap-0 [&>[data-slot=progress-track]]:h-5 [&>[data-slot=progress-track]]:bg-white/10 [&>[data-slot=progress-track]]:ring-1 [&>[data-slot=progress-track]]:ring-white/5 lg:[&>[data-slot=progress-track]]:h-7",
+                  isLimitClosed
+                    ? "[&_[data-slot=progress-indicator]]:bg-slate-400"
+                    : isLimitWarning
+                      ? "[&_[data-slot=progress-indicator]]:bg-gradient-to-r [&_[data-slot=progress-indicator]]:from-amber-300 [&_[data-slot=progress-indicator]]:to-orange-400 [&_[data-slot=progress-indicator]]:shadow-[0_0_16px_rgba(251,191,36,0.38)]"
+                      : "[&_[data-slot=progress-indicator]]:bg-gradient-to-r [&_[data-slot=progress-indicator]]:from-[#00abff] [&_[data-slot=progress-indicator]]:to-[#0038F1] [&_[data-slot=progress-indicator]]:shadow-[0_0_18px_rgba(0,171,255,0.55)]",
+                )}
               />
-              <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[11px] font-bold tracking-[0.08em] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
-                {usedPercent}%
+              <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[10px] font-bold tracking-[0.08em] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)] lg:text-[11px]">
+                {limitProgressText} · {usedPercent}%
               </span>
             </div>
           </CardContent>
@@ -136,7 +181,7 @@ export function ContractDetailView({
             </div>
           </CardHeader>
           <CardContent className="min-h-0 flex-1 p-0">
-            <CustomScrollArea className="h-full px-5">
+            <CustomScrollArea className="h-full overflow-x-hidden px-5">
               {detail.usageHistory.length === 0 ? (
                 <div className="flex h-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/40 py-10 text-center">
                   <ReceiptText size={24} className="text-slate-300" />
@@ -151,7 +196,7 @@ export function ContractDetailView({
                       <button
                         type="button"
                         onClick={() => onOpenUsage(item.id)}
-                        className="-mx-2 flex w-[calc(100%+1rem)] items-center justify-between gap-3 rounded-lg px-2 py-3 text-left transition hover:bg-slate-50"
+                        className="flex w-full items-center justify-between gap-3 rounded-lg px-2 py-3 text-left transition hover:bg-slate-50 lg:-mx-2 lg:w-[calc(100%+1rem)]"
                       >
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">

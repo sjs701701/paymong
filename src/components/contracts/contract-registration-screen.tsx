@@ -9,8 +9,6 @@ import {
   useRef,
   useState,
 } from "react";
-import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   AlertCircle,
@@ -37,7 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { UserMenu } from "@/components/shared/user-menu";
+import { DashboardHeader } from "@/components/shared/dashboard-header";
 import { cn } from "@/lib/utils";
 
 export type ContractType =
@@ -529,6 +527,7 @@ export function ContractRegistrationScreen() {
   const accountSectionRef = useRef<HTMLElement | null>(null);
   const transferSectionRef = useRef<HTMLElement | null>(null);
   const attachmentsSectionRef = useRef<HTMLElement | null>(null);
+  const lastScrollTopRef = useRef(0);
 
   const [form, setForm] = useState<ContractRegistrationForm>(initialFormState);
   const [bankQuery, setBankQuery] = useState("");
@@ -537,6 +536,7 @@ export function ContractRegistrationScreen() {
   const [isDocumentGuideOpen, setIsDocumentGuideOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
+  const [isHeaderHidden, setIsHeaderHidden] = useState(false);
   const [hasBeenVerifiedOnce, setHasBeenVerifiedOnce] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [touched, setTouched] = useState({
@@ -575,6 +575,48 @@ export function ContractRegistrationScreen() {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
   }, [isBankMenuOpen]);
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 767px)");
+
+    const handleScroll = () => {
+      if (!mobileQuery.matches) {
+        setIsHeaderHidden(false);
+        return;
+      }
+
+      const scrollTop = window.scrollY;
+      const delta = scrollTop - lastScrollTopRef.current;
+      lastScrollTopRef.current = scrollTop;
+
+      if (scrollTop < 40) {
+        setIsHeaderHidden((current) => (current ? false : current));
+        return;
+      }
+      if (Math.abs(delta) < 6) return;
+
+      const shouldHideHeader = delta > 0;
+      setIsHeaderHidden((current) =>
+        current === shouldHideHeader ? current : shouldHideHeader,
+      );
+    };
+
+    const handleBreakpointChange = () => {
+      lastScrollTopRef.current = window.scrollY;
+      if (!mobileQuery.matches) {
+        setIsHeaderHidden(false);
+      }
+    };
+
+    handleBreakpointChange();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    mobileQuery.addEventListener("change", handleBreakpointChange);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      mobileQuery.removeEventListener("change", handleBreakpointChange);
+    };
+  }, []);
 
   const amountNumber = form.amount ? Number(form.amount) : 0;
   const koreanAmountLabel = formatKoreanAmount(amountNumber);
@@ -756,22 +798,11 @@ export function ContractRegistrationScreen() {
 
   return (
     <div className="relative min-h-screen overflow-x-clip bg-[#eef2fa] font-sans text-[#151515]">
-      <header className="relative z-10 px-4 py-6 md:px-8 md:py-6">
-        <div className="mx-auto flex w-full max-w-[1360px] items-center justify-between gap-4">
-          <Link href="/" className="inline-flex items-center">
-            <Image
-              src="/brand/paymong-header-logo.svg"
-              alt="Paymong"
-              width={148}
-              height={32}
-              priority
-              className="h-6 w-auto object-contain sm:h-8"
-            />
-          </Link>
-
-          <UserMenu />
-        </div>
-      </header>
+      <DashboardHeader
+        hidden={isHeaderHidden}
+        className="sticky z-30 md:relative md:top-auto md:border-b-0 md:bg-transparent md:px-8 md:py-6 md:backdrop-blur-none md:translate-y-0"
+        innerClassName="mx-auto max-w-[1360px]"
+      />
 
       <main className="relative z-10 px-4 pb-[180px] pt-2 sm:px-6 lg:px-8 lg:pb-16">
         <div className="mx-auto max-w-[1200px]">

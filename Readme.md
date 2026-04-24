@@ -85,6 +85,32 @@ npm run lint
 
 ESLint 검사 실행
 
+## Vercel Deployment
+
+Internal test deployment:
+
+- URL: [https://paymong-vercel-deploy-main.vercel.app](https://paymong-vercel-deploy-main.vercel.app)
+- Vercel project: `paymong-vercel-deploy-main`
+- GitHub repository: `sjs701701/paymong`
+- Production branch: `main`
+- Environment variables: none currently required
+
+Deployment flow:
+
+1. Commit local changes.
+2. Push to `origin/main`.
+3. Vercel automatically builds and deploys the latest `main`.
+4. Use the URL above for mobile, desktop, and internal tester checks.
+
+Current validation routes:
+
+- `/`
+- `/login`
+- `/signup`
+- `/contracts/new`
+- `/contracts/new/complete`
+- `/mypage-v2`
+
 ## Project Notes
 
 ### Main landing

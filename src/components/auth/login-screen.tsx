@@ -50,6 +50,7 @@ const images = [
 const authProviders = [
   {
     label: "Continue with Google",
+    shortLabel: "Google",
     className: "border-gray-200 bg-white text-slate-900 hover:bg-gray-50",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -62,11 +63,13 @@ const authProviders = [
   },
   {
     label: "Continue with NAVER",
+    shortLabel: "NAVER",
     className: "border-[#03C75A] bg-[#03C75A] text-white hover:bg-[#02b451]",
     icon: <span className="text-base font-black leading-none">N</span>,
   },
   {
     label: "Continue with Kakao",
+    shortLabel: "Kakao",
     className: "border-[#FEE500] bg-[#FEE500] text-[#191919] hover:bg-[#f4da00]",
     icon: <span className="text-sm font-black leading-none">k</span>,
   },
@@ -162,17 +165,25 @@ export function LoginScreen() {
   return (
     <>
       <style>{customStyles}</style>
-      <div className="flex min-h-screen w-full overflow-hidden bg-white font-sans text-gray-900">
-        <div className="relative z-10 flex w-full items-center justify-center bg-white px-8 py-12 sm:px-14 md:px-20 lg:w-1/2">
+      <div
+        className="flex min-h-screen w-full overflow-hidden bg-white text-gray-900"
+        style={{
+          fontFamily:
+            '"Pretendard Variable", Pretendard, "Apple SD Gothic Neo", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+        }}
+      >
+        <div className="relative z-10 flex w-full items-center justify-center bg-white px-6 py-6 sm:px-14 sm:py-12 md:px-20 lg:w-1/2">
           <div className="w-full max-w-sm">
-            <div className="mb-10 flex flex-col items-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-[1.4rem] border border-black/5 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
-                <Image src="/logo-icon.svg" alt="Paymong" width={32} height={20} priority />
+            <div className="mb-5 flex flex-col items-center sm:mb-10">
+              <div className="flex h-12 w-12 items-center justify-center rounded-[1.2rem] border border-black/5 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)] sm:h-16 sm:w-16 sm:rounded-[1.4rem]">
+                <Image src="/logo-icon.svg" alt="Paymong" width={32} height={20} priority className="h-4 w-auto sm:h-5" />
               </div>
-              <p className="mt-4 text-sm font-medium tracking-[0.2em] text-slate-400">PAYMONG</p>
+              <p className="mt-2.5 text-xs font-medium tracking-[0.2em] text-slate-400 sm:mt-4 sm:text-sm">
+                PAYMONG
+              </p>
             </div>
 
-            <h1 className="mb-8 text-center text-3xl font-bold tracking-[-0.04em] text-slate-950">
+            <h1 className="mb-5 text-center text-2xl font-bold tracking-[-0.04em] text-slate-950 sm:mb-8 sm:text-3xl">
               Welcome back
             </h1>
 
@@ -278,28 +289,30 @@ export function LoginScreen() {
               </label>
             </form>
 
-            <div className="my-6 flex w-full items-center">
+            <div className="my-4 flex w-full items-center sm:my-6">
               <hr className="flex-grow border-gray-100" />
               <span className="px-4 text-sm text-gray-400">or</span>
               <hr className="flex-grow border-gray-100" />
             </div>
 
-            <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-1 sm:gap-3">
               {authProviders.map((provider) => (
                 <button
                   key={provider.label}
                   type="button"
-                  className={`flex w-full items-center justify-center gap-3 rounded-xl border px-4 py-3 font-medium transition-colors ${provider.className}`}
+                  aria-label={provider.label}
+                  className={`flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-medium transition-colors sm:gap-3 sm:px-4 sm:text-base ${provider.className}`}
                 >
                   <span aria-hidden="true" className="flex h-5 w-5 items-center justify-center">
                     {provider.icon}
                   </span>
-                  <span>{provider.label}</span>
+                  <span className="sm:hidden">{provider.shortLabel}</span>
+                  <span className="hidden sm:inline">{provider.label}</span>
                 </button>
               ))}
             </div>
 
-            <p className="mt-6 text-center text-xs text-gray-400">
+            <p className="mt-4 text-center text-[11px] leading-5 text-gray-400 sm:mt-6 sm:text-xs">
               By continuing, you agree to our{" "}
               <a href="#" className="underline transition-colors hover:text-gray-600">
                 Terms of Service
@@ -311,7 +324,7 @@ export function LoginScreen() {
               .
             </p>
 
-            <p className="mt-4 text-center text-sm text-slate-500">
+            <p className="mt-3 text-center text-sm text-slate-500 sm:mt-4">
               아직 계정이 없으신가요?{" "}
               <Link
                 href="/signup"

@@ -4,9 +4,8 @@
 // and my page route. Keep /mypage as the legacy comparison screen until the
 // v2 flow is finalized.
 
-import Image from "next/image";
-import Link from "next/link";
 import {
+  type CSSProperties,
   Suspense,
   useCallback,
   useEffect,
@@ -25,6 +24,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { DashboardHeader } from "@/components/shared/dashboard-header";
 import { UserMenu } from "@/components/shared/user-menu";
 import { cn } from "@/lib/utils";
 import {
@@ -66,6 +66,61 @@ function MyPageV2Inner() {
   const [paymentDrafts, setPaymentDrafts] = useState<
     Record<number, PaymentFormDraft>
   >({});
+  const [isHeaderHidden, setIsHeaderHidden] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const headerRef = useRef<HTMLElement>(null);
+  const lastScrollTopRef = useRef(0);
+  const isMobileViewportRef = useRef(false);
+
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const measure = () => {
+      const nextHeight = el.offsetHeight;
+      setHeaderHeight((current) =>
+        current === nextHeight ? current : nextHeight,
+      );
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const handleListScroll = useCallback((scrollTop: number) => {
+    if (!isMobileViewportRef.current) {
+      setIsHeaderHidden((current) => (current ? false : current));
+      return;
+    }
+
+    const prev = lastScrollTopRef.current;
+    const delta = scrollTop - prev;
+    lastScrollTopRef.current = scrollTop;
+
+    if (scrollTop < 40) {
+      setIsHeaderHidden((current) => (current ? false : current));
+      return;
+    }
+    if (Math.abs(delta) < 6) return;
+    const shouldHideHeader = delta > 0;
+    setIsHeaderHidden((current) =>
+      current === shouldHideHeader ? current : shouldHideHeader,
+    );
+  }, []);
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 767px)");
+    const syncViewport = () => {
+      isMobileViewportRef.current = mobileQuery.matches;
+      if (!mobileQuery.matches) {
+        setIsHeaderHidden(false);
+      }
+    };
+
+    syncViewport();
+    mobileQuery.addEventListener("change", syncViewport);
+    return () => mobileQuery.removeEventListener("change", syncViewport);
+  }, []);
 
   const view: DashboardView = (() => {
     if (!selectedContractId) return "list";
@@ -151,24 +206,22 @@ function MyPageV2Inner() {
 
   return (
     <main className="flex h-[100dvh] flex-col overflow-hidden bg-[#eef2fa]">
-      <header className="relative z-50 shrink-0 border-b border-slate-200 bg-white/85 px-4 py-4 backdrop-blur-sm md:px-5">
-        <div className="flex w-full items-center justify-between gap-4">
-          <Link href="/" className="inline-flex items-center">
-            <Image
-              src="/brand/paymong-header-logo.svg"
-              alt="Paymong"
-              width={148}
-              height={32}
-              priority
-              className="h-6 w-auto object-contain sm:h-8"
-            />
-          </Link>
+      <DashboardHeader
+        ref={headerRef}
+        hidden={isHeaderHidden}
+      />
 
-          <UserMenu />
-        </div>
-      </header>
-
-      <section className="relative flex min-h-0 flex-1 overflow-hidden">
+      <section
+        className="relative flex min-h-0 flex-1 overflow-hidden pt-[var(--mobile-header-offset)] transition-[padding-top] duration-200 ease-out lg:pt-[var(--dashboard-header-height)]"
+        style={
+          {
+            "--mobile-header-offset": `${
+              isHeaderHidden ? 0 : headerHeight
+            }px`,
+            "--dashboard-header-height": `${headerHeight}px`,
+          } as CSSProperties
+        }
+      >
         <div className="flex min-h-0 w-full flex-col bg-white lg:w-[380px] lg:shrink-0 lg:border-r lg:border-slate-200 xl:w-[420px]">
           <ContractList
             contracts={filteredContracts}
@@ -177,12 +230,13 @@ function MyPageV2Inner() {
             onSearchChange={setSearchQuery}
             onClearSearch={() => setSearchQuery("")}
             onSelect={handleSelect}
+            onListScrollChange={handleListScroll}
           />
         </div>
 
         <div
           className={cn(
-            "absolute inset-0 z-10 flex min-h-0 flex-col bg-[#eef2fa] transition-transform duration-300 ease-out",
+            "absolute inset-0 z-[60] flex min-h-0 flex-col bg-[#eef2fa] transition-transform duration-300 ease-out",
             view === "list" ? "translate-x-full" : "translate-x-0",
             "lg:static lg:z-0 lg:flex-1 lg:translate-x-0 lg:transition-none",
           )}
@@ -255,7 +309,7 @@ function UnavailableState({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center gap-3 border-b border-slate-200 bg-white/70 px-4 py-3 backdrop-blur-sm lg:px-6">
+      <div className="flex items-center gap-3 border-b border-slate-200 bg-white/70 px-4 py-4 backdrop-blur-sm lg:px-6 lg:py-3">
         <Button
           variant="ghost"
           size="icon-sm"
@@ -268,7 +322,7 @@ function UnavailableState({
         <span className="flex-1 text-center text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 lg:text-left">
           계약 상세
         </span>
-        <span className="w-7 shrink-0 lg:hidden" aria-hidden />
+        <UserMenu trigger="icon" className="shrink-0 lg:hidden" />
       </div>
 
       {isRejected ? (

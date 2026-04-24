@@ -44,7 +44,7 @@ export const SAMPLE_CONTRACTS: ContractItem[] = [
   },
   {
     id: 2,
-    type: "전세계약",
+    type: "보증금계약",
     name: "판교 푸르지오 그랑블 101동 1502호",
     amount: "850,000,000",
     status: "승인됨",
@@ -68,7 +68,7 @@ export const SAMPLE_CONTRACTS: ContractItem[] = [
   },
   {
     id: 5,
-    type: "전세계약",
+    type: "월세계약",
     name: "잠실 엘스 120동 802호",
     amount: "1,200,000,000",
     status: "승인됨",
@@ -89,7 +89,7 @@ export const SAMPLE_CONTRACTS: ContractItem[] = [
   },
   {
     id: 8,
-    type: "전세계약",
+    type: "보증금계약",
     name: "서초 래미안 리더스원 104동 702호",
     amount: "1,450,000,000",
     status: "승인됨",
@@ -113,7 +113,7 @@ export const SAMPLE_CONTRACTS: ContractItem[] = [
   },
   {
     id: 11,
-    type: "전세계약",
+    type: "보증금계약",
     name: "용산 센트럴파크 해링턴 2차 1503호",
     amount: "980,000,000",
     status: "승인됨",
@@ -173,7 +173,7 @@ export const CONTRACT_DETAILS: Record<number, ContractDetail> = {
     counterparty: {
       bank: "신한은행",
       accountNumber: "98765432109",
-      holder: "이전세",
+      holder: "이보증",
     },
     monthlyLimit: 850_000_000,
     usedThisMonth: 850_000_000,

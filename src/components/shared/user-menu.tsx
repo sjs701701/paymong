@@ -126,23 +126,46 @@ const USER_MENU_SECTIONS: Array<{
   },
 ];
 
-export function UserMenu() {
+type UserMenuProps = {
+  trigger?: "badge" | "icon";
+  className?: string;
+};
+
+export function UserMenu({ trigger = "badge", className }: UserMenuProps = {}) {
   return (
-    <Suspense fallback={<UserMenuTriggerFallback />}>
-      <UserMenuInner />
+    <Suspense
+      fallback={
+        <UserMenuTriggerFallback trigger={trigger} className={className} />
+      }
+    >
+      <UserMenuInner trigger={trigger} className={className} />
     </Suspense>
   );
 }
 
-function UserMenuTriggerFallback() {
+function UserMenuTriggerFallback({
+  trigger,
+  className,
+}: UserMenuProps & { trigger: NonNullable<UserMenuProps["trigger"]> }) {
   return (
-    <div className="inline-flex h-9 min-w-28 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm sm:h-10 sm:min-w-32 sm:px-5">
+    <div
+      className={cn(
+        "inline-flex items-center justify-center border border-slate-200 bg-white text-sm font-semibold text-slate-800 shadow-sm",
+        trigger === "icon"
+          ? "h-9 w-9 overflow-hidden rounded-full text-transparent"
+          : "h-9 min-w-28 gap-2 rounded-xl px-4 sm:h-10 sm:min-w-32 sm:px-5",
+        className,
+      )}
+    >
       <span>홍길동 님</span>
     </div>
   );
 }
 
-function UserMenuInner() {
+function UserMenuInner({
+  trigger,
+  className,
+}: UserMenuProps & { trigger: NonNullable<UserMenuProps["trigger"]> }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -239,14 +262,19 @@ function UserMenuInner() {
 
   return (
     <>
-      <div ref={userMenuRef} className="relative">
+      <div ref={userMenuRef} className={cn("relative", className)}>
         <button
           type="button"
           aria-haspopup="menu"
           aria-expanded={isOpen}
           aria-label="사용자 메뉴 열기"
           onClick={() => (isOpen ? closeMenu() : setIsOpen(true))}
-          className="inline-flex h-9 min-w-28 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 sm:h-10 sm:min-w-32 sm:px-5"
+          className={cn(
+            "inline-flex items-center justify-center border border-slate-200 bg-white text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50",
+            trigger === "icon"
+              ? "h-9 w-9 rounded-full [&>span:first-child]:hidden"
+              : "h-9 min-w-28 gap-2 rounded-xl px-4 sm:h-10 sm:min-w-32 sm:px-5",
+          )}
         >
           <span>홍길동 님</span>
           <span

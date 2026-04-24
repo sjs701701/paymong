@@ -3,6 +3,7 @@
 import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
+  type UIEvent as ReactUIEvent,
   useCallback,
   useEffect,
   useRef,
@@ -14,6 +15,7 @@ type CustomScrollAreaProps = {
   className?: string;
   thumbClassName?: string;
   minThumbHeight?: number;
+  onScrollChange?: (scrollTop: number) => void;
 };
 
 const DEFAULT_THUMB_CLASS = "bg-slate-300 hover:bg-slate-400";
@@ -23,10 +25,17 @@ export function CustomScrollArea({
   className,
   thumbClassName,
   minThumbHeight = 32,
+  onScrollChange,
 }: CustomScrollAreaProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
+  const scrollRafRef = useRef<number | null>(null);
+  const latestScrollTopRef = useRef(0);
+  const shouldSyncThumbRef = useRef(false);
+  const isScrollableRef = useRef(false);
+  const thumbHeightRef = useRef(0);
+  const thumbTopRef = useRef(0);
   const dragStateRef = useRef<{
     startY: number;
     startScrollTop: number;
@@ -39,7 +48,27 @@ export function CustomScrollArea({
   const [thumbTop, setThumbTop] = useState(0);
   const [isScrollable, setIsScrollable] = useState(false);
 
+  const resetThumb = useCallback(() => {
+    if (isScrollableRef.current) {
+      isScrollableRef.current = false;
+      setIsScrollable(false);
+    }
+    if (thumbHeightRef.current !== 0) {
+      thumbHeightRef.current = 0;
+      setThumbHeight(0);
+    }
+    if (thumbTopRef.current !== 0) {
+      thumbTopRef.current = 0;
+      setThumbTop(0);
+    }
+  }, []);
+
   const updateThumb = useCallback(() => {
+    if (!shouldSyncThumbRef.current) {
+      resetThumb();
+      return;
+    }
+
     const scrollEl = scrollRef.current;
     const trackEl = trackRef.current;
     if (!scrollEl || !trackEl) return;
@@ -48,11 +77,13 @@ export function CustomScrollArea({
     const trackHeight = trackEl.clientHeight;
     const scrollable = scrollHeight > clientHeight + 1;
 
-    setIsScrollable(scrollable);
+    if (isScrollableRef.current !== scrollable) {
+      isScrollableRef.current = scrollable;
+      setIsScrollable(scrollable);
+    }
 
     if (!scrollable || trackHeight <= 0) {
-      setThumbHeight(0);
-      setThumbTop(0);
+      resetThumb();
       return;
     }
 
@@ -66,23 +97,80 @@ export function CustomScrollArea({
         ? (scrollTop / maxScroll) * (trackHeight - nextThumbHeight)
         : 0;
 
-    setThumbHeight(nextThumbHeight);
-    setThumbTop(nextThumbTop);
-  }, [minThumbHeight]);
+    if (Math.abs(thumbHeightRef.current - nextThumbHeight) > 0.5) {
+      thumbHeightRef.current = nextThumbHeight;
+      setThumbHeight(nextThumbHeight);
+    }
+    if (Math.abs(thumbTopRef.current - nextThumbTop) > 0.5) {
+      thumbTopRef.current = nextThumbTop;
+      setThumbTop(nextThumbTop);
+    }
+  }, [minThumbHeight, resetThumb]);
+
+  const handleScroll = useCallback(
+    (event: ReactUIEvent<HTMLDivElement>) => {
+      latestScrollTopRef.current = event.currentTarget.scrollTop;
+
+      if (scrollRafRef.current != null) return;
+
+      scrollRafRef.current = window.requestAnimationFrame(() => {
+        scrollRafRef.current = null;
+        updateThumb();
+        onScrollChange?.(latestScrollTopRef.current);
+      });
+    },
+    [onScrollChange, updateThumb],
+  );
 
   useEffect(() => {
     const scrollEl = scrollRef.current;
     const contentEl = contentRef.current;
     if (!scrollEl || !contentEl) return;
 
-    updateThumb();
+    const frameId = window.requestAnimationFrame(updateThumb);
 
     const resizeObserver = new ResizeObserver(() => updateThumb());
     resizeObserver.observe(scrollEl);
     resizeObserver.observe(contentEl);
 
-    return () => resizeObserver.disconnect();
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      resizeObserver.disconnect();
+    };
   }, [updateThumb]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 768px)");
+    let frameId: number | null = null;
+
+    const syncBreakpoint = () => {
+      shouldSyncThumbRef.current = mediaQuery.matches;
+      if (frameId != null) {
+        window.cancelAnimationFrame(frameId);
+      }
+      frameId = window.requestAnimationFrame(() => {
+        frameId = null;
+        updateThumb();
+      });
+    };
+
+    syncBreakpoint();
+    mediaQuery.addEventListener("change", syncBreakpoint);
+    return () => {
+      if (frameId != null) {
+        window.cancelAnimationFrame(frameId);
+      }
+      mediaQuery.removeEventListener("change", syncBreakpoint);
+    };
+  }, [updateThumb]);
+
+  useEffect(() => {
+    return () => {
+      if (scrollRafRef.current != null) {
+        window.cancelAnimationFrame(scrollRafRef.current);
+      }
+    };
+  }, []);
 
   const handleThumbPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     const scrollEl = scrollRef.current;
@@ -129,8 +217,8 @@ export function CustomScrollArea({
     <div className={`relative ${className ?? ""}`.trim()}>
       <div
         ref={scrollRef}
-        onScroll={updateThumb}
-        className="h-full w-full overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        onScroll={handleScroll}
+        className="h-full w-full overflow-x-hidden overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         <div ref={contentRef}>{children}</div>
       </div>

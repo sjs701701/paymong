@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ArrowLeft, Check, Download, FileCheck2, Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { UserMenu } from "@/components/shared/user-menu";
 import {
   Card,
   CardContent,
@@ -140,7 +141,7 @@ export function UsageDetailView({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center gap-3 border-b border-slate-200 bg-white/70 px-4 py-3 backdrop-blur-sm sm:px-6">
+      <div className="flex items-center gap-3 border-b border-slate-200 bg-white/70 px-4 py-4 backdrop-blur-sm sm:px-6 lg:py-3">
         <Button
           variant="ghost"
           size="icon-sm"
@@ -159,7 +160,7 @@ export function UsageDetailView({
             예금주 {detail.counterparty.holder}
           </p>
         </div>
-        <span className="w-7 shrink-0" aria-hidden />
+        <UserMenu trigger="icon" className="shrink-0 lg:hidden" />
       </div>
 
       <div

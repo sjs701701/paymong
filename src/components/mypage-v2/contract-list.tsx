@@ -22,6 +22,7 @@ type ContractListProps = {
   onSearchChange: (value: string) => void;
   onClearSearch: () => void;
   onSelect: (id: number) => void;
+  onListScrollChange?: (scrollTop: number) => void;
 };
 
 export function ContractList({
@@ -31,6 +32,7 @@ export function ContractList({
   onSearchChange,
   onClearSearch,
   onSelect,
+  onListScrollChange,
 }: ContractListProps) {
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -73,7 +75,10 @@ export function ContractList({
         </div>
       </div>
 
-      <CustomScrollArea className="min-h-0 flex-1">
+      <CustomScrollArea
+        className="min-h-0 flex-1"
+        onScrollChange={onListScrollChange}
+      >
         <div className="flex flex-col gap-2 px-4 pt-1 pb-4 sm:px-5">
           {contracts.length > 0 ? (
             contracts.map((contract) => {
