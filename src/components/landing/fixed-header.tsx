@@ -392,7 +392,7 @@ export function FixedHeader({
               <Image
                 src={useWhiteLogo ? HEADER_LOGO_WHITE_PATH : HEADER_LOGO_PATH}
                 alt="Paymong"
-                className="h-10 w-auto object-contain transition-transform hover:scale-[1.03]"
+                className="h-6 w-auto object-contain transition-transform hover:scale-[1.03] sm:h-10"
                 width={148}
                 height={32}
                 priority

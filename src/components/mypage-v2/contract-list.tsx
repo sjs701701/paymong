@@ -78,7 +78,7 @@ export function ContractList({
           {contracts.length > 0 ? (
             contracts.map((contract) => {
               const isSelected = selectedId === contract.id;
-              const isActive = contract.status === "이용중";
+              const isActive = contract.status === "승인됨";
               return (
                 <button
                   key={contract.id}

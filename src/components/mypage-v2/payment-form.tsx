@@ -4,6 +4,7 @@ import {
   type ChangeEvent,
   type FormEvent,
   type RefObject,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -47,9 +48,23 @@ import {
 type TransferTiming = "now" | "reserved";
 type PaymentMethod = "default" | "other";
 
+export type PaymentFormDraft = {
+  amountRaw: string;
+  senderName: string;
+  timing: TransferTiming;
+  reservedDate: string;
+  paymentMethod: PaymentMethod;
+  otherPhone: string;
+  isSplitCard: boolean;
+  hasAgreed: boolean;
+};
+
 type PaymentFormViewProps = {
   contract: ContractItem;
   detail: ContractDetail;
+  initialDraft?: PaymentFormDraft;
+  submitLabel?: string;
+  onDraftChange?: (draft: PaymentFormDraft) => void;
   onBack: () => void;
   onCompleted: () => void;
 };
@@ -93,20 +108,31 @@ function formatReservedLabel(iso: string) {
 export function PaymentFormView({
   contract,
   detail,
+  initialDraft,
+  submitLabel = "결제하기",
+  onDraftChange,
   onBack,
   onCompleted,
 }: PaymentFormViewProps) {
   const remaining = Math.max(detail.monthlyLimit - detail.usedThisMonth, 0);
   const reservedBounds = useMemo(() => getReservedDateBounds(), []);
 
-  const [amountRaw, setAmountRaw] = useState("");
-  const [senderName, setSenderName] = useState("");
-  const [timing, setTiming] = useState<TransferTiming>("now");
-  const [reservedDate, setReservedDate] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("default");
-  const [otherPhone, setOtherPhone] = useState("");
-  const [isSplitCard, setIsSplitCard] = useState(false);
-  const [hasAgreed, setHasAgreed] = useState(false);
+  const [amountRaw, setAmountRaw] = useState(initialDraft?.amountRaw ?? "");
+  const [senderName, setSenderName] = useState(initialDraft?.senderName ?? "");
+  const [timing, setTiming] = useState<TransferTiming>(
+    initialDraft?.timing ?? "now",
+  );
+  const [reservedDate, setReservedDate] = useState(
+    initialDraft?.reservedDate ?? "",
+  );
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
+    initialDraft?.paymentMethod ?? "default",
+  );
+  const [otherPhone, setOtherPhone] = useState(initialDraft?.otherPhone ?? "");
+  const [isSplitCard, setIsSplitCard] = useState(
+    initialDraft?.isSplitCard ?? false,
+  );
+  const [hasAgreed, setHasAgreed] = useState(initialDraft?.hasAgreed ?? false);
   const [isConsentOpen, setIsConsentOpen] = useState(false);
   const [isPgOpen, setIsPgOpen] = useState(false);
   const [isSplitInfoOpen, setIsSplitInfoOpen] = useState(false);
@@ -133,6 +159,29 @@ export function PaymentFormView({
   const amountOverLimit = amountNumber > remaining;
   const fee = Math.round(amountNumber * FEE_RATE[timing]);
   const total = amountNumber + fee;
+
+  useEffect(() => {
+    onDraftChange?.({
+      amountRaw,
+      senderName,
+      timing,
+      reservedDate,
+      paymentMethod,
+      otherPhone,
+      isSplitCard,
+      hasAgreed,
+    });
+  }, [
+    amountRaw,
+    senderName,
+    timing,
+    reservedDate,
+    paymentMethod,
+    otherPhone,
+    isSplitCard,
+    hasAgreed,
+    onDraftChange,
+  ]);
 
   const senderError =
     !senderName.trim() ? "송금자명을 입력해주세요." : null;
@@ -180,8 +229,8 @@ export function PaymentFormView({
   })();
 
   const formStatusMessage = missingFieldLabels.length
-    ? `${missingFieldLabels.join(", ")} 항목이 입력되지 않았어요. 결제하기 버튼을 누르면 해당 위치로 이동합니다.`
-    : "결제 준비가 완료되었습니다. 결제하기 버튼을 누르면 결제가 진행됩니다.";
+    ? `${missingFieldLabels.join(", ")} 항목이 입력되지 않았어요. ${submitLabel} 버튼을 누르면 해당 위치로 이동합니다.`
+    : `결제 준비가 완료되었습니다. ${submitLabel} 버튼을 누르면 결제가 진행됩니다.`;
 
   const handleAmountChange = (event: ChangeEvent<HTMLInputElement>) => {
     const digits = parseDigits(event.target.value).slice(0, 13);
@@ -307,7 +356,7 @@ export function PaymentFormView({
               {contract.type}
             </span>
             <h2 className="text-xl font-bold tracking-[-0.02em] text-slate-900 sm:text-2xl">
-              결제하기
+              {submitLabel}
             </h2>
             <p className="text-sm text-slate-600">
               송금 시{" "}
@@ -720,9 +769,9 @@ export function PaymentFormView({
               size="lg"
               data-invalid={!isFormValid || undefined}
               aria-describedby="payment-form-status"
-              className="h-auto w-full gap-2 rounded-xl bg-[#0038F1] py-4 text-base font-bold text-white hover:bg-[#002fd0] data-[invalid=true]:bg-[#A8BBF5] data-[invalid=true]:hover:bg-[#A8BBF5]"
+              className="h-auto w-full gap-2 rounded-xl bg-[#0038F1] py-4 text-base font-bold text-white hover:bg-[#002fd0] data-[invalid=true]:bg-slate-200 data-[invalid=true]:text-slate-500 data-[invalid=true]:hover:bg-slate-200"
             >
-              결제하기
+              {submitLabel}
             </Button>
           </div>
         </div>
@@ -751,9 +800,9 @@ export function PaymentFormView({
             size="lg"
             data-invalid={!isFormValid || undefined}
             aria-describedby="payment-form-status"
-            className="pointer-events-auto h-auto w-full gap-2 rounded-xl bg-[#0038F1] py-4 text-base font-bold text-white hover:bg-[#002fd0] data-[invalid=true]:bg-[#A8BBF5] data-[invalid=true]:hover:bg-[#A8BBF5]"
+            className="pointer-events-auto h-auto w-full gap-2 rounded-xl bg-[#0038F1] py-4 text-base font-bold text-white hover:bg-[#002fd0] data-[invalid=true]:bg-slate-200 data-[invalid=true]:text-slate-500 data-[invalid=true]:hover:bg-slate-200"
           >
-            결제하기
+            {submitLabel}
           </Button>
         </div>
       </form>

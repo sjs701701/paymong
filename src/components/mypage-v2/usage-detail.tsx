@@ -301,7 +301,7 @@ export function UsageDetailView({
               size="lg"
               disabled={isTransferRequested}
               onClick={() => setIsTransferOpen(true)}
-              className="pointer-events-auto h-auto w-full gap-2 rounded-xl bg-[#0038F1] py-4 text-base font-bold text-white shadow-[0_18px_40px_rgba(0,56,241,0.24)] hover:bg-[#002fd0] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:opacity-100 disabled:shadow-none"
+              className="pointer-events-auto h-auto w-full gap-2 rounded-xl bg-[#0038F1] py-4 text-base font-bold text-white hover:bg-[#002fd0] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:opacity-100 disabled:shadow-none"
             >
               {isTransferRequested ? (
                 <>
@@ -319,7 +319,7 @@ export function UsageDetailView({
             <Button
               size="lg"
               onClick={handleBack}
-              className="pointer-events-auto h-auto w-full gap-2 rounded-xl bg-[#0038F1] py-4 text-base font-bold text-white shadow-[0_18px_40px_rgba(0,56,241,0.24)] hover:bg-[#002fd0]"
+              className="pointer-events-auto h-auto w-full gap-2 rounded-xl bg-[#0038F1] py-4 text-base font-bold text-white hover:bg-[#002fd0]"
             >
               <Check size={18} />
               확인

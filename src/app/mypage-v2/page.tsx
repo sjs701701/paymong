@@ -6,18 +6,26 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, useCallback, useMemo, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Lottie, { type LottieRefCurrentProps } from "lottie-react";
 import {
   AlertTriangle,
   ArrowLeft,
   Check,
   ClipboardList,
-  Hourglass,
   ShieldAlert,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { UserMenu } from "@/components/shared/user-menu";
 import { cn } from "@/lib/utils";
 import {
   CONTRACT_DETAILS,
@@ -26,14 +34,22 @@ import {
 } from "@/components/mypage-v2/data";
 import { ContractDetailView } from "@/components/mypage-v2/contract-detail";
 import { ContractList } from "@/components/mypage-v2/contract-list";
-import { PaymentFormView } from "@/components/mypage-v2/payment-form";
+import {
+  PaymentFormView,
+  type PaymentFormDraft,
+} from "@/components/mypage-v2/payment-form";
 import { UsageDetailView } from "@/components/mypage-v2/usage-detail";
 
 type DashboardView = "list" | "detail" | "payment" | "usage";
 
+const UNDER_REVIEW_LOTTIE_PATH =
+  "/design/mypage-v2/review-status/under-review.json";
+
+
 function normalizeSearchValue(value: string) {
   return value.toLowerCase().replace(/\s+/g, "");
 }
+
 
 function MyPageV2Inner() {
   const router = useRouter();
@@ -47,6 +63,9 @@ function MyPageV2Inner() {
   const selectedUsageId = usageParam ? Number(usageParam) : null;
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [paymentDrafts, setPaymentDrafts] = useState<
+    Record<number, PaymentFormDraft>
+  >({});
 
   const view: DashboardView = (() => {
     if (!selectedContractId) return "list";
@@ -97,6 +116,21 @@ function MyPageV2Inner() {
     updateParams({ action: "payment", usage: null });
   };
 
+  const handlePaymentDraftChange = useCallback(
+    (contractId: number, draft: PaymentFormDraft) => {
+      setPaymentDrafts((prev) => ({ ...prev, [contractId]: draft }));
+    },
+    [],
+  );
+
+  const handleSelectedPaymentDraftChange = useCallback(
+    (draft: PaymentFormDraft) => {
+      if (selectedContractId == null) return;
+      handlePaymentDraftChange(selectedContractId, draft);
+    },
+    [handlePaymentDraftChange, selectedContractId],
+  );
+
   const handleBackToDetail = () => {
     updateParams({ action: null, usage: null });
   };
@@ -117,7 +151,7 @@ function MyPageV2Inner() {
 
   return (
     <main className="flex h-[100dvh] flex-col overflow-hidden bg-[#eef2fa]">
-      <header className="shrink-0 border-b border-slate-200 bg-white/85 px-4 py-4 backdrop-blur-sm md:px-8">
+      <header className="relative z-50 shrink-0 border-b border-slate-200 bg-white/85 px-4 py-4 backdrop-blur-sm md:px-5">
         <div className="flex w-full items-center justify-between gap-4">
           <Link href="/" className="inline-flex items-center">
             <Image
@@ -126,21 +160,11 @@ function MyPageV2Inner() {
               width={148}
               height={32}
               priority
-              className="h-9 w-auto object-contain"
+              className="h-6 w-auto object-contain sm:h-8"
             />
           </Link>
 
-          <button
-            type="button"
-            aria-label="메뉴 열기"
-            className="inline-flex items-center justify-center p-1 transition-opacity hover:opacity-75"
-          >
-            <span className="flex h-6 w-6 flex-col justify-center gap-[5px]">
-              <span className="block h-[2px] w-full rounded-full bg-[#1f2a44]" />
-              <span className="block h-[2px] w-full rounded-full bg-[#1f2a44]" />
-              <span className="block h-[2px] w-full rounded-full bg-[#1f2a44]" />
-            </span>
-          </button>
+          <UserMenu />
         </div>
       </header>
 
@@ -163,17 +187,23 @@ function MyPageV2Inner() {
             "lg:static lg:z-0 lg:flex-1 lg:translate-x-0 lg:transition-none",
           )}
         >
-          {selectedContract && selectedContract.status !== "이용중" ? (
-            <UnavailableState
-              contract={selectedContract}
-              onBack={handleBackToList}
-            />
-          ) : view === "payment" && selectedContract && selectedDetail ? (
+          {view === "payment" && selectedContract && selectedDetail ? (
             <PaymentFormView
               contract={selectedContract}
               detail={selectedDetail}
+              initialDraft={paymentDrafts[selectedContract.id]}
+              submitLabel={
+                selectedContract.status === "반려" ? "보완하기" : "결제하기"
+              }
+              onDraftChange={handleSelectedPaymentDraftChange}
               onBack={handleBackToDetail}
               onCompleted={handlePaymentCompleted}
+            />
+          ) : selectedContract && selectedContract.status !== "승인됨" ? (
+            <UnavailableState
+              contract={selectedContract}
+              onBack={handleBackToList}
+              onSupplement={handleGoToPayment}
             />
           ) : view === "usage" &&
             selectedContract &&
@@ -213,9 +243,14 @@ export default function MyPageV2() {
 type UnavailableStateProps = {
   contract: ContractItem;
   onBack: () => void;
+  onSupplement: () => void;
 };
 
-function UnavailableState({ contract, onBack }: UnavailableStateProps) {
+function UnavailableState({
+  contract,
+  onBack,
+  onSupplement,
+}: UnavailableStateProps) {
   const isRejected = contract.status === "반려";
 
   return (
@@ -237,15 +272,27 @@ function UnavailableState({ contract, onBack }: UnavailableStateProps) {
       </div>
 
       {isRejected ? (
-        <RejectedState contract={contract} onBack={onBack} />
+        <RejectedState
+          contract={contract}
+          onBack={onBack}
+          onSupplement={onSupplement}
+        />
       ) : (
-        <UnderReviewState contract={contract} onBack={onBack} />
+        <UnderReviewState
+          contract={contract}
+          onBack={onBack}
+          onSupplement={onSupplement}
+        />
       )}
     </div>
   );
 }
 
-function RejectedState({ contract, onBack }: UnavailableStateProps) {
+function RejectedState({
+  contract,
+  onBack,
+  onSupplement,
+}: UnavailableStateProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
       <div className="mx-auto w-full max-w-lg space-y-5 px-5 py-6 sm:px-6 sm:py-8">
@@ -302,6 +349,13 @@ function RejectedState({ contract, onBack }: UnavailableStateProps) {
           <ArrowLeft size={16} />
           리스트로 돌아가기
         </Button>
+        <Button
+          size="lg"
+          onClick={onSupplement}
+          className="h-auto w-full rounded-xl bg-[#0038F1] px-5 py-3 text-sm font-semibold text-white hover:bg-[#002fd0]"
+        >
+          보완하기
+        </Button>
       </div>
     </div>
   );
@@ -327,39 +381,66 @@ const REVIEW_STEPS: ReviewStep[] = [
   },
   {
     title: "이용 시작",
-    description: "이용중 상태로 전환되면 결제를 시작할 수 있어요.",
+    description: "승인됨 상태로 전환되면 결제를 시작할 수 있어요.",
   },
 ];
 
 function UnderReviewState({ contract, onBack }: UnavailableStateProps) {
   const currentStep = 1;
+  const reviewAnimationRef = useRef<LottieRefCurrentProps>(null);
+  const [reviewAnimation, setReviewAnimation] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetch(UNDER_REVIEW_LOTTIE_PATH)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to load under review animation.");
+        }
+        return response.json() as Promise<Record<string, unknown>>;
+      })
+      .then((animationData) => {
+        if (isMounted) {
+          setReviewAnimation(animationData);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setReviewAnimation(null);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
       <div className="mx-auto w-full max-w-lg space-y-5 px-5 py-6 sm:px-6 sm:py-8">
-        <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-5 shadow-sm">
-          <div className="flex items-start gap-4">
-            <span className="relative mt-1 inline-flex h-14 w-14 shrink-0 items-center justify-center">
-              <span
-                aria-hidden
-                className="absolute inset-0 rounded-full bg-amber-400/45"
-                style={{
-                  animation:
-                    "paymong-review-ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite",
-                }}
-              />
-              <span
-                aria-hidden
-                className="absolute inset-2 rounded-full bg-amber-500/55"
-                style={{
-                  animation:
-                    "paymong-review-ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite",
-                  animationDelay: "1.2s",
-                }}
-              />
-              <span className="relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-amber-500 shadow-[0_8px_22px_rgba(245,158,11,0.5)] ring-4 ring-white">
-                <Hourglass size={16} className="text-white" />
-              </span>
+        <div className="rounded-2xl border border-amber-100 bg-amber-50 p-5 shadow-sm">
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 inline-flex h-20 w-20 shrink-0 items-center justify-center">
+              {reviewAnimation ? (
+                <Lottie
+                  lottieRef={reviewAnimationRef}
+                  animationData={reviewAnimation}
+                  loop
+                  autoplay
+                  onDOMLoaded={() => reviewAnimationRef.current?.setSpeed(0.72)}
+                  aria-hidden="true"
+                  className="h-full w-full"
+                />
+              ) : (
+                <span
+                  aria-hidden
+                  className="h-10 w-10 rounded-full bg-amber-500 shadow-[0_8px_22px_rgba(245,158,11,0.5)] ring-4 ring-white"
+                />
+              )}
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-semibold text-[#00abff]">

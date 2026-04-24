@@ -1,4 +1,4 @@
-export type ContractStatus = "검토중" | "이용중" | "반려";
+export type ContractStatus = "검토중" | "승인됨" | "반려";
 
 export type ContractItem = {
   id: number;
@@ -47,7 +47,7 @@ export const SAMPLE_CONTRACTS: ContractItem[] = [
     type: "전세계약",
     name: "판교 푸르지오 그랑블 101동 1502호",
     amount: "850,000,000",
-    status: "이용중",
+    status: "승인됨",
   },
   {
     id: 3,
@@ -71,7 +71,7 @@ export const SAMPLE_CONTRACTS: ContractItem[] = [
     type: "전세계약",
     name: "잠실 엘스 120동 802호",
     amount: "1,200,000,000",
-    status: "이용중",
+    status: "승인됨",
   },
   {
     id: 6,
@@ -92,7 +92,7 @@ export const SAMPLE_CONTRACTS: ContractItem[] = [
     type: "전세계약",
     name: "서초 래미안 리더스원 104동 702호",
     amount: "1,450,000,000",
-    status: "이용중",
+    status: "승인됨",
   },
   {
     id: 9,
@@ -116,7 +116,7 @@ export const SAMPLE_CONTRACTS: ContractItem[] = [
     type: "전세계약",
     name: "용산 센트럴파크 해링턴 2차 1503호",
     amount: "980,000,000",
-    status: "이용중",
+    status: "승인됨",
   },
   {
     id: 12,
@@ -132,7 +132,7 @@ export const SAMPLE_CONTRACTS: ContractItem[] = [
 
 export const STATUS_BADGE_CLASS: Record<ContractStatus, string> = {
   검토중: "border border-yellow-200 bg-yellow-100 text-yellow-800",
-  이용중: "border border-green-200 bg-green-100 text-green-800",
+  승인됨: "border border-green-200 bg-green-100 text-green-800",
   반려: "border border-red-200 bg-red-100 text-red-800",
 };
 

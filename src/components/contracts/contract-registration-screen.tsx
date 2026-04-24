@@ -3,6 +3,7 @@
 import {
   type ChangeEvent,
   type DragEvent,
+  type RefObject,
   useEffect,
   useMemo,
   useRef,
@@ -12,6 +13,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  AlertCircle,
   ArrowLeft,
   Check,
   CheckCircle2,
@@ -26,6 +28,17 @@ import {
   Wallet,
   X,
 } from "lucide-react";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { UserMenu } from "@/components/shared/user-menu";
+import { cn } from "@/lib/utils";
 
 export type ContractType =
   | "월세"
@@ -62,6 +75,18 @@ const CONTRACT_TYPES: ContractType[] = [
   "사업대금",
   "기타",
 ];
+
+const CONTRACT_NAME_PLACEHOLDERS: Record<ContractType, string> = {
+  월세: "예: 강남역 서희스타힐스 502호",
+  "관리비/배달료": "예: 8월 오피스 관리비",
+  보증금: "예: 판교 원룸 보증금",
+  교육비: "예: 초등학교 1학기 학원비",
+  "인건비/용역비": "예: 6월 디자인 용역비",
+  "수리비/인테리어": "예: 주방 리모델링 공사비",
+  보험료: "예: 3월 자동차 보험료",
+  사업대금: "예: 9월 매출 정산 대금",
+  기타: "예: 이번 달 경조사비",
+};
 
 const BANK_OPTIONS = [
   "국민은행",
@@ -205,6 +230,24 @@ function formatMoney(value: string) {
   return new Intl.NumberFormat("ko-KR").format(Number(value));
 }
 
+function formatKoreanAmount(value: number): string {
+  if (!value || value <= 0) return "";
+  const units = ["", "만", "억", "조"];
+  const fmt = new Intl.NumberFormat("ko-KR");
+  const chunks: string[] = [];
+  let remaining = value;
+  let unitIdx = 0;
+  while (remaining > 0 && unitIdx < units.length) {
+    const chunk = remaining % 10000;
+    if (chunk > 0) {
+      chunks.unshift(`${fmt.format(chunk)}${units[unitIdx]}`);
+    }
+    remaining = Math.floor(remaining / 10000);
+    unitIdx++;
+  }
+  return chunks.length > 0 ? `${chunks.join(" ")}원` : "";
+}
+
 function formatFileSize(size: number) {
   if (size < 1024 * 1024) {
     return `${Math.max(1, Math.round(size / 1024))}KB`;
@@ -228,6 +271,60 @@ function getFileIcon(file: File) {
   return FileText;
 }
 
+function FieldError({ message }: { message: string }) {
+  return (
+    <p
+      role="alert"
+      className="mt-1.5 flex items-start gap-1 text-xs font-medium text-rose-600"
+    >
+      <AlertCircle size={13} className="mt-0.5 shrink-0" />
+      <span>{message}</span>
+    </p>
+  );
+}
+
+type AttachmentThumbnailProps = {
+  file: File;
+};
+
+function AttachmentThumbnail({ file }: AttachmentThumbnailProps) {
+  const isImage = file.type.startsWith("image/");
+  const preview = useMemo(() => {
+    if (!isImage || typeof window === "undefined") return null;
+    return URL.createObjectURL(file);
+  }, [file, isImage]);
+
+  useEffect(() => {
+    if (!preview) return;
+    return () => {
+      URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
+
+  if (isImage && preview) {
+    return (
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={preview}
+          alt={file.name}
+          className="h-full w-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+      {isImage ? (
+        <FileImage className="h-5 w-5" />
+      ) : (
+        <FileText className="h-5 w-5" />
+      )}
+    </div>
+  );
+}
+
 type SectionHeaderProps = {
   number: number;
   title: string;
@@ -249,32 +346,35 @@ function SectionHeader({
     <div className="mb-6 flex items-start gap-4">
       <div
         aria-hidden="true"
-        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors ${
+        className={cn(
+          "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-bold transition-colors",
           isComplete
             ? "bg-emerald-500 text-white"
             : isLocked
               ? "border border-slate-200 bg-slate-100 text-slate-300"
               : isActive
                 ? "bg-[#0038F1] text-white shadow-[0_10px_22px_rgba(0,56,241,0.24)]"
-                : "border border-slate-200 bg-white text-slate-400"
-        }`}
-      >
-        {isComplete ? (
-          <Check className="h-5 w-5" />
-        ) : (
-          String(number).padStart(2, "0")
+                : "border border-slate-200 bg-white text-slate-400",
         )}
+      >
+        {isComplete ? <Check className="h-5 w-5" /> : number}
       </div>
       <div className="min-w-0 pt-1">
         <h2
-          className={`text-lg font-semibold tracking-[-0.03em] sm:text-xl ${
-            isLocked ? "text-slate-400" : "text-slate-950"
-          }`}
+          className={cn(
+            "text-lg font-semibold tracking-[-0.03em] sm:text-xl",
+            isLocked ? "text-slate-400" : "text-slate-950",
+          )}
         >
           {title}
         </h2>
         {hint ? (
-          <p className={`mt-1 text-sm ${isLocked ? "text-slate-400" : "text-slate-500"}`}>
+          <p
+            className={cn(
+              "mt-1 text-sm",
+              isLocked ? "text-slate-400" : "text-slate-500",
+            )}
+          >
             {hint}
           </p>
         ) : null}
@@ -390,9 +490,10 @@ function SummaryPanel({
             </dt>
             <dd className="flex min-w-0 items-center justify-end gap-2 text-right">
               <span
-                className={`truncate text-sm font-medium transition-colors ${
-                  item.isComplete ? "text-slate-900" : "text-slate-400"
-                }`}
+                className={cn(
+                  "truncate text-sm font-medium transition-colors",
+                  item.isComplete ? "text-slate-900" : "text-slate-400",
+                )}
               >
                 {item.value}
               </span>
@@ -404,12 +505,9 @@ function SummaryPanel({
       <div className="border-t border-slate-100 px-6 py-5">
         <button
           type="submit"
-          disabled={!isFormComplete}
-          className={`inline-flex w-full items-center justify-center rounded-2xl px-6 py-4 text-sm font-semibold transition ${
-            isFormComplete
-              ? "bg-[#0038F1] text-white shadow-[0_18px_40px_rgba(0,56,241,0.24)] hover:bg-[#002fd0]"
-              : "cursor-not-allowed bg-slate-200 text-slate-500"
-          }`}
+          data-invalid={!isFormComplete || undefined}
+          aria-describedby="contract-form-status"
+          className="inline-flex w-full items-center justify-center rounded-2xl bg-[#0038F1] px-6 py-4 text-sm font-semibold text-white transition-colors duration-75 hover:bg-[#002fd0] data-[invalid=true]:bg-slate-200 data-[invalid=true]:text-slate-500 data-[invalid=true]:hover:bg-slate-200"
         >
           계약 등록 완료
         </button>
@@ -426,13 +524,30 @@ export function ContractRegistrationScreen() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const bankLayerRef = useRef<HTMLDivElement | null>(null);
 
+  const coreInfoSectionRef = useRef<HTMLElement | null>(null);
+  const contractTypeSectionRef = useRef<HTMLElement | null>(null);
+  const accountSectionRef = useRef<HTMLElement | null>(null);
+  const transferSectionRef = useRef<HTMLElement | null>(null);
+  const attachmentsSectionRef = useRef<HTMLElement | null>(null);
+
   const [form, setForm] = useState<ContractRegistrationForm>(initialFormState);
   const [bankQuery, setBankQuery] = useState("");
   const [isBankMenuOpen, setIsBankMenuOpen] = useState(false);
   const [isSavedAccountsOpen, setIsSavedAccountsOpen] = useState(false);
   const [isDocumentGuideOpen, setIsDocumentGuideOpen] = useState(false);
-  const [isDraggingFiles, setIsDraggingFiles] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isDraggingFiles, setIsDraggingFiles] = useState(false);
+  const [hasBeenVerifiedOnce, setHasBeenVerifiedOnce] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [touched, setTouched] = useState({
+    address: false,
+    addressDetail: false,
+    contractName: false,
+    bank: false,
+    accountNumber: false,
+    senderName: false,
+    amount: false,
+  });
 
   const isRentContract = form.contractType === "월세";
   const amountLabel = isRentContract ? "월세 입력" : "송금액 입력";
@@ -445,29 +560,6 @@ export function ContractRegistrationScreen() {
       ),
     [normalizedBankQuery],
   );
-
-  useEffect(() => {
-    const anyModalOpen =
-      isConfirmOpen || isSavedAccountsOpen || isDocumentGuideOpen;
-    if (!anyModalOpen) return;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      if (isConfirmOpen) setIsConfirmOpen(false);
-      else if (isDocumentGuideOpen) setIsDocumentGuideOpen(false);
-      else if (isSavedAccountsOpen) setIsSavedAccountsOpen(false);
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isConfirmOpen, isSavedAccountsOpen, isDocumentGuideOpen]);
 
   useEffect(() => {
     if (!isBankMenuOpen) return;
@@ -484,28 +576,34 @@ export function ContractRegistrationScreen() {
     };
   }, [isBankMenuOpen]);
 
+  const amountNumber = form.amount ? Number(form.amount) : 0;
+  const koreanAmountLabel = formatKoreanAmount(amountNumber);
+
+  const isContractTypeComplete = Boolean(form.contractType);
   const isCoreInfoComplete = Boolean(
     form.contractType &&
       (isRentContract
         ? form.address.trim() && form.addressDetail.trim()
         : form.contractName.trim()),
   );
-  const isTransferInfoComplete = Boolean(form.senderName.trim() && form.amount);
-  const isFormComplete = Boolean(
-    isCoreInfoComplete &&
-      form.bank &&
-      isAccountNumberValid &&
-      form.isAccountVerified &&
-      isTransferInfoComplete &&
-      form.attachments.length > 0,
+  const isAccountComplete = Boolean(
+    form.bank && isAccountNumberValid && form.isAccountVerified,
   );
+  const isTransferInfoComplete = Boolean(form.senderName.trim() && form.amount);
+  const isAttachmentsComplete = form.attachments.length > 0;
+  const isFormComplete =
+    isContractTypeComplete &&
+    isCoreInfoComplete &&
+    isAccountComplete &&
+    isTransferInfoComplete &&
+    isAttachmentsComplete;
 
   const sectionStatuses = [
-    Boolean(form.contractType),
+    isContractTypeComplete,
     isCoreInfoComplete,
-    form.isAccountVerified,
+    isAccountComplete,
     isTransferInfoComplete,
-    form.attachments.length > 0,
+    isAttachmentsComplete,
   ];
   const effectiveComplete = sectionStatuses.map((_, index) =>
     sectionStatuses.slice(0, index + 1).every(Boolean),
@@ -517,6 +615,54 @@ export function ContractRegistrationScreen() {
   const activeSectionIndex = effectiveComplete.findIndex((done) => !done);
   const verifyButtonEnabled =
     Boolean(form.bank) && isAccountNumberValid && !form.isAccountVerified;
+  const needsReverify =
+    hasBeenVerifiedOnce &&
+    !form.isAccountVerified &&
+    Boolean(form.bank) &&
+    form.accountNumber.length > 0;
+
+  const addressError =
+    isRentContract && !form.address.trim() ? "주소를 입력해주세요." : null;
+  const addressDetailError =
+    isRentContract && !form.addressDetail.trim()
+      ? "상세주소를 입력해주세요."
+      : null;
+  const contractNameError =
+    !isRentContract &&
+    form.contractType != null &&
+    !form.contractName.trim()
+      ? "계약명을 입력해주세요."
+      : null;
+  const bankError = !form.bank ? "은행을 선택해주세요." : null;
+  const accountNumberError = (() => {
+    if (!form.accountNumber) return "계좌번호를 입력해주세요.";
+    if (!isAccountNumberValid) return "계좌번호는 숫자 8자리 이상 입력해주세요.";
+    if (!form.isAccountVerified) return "계좌인증을 완료해주세요.";
+    return null;
+  })();
+  const senderNameError = !form.senderName.trim()
+    ? "송금자명을 입력해주세요."
+    : null;
+  const amountError = !form.amount
+    ? `${amountLabel.replace(" 입력", "")}을 입력해주세요.`
+    : null;
+
+  const showError = (
+    field: keyof typeof touched,
+    error: string | null,
+  ): string | null =>
+    error && (touched[field] || submitAttempted) ? error : null;
+
+  const missingSections: string[] = [];
+  if (!isContractTypeComplete) missingSections.push("계약 유형");
+  if (!isCoreInfoComplete) missingSections.push("기본 정보");
+  if (!isAccountComplete) missingSections.push("계좌 정보");
+  if (!isTransferInfoComplete) missingSections.push("송금 정보");
+  if (!isAttachmentsComplete) missingSections.push("첨부 파일");
+
+  const formStatusMessage = isFormComplete
+    ? "모든 입력이 완료되었습니다. 계약 등록 완료 버튼을 누르면 확인 단계로 이동합니다."
+    : `${missingSections.join(", ")} 항목이 필요합니다. 계약 등록 완료 버튼을 누르면 미완료 섹션으로 이동합니다.`;
 
   const updateForm = (patch: Partial<ContractRegistrationForm>) => {
     setForm((current) => ({ ...current, ...patch }));
@@ -570,8 +716,46 @@ export function ContractRegistrationScreen() {
     });
   };
 
+  const handleVerifyAccount = () => {
+    updateForm({ isAccountVerified: true });
+    setHasBeenVerifiedOnce(true);
+  };
+
+  const handleFormSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    setSubmitAttempted(true);
+    setTouched({
+      address: true,
+      addressDetail: true,
+      contractName: true,
+      bank: true,
+      accountNumber: true,
+      senderName: true,
+      amount: true,
+    });
+    if (isFormComplete) {
+      setIsConfirmOpen(true);
+      return;
+    }
+    const sectionList: Array<{
+      done: boolean;
+      ref: RefObject<HTMLElement | null>;
+    }> = [
+      { done: isContractTypeComplete, ref: contractTypeSectionRef },
+      { done: isCoreInfoComplete, ref: coreInfoSectionRef },
+      { done: isAccountComplete, ref: accountSectionRef },
+      { done: isTransferInfoComplete, ref: transferSectionRef },
+      { done: isAttachmentsComplete, ref: attachmentsSectionRef },
+    ];
+    const firstIncomplete = sectionList.find((item) => !item.done);
+    firstIncomplete?.ref.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  };
+
   return (
-    <div className="relative min-h-screen overflow-x-clip bg-[#f5f8ff] font-sans text-[#151515]">
+    <div className="relative min-h-screen overflow-x-clip bg-[#eef2fa] font-sans text-[#151515]">
       <header className="relative z-10 px-4 py-6 md:px-8 md:py-6">
         <div className="mx-auto flex w-full max-w-[1360px] items-center justify-between gap-4">
           <Link href="/" className="inline-flex items-center">
@@ -581,33 +765,34 @@ export function ContractRegistrationScreen() {
               width={148}
               height={32}
               priority
-              className="h-10 w-auto object-contain"
+              className="h-6 w-auto object-contain sm:h-8"
             />
           </Link>
 
-          <button
-            type="button"
-            aria-label="메뉴 열기"
-            className="inline-flex items-center justify-center p-1 transition-opacity hover:opacity-75"
-          >
-            <span className="flex h-6 w-6 flex-col justify-center gap-[5px]">
-              <span className="block h-[2px] w-full rounded-full bg-[#1f2a44]" />
-              <span className="block h-[2px] w-full rounded-full bg-[#1f2a44]" />
-              <span className="block h-[2px] w-full rounded-full bg-[#1f2a44]" />
-            </span>
-          </button>
+          <UserMenu />
         </div>
       </header>
 
-      <main className="relative z-10 px-4 pb-[160px] pt-2 sm:px-6 lg:px-8 lg:pb-16">
+      <main className="relative z-10 px-4 pb-[180px] pt-2 sm:px-6 lg:px-8 lg:pb-16">
         <div className="mx-auto max-w-[1200px]">
-          <Link
-            href="/mypage-v2"
+          <button
+            type="button"
+            onClick={() => {
+              if (
+                typeof window !== "undefined" &&
+                document.referrer &&
+                new URL(document.referrer).origin === window.location.origin
+              ) {
+                router.back();
+                return;
+              }
+              router.push("/mypage-v2");
+            }}
             className="group mb-6 inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-950"
           >
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-            계약리스트로 돌아가기
-          </Link>
+            뒤로가기
+          </button>
 
           <div className="mb-8 max-w-[620px]">
             <h1 className="text-3xl font-bold tracking-[-0.03em] text-slate-950 sm:text-4xl lg:text-[2.5rem]">
@@ -615,17 +800,21 @@ export function ContractRegistrationScreen() {
             </h1>
           </div>
 
-          <form
-            id="contract-registration-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (!isFormComplete) return;
-              setIsConfirmOpen(true);
-            }}
-          >
+          <form id="contract-registration-form" onSubmit={handleFormSubmit}>
+            <div
+              id="contract-form-status"
+              role="status"
+              aria-live="polite"
+              className="sr-only"
+            >
+              {formStatusMessage}
+            </div>
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-8">
               <div className="overflow-hidden rounded-[32px] border border-slate-200/80 bg-white/90 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur-sm">
-                <section className="border-b border-slate-200/80 px-6 py-7 sm:px-8 sm:py-8">
+                <section
+                  ref={contractTypeSectionRef}
+                  className="scroll-mt-24 border-b border-slate-200/80 px-6 py-7 sm:px-8 sm:py-8"
+                >
                   <SectionHeader
                     number={1}
                     title="어떤 거래를 등록하시나요?"
@@ -642,20 +831,27 @@ export function ContractRegistrationScreen() {
                           key={type}
                           type="button"
                           onClick={() => handleContractTypeSelect(type)}
-                          className={`rounded-full px-4 py-2.5 text-sm font-semibold transition-all ${
+                          className={cn(
+                            "rounded-full px-4 py-2.5 text-sm font-semibold transition-colors",
                             isSelected
-                              ? "bg-[#0038F1] text-white shadow-[0_12px_24px_rgba(0,56,241,0.24)]"
-                              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                          }`}
+                              ? "bg-[#0038F1] text-white"
+                              : "bg-slate-100 text-slate-700 hover:bg-slate-200",
+                          )}
                         >
                           {type}
                         </button>
                       );
                     })}
                   </div>
+                  {submitAttempted && !isContractTypeComplete ? (
+                    <FieldError message="계약 유형을 선택해주세요." />
+                  ) : null}
                 </section>
 
-                <section className="border-b border-slate-200/80 px-6 py-7 sm:px-8 sm:py-8">
+                <section
+                  ref={coreInfoSectionRef}
+                  className="scroll-mt-24 border-b border-slate-200/80 px-6 py-7 sm:px-8 sm:py-8"
+                >
                   <SectionHeader
                     number={2}
                     title="계약 핵심 정보를 입력해주세요"
@@ -668,38 +864,91 @@ export function ContractRegistrationScreen() {
                     isRentContract ? (
                       <div className="grid gap-4 md:grid-cols-2">
                         <label className="block">
-                          <span className="mb-2 block text-sm font-medium text-slate-600">주소</span>
+                          <span className="mb-2 block text-sm font-medium text-slate-600">
+                            주소
+                          </span>
                           <input
                             type="text"
                             value={form.address}
-                            onChange={(event) => updateForm({ address: event.target.value })}
+                            onChange={(event) =>
+                              updateForm({ address: event.target.value })
+                            }
+                            onBlur={() =>
+                              setTouched((prev) => ({ ...prev, address: true }))
+                            }
                             placeholder="예: 서울특별시 강남구 테헤란로 123"
-                            className="block w-full rounded-2xl border border-slate-200 bg-[#fbfcff] px-4 py-3.5 text-slate-900 outline-none transition focus:border-[#0038F1] focus:bg-white focus:ring-4 focus:ring-[#0038F1]/10"
+                            className={cn(
+                              "block w-full rounded-2xl border bg-[#fbfcff] px-4 py-3.5 text-slate-900 outline-none transition focus:bg-white focus:ring-4",
+                              showError("address", addressError)
+                                ? "border-rose-300 focus:border-rose-400 focus:ring-rose-200/40"
+                                : "border-slate-200 focus:border-[#0038F1] focus:ring-[#0038F1]/10",
+                            )}
                           />
+                          {showError("address", addressError) ? (
+                            <FieldError message={addressError!} />
+                          ) : null}
                         </label>
                         <label className="block">
-                          <span className="mb-2 block text-sm font-medium text-slate-600">상세주소</span>
+                          <span className="mb-2 block text-sm font-medium text-slate-600">
+                            상세주소
+                          </span>
                           <input
                             type="text"
                             value={form.addressDetail}
                             onChange={(event) =>
                               updateForm({ addressDetail: event.target.value })
                             }
+                            onBlur={() =>
+                              setTouched((prev) => ({
+                                ...prev,
+                                addressDetail: true,
+                              }))
+                            }
                             placeholder="예: 502호"
-                            className="block w-full rounded-2xl border border-slate-200 bg-[#fbfcff] px-4 py-3.5 text-slate-900 outline-none transition focus:border-[#0038F1] focus:bg-white focus:ring-4 focus:ring-[#0038F1]/10"
+                            className={cn(
+                              "block w-full rounded-2xl border bg-[#fbfcff] px-4 py-3.5 text-slate-900 outline-none transition focus:bg-white focus:ring-4",
+                              showError("addressDetail", addressDetailError)
+                                ? "border-rose-300 focus:border-rose-400 focus:ring-rose-200/40"
+                                : "border-slate-200 focus:border-[#0038F1] focus:ring-[#0038F1]/10",
+                            )}
                           />
+                          {showError("addressDetail", addressDetailError) ? (
+                            <FieldError message={addressDetailError!} />
+                          ) : null}
                         </label>
                       </div>
                     ) : (
                       <label className="block">
-                        <span className="mb-2 block text-sm font-medium text-slate-600">계약명</span>
+                        <span className="mb-2 block text-sm font-medium text-slate-600">
+                          계약명
+                        </span>
                         <input
                           type="text"
                           value={form.contractName}
-                          onChange={(event) => updateForm({ contractName: event.target.value })}
-                          placeholder="예: 6월 디자인 용역비"
-                          className="block w-full rounded-2xl border border-slate-200 bg-[#fbfcff] px-4 py-3.5 text-slate-900 outline-none transition focus:border-[#0038F1] focus:bg-white focus:ring-4 focus:ring-[#0038F1]/10"
+                          onChange={(event) =>
+                            updateForm({ contractName: event.target.value })
+                          }
+                          onBlur={() =>
+                            setTouched((prev) => ({
+                              ...prev,
+                              contractName: true,
+                            }))
+                          }
+                          placeholder={
+                            form.contractType
+                              ? CONTRACT_NAME_PLACEHOLDERS[form.contractType]
+                              : "계약명을 입력해주세요"
+                          }
+                          className={cn(
+                            "block w-full rounded-2xl border bg-[#fbfcff] px-4 py-3.5 text-slate-900 outline-none transition focus:bg-white focus:ring-4",
+                            showError("contractName", contractNameError)
+                              ? "border-rose-300 focus:border-rose-400 focus:ring-rose-200/40"
+                              : "border-slate-200 focus:border-[#0038F1] focus:ring-[#0038F1]/10",
+                          )}
                         />
+                        {showError("contractName", contractNameError) ? (
+                          <FieldError message={contractNameError!} />
+                        ) : null}
                       </label>
                     )
                   ) : (
@@ -707,7 +956,10 @@ export function ContractRegistrationScreen() {
                   )}
                 </section>
 
-                <section className="border-b border-slate-200/80 px-6 py-7 sm:px-8 sm:py-8">
+                <section
+                  ref={accountSectionRef}
+                  className="scroll-mt-24 border-b border-slate-200/80 px-6 py-7 sm:px-8 sm:py-8"
+                >
                   <SectionHeader
                     number={3}
                     title="거래 상대방 계좌정보를 입력해주세요"
@@ -717,139 +969,197 @@ export function ContractRegistrationScreen() {
                   />
 
                   {sectionUnlocked[2] ? (
-                  <>
-                  <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-sm text-slate-500">
-                      이전에 송금한 계좌를 불러와 빠르게 입력할 수 있어요.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setIsSavedAccountsOpen(true)}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
-                    >
-                      <Wallet className="h-4 w-4" />
-                      계좌 불러오기
-                    </button>
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
-                    <div className="relative" ref={bankLayerRef}>
-                      <span className="mb-2 block text-sm font-medium text-slate-600">은행 선택</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsBankMenuOpen((current) => !current);
-                          setBankQuery(form.bank);
-                        }}
-                        className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-[#fbfcff] px-4 py-3.5 text-left text-slate-900 outline-none transition hover:bg-white focus:border-[#0038F1] focus:ring-4 focus:ring-[#0038F1]/10"
-                      >
-                        <span className={form.bank ? "text-slate-900" : "text-slate-400"}>
-                          {form.bank || "은행을 검색해 선택하세요"}
-                        </span>
-                        <ChevronDown
-                          className={`h-4 w-4 text-slate-400 transition-transform ${
-                            isBankMenuOpen ? "rotate-180" : ""
-                          }`}
-                        />
-                      </button>
-
-                      {isBankMenuOpen ? (
-                        <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-20 overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_18px_48px_rgba(15,23,42,0.12)]">
-                          <div className="border-b border-slate-100 p-3">
-                            <div className="relative">
-                              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                              <input
-                                type="text"
-                                autoFocus
-                                value={bankQuery}
-                                onChange={(event) => setBankQuery(event.target.value)}
-                                placeholder="은행명을 검색하세요"
-                                className="block w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-900 outline-none transition focus:border-[#0038F1] focus:bg-white focus:ring-4 focus:ring-[#0038F1]/10"
-                              />
-                            </div>
-                          </div>
-                          <div className="max-h-64 overflow-y-auto p-2">
-                            {filteredBanks.length > 0 ? (
-                              filteredBanks.map((bank) => (
-                                <button
-                                  key={bank}
-                                  type="button"
-                                  onClick={() => {
-                                    updateForm({ bank, isAccountVerified: false });
-                                    setBankQuery(bank);
-                                    setIsBankMenuOpen(false);
-                                  }}
-                                  className="flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                                >
-                                  {bank}
-                                  {form.bank === bank ? (
-                                    <CheckCircle2 className="h-4 w-4 text-[#0038F1]" />
-                                  ) : null}
-                                </button>
-                              ))
-                            ) : (
-                              <div className="px-4 py-5 text-sm text-slate-500">
-                                검색 결과가 없습니다.
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="block">
-                      <span className="mb-2 block text-sm font-medium text-slate-600">계좌번호</span>
-                      <div
-                        className={`flex items-stretch rounded-2xl border bg-[#fbfcff] transition focus-within:bg-white focus-within:ring-4 ${
-                          form.isAccountVerified
-                            ? "border-emerald-200 focus-within:border-emerald-300 focus-within:ring-emerald-100"
-                            : "border-slate-200 focus-within:border-[#0038F1] focus-within:ring-[#0038F1]/10"
-                        }`}
-                      >
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          value={form.accountNumber}
-                          onChange={handleAccountNumberChange}
-                          placeholder="숫자만 입력해주세요"
-                          className="block w-full bg-transparent px-4 py-3.5 text-slate-900 outline-none"
-                        />
+                    <>
+                      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-sm text-slate-500">
+                          이전에 송금한 계좌를 불러와 빠르게 입력할 수 있어요.
+                        </p>
                         <button
                           type="button"
-                          disabled={form.isAccountVerified || !verifyButtonEnabled}
-                          onClick={() => updateForm({ isAccountVerified: true })}
-                          className={`m-1 inline-flex shrink-0 items-center justify-center rounded-[14px] px-4 text-sm font-semibold transition ${
-                            form.isAccountVerified
-                              ? "bg-emerald-100 text-emerald-700"
-                              : verifyButtonEnabled
-                                ? "bg-[#0038F1] text-white hover:bg-[#002fd0]"
-                                : "cursor-not-allowed bg-slate-200 text-slate-500"
-                          }`}
+                          onClick={() => setIsSavedAccountsOpen(true)}
+                          disabled={SAVED_ACCOUNTS.length === 0}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          {form.isAccountVerified ? (
-                            <>
-                              <Check className="mr-1 h-4 w-4" />
-                              인증완료
-                            </>
-                          ) : (
-                            "계좌인증"
-                          )}
+                          <Wallet className="h-4 w-4" />
+                          계좌 불러오기
                         </button>
                       </div>
-                    </div>
-                  </div>
 
-                  <div className="mt-4 rounded-[20px] bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                    계좌인증은 이번 단계에서 UI 흐름만 먼저 제공합니다. 실제 인증 모듈은 이후
-                    연동 예정입니다.
-                  </div>
-                  </>
+                      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+                        <div className="relative" ref={bankLayerRef}>
+                          <span className="mb-2 block text-sm font-medium text-slate-600">
+                            은행 선택
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsBankMenuOpen((current) => !current);
+                              setBankQuery(form.bank);
+                              setTouched((prev) => ({ ...prev, bank: true }));
+                            }}
+                            className={cn(
+                              "flex w-full items-center justify-between rounded-2xl border bg-[#fbfcff] px-4 py-3.5 text-left text-slate-900 outline-none transition hover:bg-white focus:ring-4",
+                              showError("bank", bankError)
+                                ? "border-rose-300 focus:border-rose-400 focus:ring-rose-200/40"
+                                : "border-slate-200 focus:border-[#0038F1] focus:ring-[#0038F1]/10",
+                            )}
+                          >
+                            <span
+                              className={
+                                form.bank ? "text-slate-900" : "text-slate-400"
+                              }
+                            >
+                              {form.bank || "은행을 검색해 선택하세요"}
+                            </span>
+                            <ChevronDown
+                              className={cn(
+                                "h-4 w-4 text-slate-400 transition-transform",
+                                isBankMenuOpen && "rotate-180",
+                              )}
+                            />
+                          </button>
+
+                          {isBankMenuOpen ? (
+                            <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-20 overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_18px_48px_rgba(15,23,42,0.12)]">
+                              <div className="border-b border-slate-100 p-3">
+                                <div className="relative">
+                                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                  <input
+                                    type="text"
+                                    autoFocus
+                                    value={bankQuery}
+                                    onChange={(event) =>
+                                      setBankQuery(event.target.value)
+                                    }
+                                    placeholder="은행명을 검색하세요"
+                                    className="block w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-900 outline-none transition focus:border-[#0038F1] focus:bg-white focus:ring-4 focus:ring-[#0038F1]/10"
+                                  />
+                                </div>
+                              </div>
+                              <div className="max-h-64 overflow-y-auto p-2">
+                                {filteredBanks.length > 0 ? (
+                                  filteredBanks.map((bank) => (
+                                    <button
+                                      key={bank}
+                                      type="button"
+                                      onClick={() => {
+                                        updateForm({
+                                          bank,
+                                          isAccountVerified: false,
+                                        });
+                                        setBankQuery(bank);
+                                        setIsBankMenuOpen(false);
+                                      }}
+                                      className="flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                                    >
+                                      {bank}
+                                      {form.bank === bank ? (
+                                        <CheckCircle2 className="h-4 w-4 text-[#0038F1]" />
+                                      ) : null}
+                                    </button>
+                                  ))
+                                ) : (
+                                  <div className="px-4 py-5 text-sm text-slate-500">
+                                    검색 결과가 없습니다.
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ) : null}
+                          {showError("bank", bankError) ? (
+                            <FieldError message={bankError!} />
+                          ) : null}
+                        </div>
+
+                        <div className="block">
+                          <span className="mb-2 block text-sm font-medium text-slate-600">
+                            계좌번호
+                          </span>
+                          <div
+                            className={cn(
+                              "flex items-stretch rounded-2xl border bg-[#fbfcff] transition focus-within:bg-white focus-within:ring-4",
+                              showError("accountNumber", accountNumberError)
+                                ? "border-rose-300 focus-within:border-rose-400 focus-within:ring-rose-200/40"
+                                : form.isAccountVerified
+                                  ? "border-emerald-200 focus-within:border-emerald-300 focus-within:ring-emerald-100"
+                                  : "border-slate-200 focus-within:border-[#0038F1] focus-within:ring-[#0038F1]/10",
+                            )}
+                          >
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              value={form.accountNumber}
+                              onChange={handleAccountNumberChange}
+                              onBlur={() =>
+                                setTouched((prev) => ({
+                                  ...prev,
+                                  accountNumber: true,
+                                }))
+                              }
+                              placeholder="숫자만 입력해주세요"
+                              className="block w-full bg-transparent px-4 py-3.5 text-slate-900 outline-none"
+                            />
+                            <button
+                              type="button"
+                              disabled={
+                                form.isAccountVerified || !verifyButtonEnabled
+                              }
+                              onClick={handleVerifyAccount}
+                              className={cn(
+                                "m-1 inline-flex shrink-0 items-center justify-center rounded-[14px] px-4 text-sm font-semibold transition",
+                                form.isAccountVerified
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : verifyButtonEnabled
+                                    ? "bg-[#0038F1] text-white hover:bg-[#002fd0]"
+                                    : "cursor-not-allowed bg-slate-200 text-slate-500",
+                              )}
+                            >
+                              {form.isAccountVerified ? (
+                                <>
+                                  <Check className="mr-1 h-4 w-4" />
+                                  인증완료
+                                </>
+                              ) : (
+                                "계좌인증"
+                              )}
+                            </button>
+                          </div>
+                          {showError("accountNumber", accountNumberError) ? (
+                            <FieldError message={accountNumberError!} />
+                          ) : null}
+                        </div>
+                      </div>
+
+                      {needsReverify ? (
+                        <div className="mt-4 flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-amber-800">
+                          <AlertCircle
+                            className="mt-0.5 h-4 w-4 shrink-0"
+                            size={14}
+                          />
+                          <span>
+                            계좌 정보가 변경되어 인증이 해제됐어요.{" "}
+                            <span className="font-semibold">
+                              계좌인증
+                            </span>{" "}
+                            버튼을 다시 눌러 재인증해주세요.
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="mt-4 rounded-[20px] bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                          계좌인증은 이번 단계에서 UI 흐름만 먼저 제공합니다.
+                          실제 인증 모듈은 이후 연동 예정입니다.
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <LockedPlaceholder />
                   )}
                 </section>
 
-                <section className="border-b border-slate-200/80 px-6 py-7 sm:px-8 sm:py-8">
+                <section
+                  ref={transferSectionRef}
+                  className="scroll-mt-24 border-b border-slate-200/80 px-6 py-7 sm:px-8 sm:py-8"
+                >
                   <SectionHeader
                     number={4}
                     title="실제 송금 정보를 입력해주세요"
@@ -859,40 +1169,83 @@ export function ContractRegistrationScreen() {
                   />
 
                   {sectionUnlocked[3] ? (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <label className="block">
-                      <span className="mb-2 block text-sm font-medium text-slate-600">송금자명</span>
-                      <input
-                        type="text"
-                        value={form.senderName}
-                        onChange={(event) => updateForm({ senderName: event.target.value })}
-                        placeholder="예: 김페이몽"
-                        className="block w-full rounded-2xl border border-slate-200 bg-[#fbfcff] px-4 py-3.5 text-slate-900 outline-none transition focus:border-[#0038F1] focus:bg-white focus:ring-4 focus:ring-[#0038F1]/10"
-                      />
-                    </label>
-                    <label className="block">
-                      <span className="mb-2 block text-sm font-medium text-slate-600">{amountLabel}</span>
-                      <div className="relative">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <label className="block">
+                        <span className="mb-2 block text-sm font-medium text-slate-600">
+                          송금자명
+                        </span>
                         <input
                           type="text"
-                          inputMode="numeric"
-                          value={formatMoney(form.amount)}
-                          onChange={handleMoneyChange}
-                          placeholder="숫자만 입력해주세요"
-                          className="block w-full rounded-2xl border border-slate-200 bg-[#fbfcff] px-4 py-3.5 pr-12 text-slate-900 outline-none transition focus:border-[#0038F1] focus:bg-white focus:ring-4 focus:ring-[#0038F1]/10"
+                          value={form.senderName}
+                          onChange={(event) =>
+                            updateForm({ senderName: event.target.value })
+                          }
+                          onBlur={() =>
+                            setTouched((prev) => ({
+                              ...prev,
+                              senderName: true,
+                            }))
+                          }
+                          placeholder="예: 김페이몽"
+                          className={cn(
+                            "block w-full rounded-2xl border bg-[#fbfcff] px-4 py-3.5 text-slate-900 outline-none transition focus:bg-white focus:ring-4",
+                            showError("senderName", senderNameError)
+                              ? "border-rose-300 focus:border-rose-400 focus:ring-rose-200/40"
+                              : "border-slate-200 focus:border-[#0038F1] focus:ring-[#0038F1]/10",
+                          )}
                         />
-                        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-400">
-                          원
+                        {showError("senderName", senderNameError) ? (
+                          <FieldError message={senderNameError!} />
+                        ) : null}
+                      </label>
+                      <label className="block">
+                        <span className="mb-2 block text-sm font-medium text-slate-600">
+                          {amountLabel}
                         </span>
-                      </div>
-                    </label>
-                  </div>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            value={formatMoney(form.amount)}
+                            onChange={handleMoneyChange}
+                            onBlur={() =>
+                              setTouched((prev) => ({
+                                ...prev,
+                                amount: true,
+                              }))
+                            }
+                            placeholder="숫자만 입력해주세요"
+                            className={cn(
+                              "block w-full rounded-2xl border bg-[#fbfcff] px-4 py-3.5 pr-12 text-slate-900 outline-none transition focus:bg-white focus:ring-4",
+                              showError("amount", amountError)
+                                ? "border-rose-300 focus:border-rose-400 focus:ring-rose-200/40"
+                                : "border-slate-200 focus:border-[#0038F1] focus:ring-[#0038F1]/10",
+                            )}
+                          />
+                          <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-400">
+                            원
+                          </span>
+                        </div>
+                        {showError("amount", amountError) ? (
+                          <FieldError message={amountError!} />
+                        ) : koreanAmountLabel ? (
+                          <p className="mt-1.5 text-xs text-slate-500">
+                            <span className="font-semibold text-[#0038F1]">
+                              {koreanAmountLabel}
+                            </span>
+                          </p>
+                        ) : null}
+                      </label>
+                    </div>
                   ) : (
                     <LockedPlaceholder />
                   )}
                 </section>
 
-                <section className="px-6 py-7 sm:px-8 sm:py-8">
+                <section
+                  ref={attachmentsSectionRef}
+                  className="scroll-mt-24 px-6 py-7 sm:px-8 sm:py-8"
+                >
                   <SectionHeader
                     number={5}
                     title="확인에 필요한 서류를 첨부해주세요"
@@ -902,103 +1255,108 @@ export function ContractRegistrationScreen() {
                   />
 
                   {sectionUnlocked[4] ? (
-                  <>
-                  <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-sm text-slate-500">
-                      계약 유형별로 필요한 서류를 확인해보세요.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setIsDocumentGuideOpen(true)}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
-                    >
-                      <Info className="h-4 w-4" />
-                      계약별 첨부서류 안내
-                    </button>
-                  </div>
+                    <>
+                      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-sm text-slate-500">
+                          계약 유형별로 필요한 서류를 확인해보세요.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setIsDocumentGuideOpen(true)}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                        >
+                          <Info className="h-4 w-4" />
+                          계약별 첨부서류 안내
+                        </button>
+                      </div>
 
-                  <div
-                    onDragEnter={(event) => {
-                      event.preventDefault();
-                      setIsDraggingFiles(true);
-                    }}
-                    onDragOver={(event) => {
-                      event.preventDefault();
-                      setIsDraggingFiles(true);
-                    }}
-                    onDragLeave={(event) => {
-                      event.preventDefault();
-                      if (event.currentTarget.contains(event.relatedTarget as Node)) {
-                        return;
-                      }
-                      setIsDraggingFiles(false);
-                    }}
-                    onDrop={handleFileDrop}
-                    className={`rounded-[24px] border border-dashed px-6 py-8 text-center transition ${
-                      isDraggingFiles
-                        ? "border-[#0038F1] bg-[#0038F1]/5"
-                        : "border-slate-200 bg-slate-50/70"
-                    }`}
-                  >
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#0038F1] shadow-[0_14px_30px_rgba(0,56,241,0.08)]">
-                      <Upload className="h-6 w-6" />
-                    </div>
-                    <p className="mt-4 text-base font-semibold text-slate-900">
-                      파일을 끌어다 놓거나 버튼으로 업로드하세요
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-slate-500">
-                      계약서, 영수증, 견적서 등 여러 파일을 한 번에 첨부할 수 있습니다.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="mt-5 inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-black"
-                    >
-                      파일 선택
-                    </button>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      multiple
-                      className="hidden"
-                      onChange={handleFileBrowseChange}
-                    />
-                  </div>
+                      <div
+                        onDragEnter={(event) => {
+                          event.preventDefault();
+                          setIsDraggingFiles(true);
+                        }}
+                        onDragOver={(event) => {
+                          event.preventDefault();
+                          setIsDraggingFiles(true);
+                        }}
+                        onDragLeave={(event) => {
+                          event.preventDefault();
+                          if (
+                            event.currentTarget.contains(
+                              event.relatedTarget as Node,
+                            )
+                          ) {
+                            return;
+                          }
+                          setIsDraggingFiles(false);
+                        }}
+                        onDrop={handleFileDrop}
+                        className={cn(
+                          "rounded-[24px] border border-dashed px-6 py-8 text-center transition",
+                          isDraggingFiles
+                            ? "border-[#0038F1] bg-[#0038F1]/5"
+                            : "border-slate-200 bg-slate-50/70",
+                        )}
+                      >
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#0038F1] shadow-[0_14px_30px_rgba(0,56,241,0.08)]">
+                          <Upload className="h-6 w-6" />
+                        </div>
+                        <p className="mt-4 text-base font-semibold text-slate-900">
+                          파일을 끌어다 놓거나 버튼으로 업로드하세요
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                          계약서, 영수증, 견적서 등 여러 파일을 한 번에 첨부할
+                          수 있습니다.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="mt-5 inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-black"
+                        >
+                          파일 선택
+                        </button>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          multiple
+                          className="hidden"
+                          onChange={handleFileBrowseChange}
+                        />
+                      </div>
 
-                  {form.attachments.length > 0 ? (
-                    <ul className="mt-5 grid gap-3 sm:grid-cols-2">
-                      {form.attachments.map((file) => {
-                        const Icon = getFileIcon(file);
-                        return (
-                          <li
-                            key={`${file.name}-${file.size}-${file.lastModified}`}
-                            className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
-                          >
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
-                              <Icon className="h-5 w-5" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium text-slate-900">
-                                {file.name}
-                              </p>
-                              <p className="text-xs text-slate-400">
-                                {formatFileSize(file.size)}
-                              </p>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleAttachmentRemove(file)}
-                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
-                              aria-label={`${file.name} 제거`}
+                      {submitAttempted && !isAttachmentsComplete ? (
+                        <FieldError message="최소 한 개 이상의 파일을 첨부해주세요." />
+                      ) : null}
+
+                      {form.attachments.length > 0 ? (
+                        <ul className="mt-5 grid gap-3 sm:grid-cols-2">
+                          {form.attachments.map((file) => (
+                            <li
+                              key={`${file.name}-${file.size}-${file.lastModified}`}
+                              className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
                             >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : null}
-                  </>
+                              <AttachmentThumbnail file={file} />
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-medium text-slate-900">
+                                  {file.name}
+                                </p>
+                                <p className="text-xs text-slate-400">
+                                  {formatFileSize(file.size)}
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleAttachmentRemove(file)}
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+                                aria-label={`${file.name} 제거`}
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </>
                   ) : (
                     <LockedPlaceholder />
                   )}
@@ -1044,12 +1402,9 @@ export function ContractRegistrationScreen() {
             <button
               type="submit"
               form="contract-registration-form"
-              disabled={!isFormComplete}
-              className={`inline-flex w-full items-center justify-center rounded-2xl px-6 py-3.5 text-sm font-semibold transition ${
-                isFormComplete
-                  ? "bg-[#0038F1] text-white shadow-[0_14px_32px_rgba(0,56,241,0.24)] hover:bg-[#002fd0]"
-                  : "cursor-not-allowed bg-slate-200 text-slate-500"
-              }`}
+              data-invalid={!isFormComplete || undefined}
+              aria-describedby="contract-form-status"
+              className="inline-flex w-full items-center justify-center rounded-2xl bg-[#0038F1] px-6 py-3.5 text-sm font-semibold text-white transition-colors duration-75 hover:bg-[#002fd0] data-[invalid=true]:bg-slate-200 data-[invalid=true]:text-slate-500 data-[invalid=true]:hover:bg-slate-200"
             >
               계약 등록 완료
             </button>
@@ -1057,170 +1412,112 @@ export function ContractRegistrationScreen() {
         </div>
       </div>
 
-      {isConfirmOpen ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="contract-confirm-title"
-          className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 sm:px-6"
-        >
-          <div
-            aria-hidden="true"
-            onClick={() => setIsConfirmOpen(false)}
-            className="absolute inset-0 bg-slate-950/55 backdrop-blur-sm"
-          />
+      <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle>계약 내용을 확인해주세요</DialogTitle>
+            <DialogDescription>
+              등록 전에 입력하신 내용을 다시 한 번 확인해주세요.
+            </DialogDescription>
+          </DialogHeader>
 
-          <div className="relative z-10 flex max-h-[92vh] w-full max-w-[520px] flex-col overflow-hidden rounded-[28px] bg-white shadow-[0_36px_90px_rgba(15,23,42,0.28)]">
-            <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 pb-5 pt-6 sm:px-7">
-              <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#00abff]">
-                  Confirm
-                </p>
-                <h2
-                  id="contract-confirm-title"
-                  className="mt-2 text-xl font-bold tracking-[-0.02em] text-slate-950 sm:text-[1.375rem]"
+          <div className="-mx-1 max-h-[60vh] overflow-y-auto px-1">
+            <dl className="divide-y divide-slate-100">
+              {(
+                [
+                  { label: "계약 유형", value: form.contractType ?? "—" },
+                  ...(isRentContract
+                    ? [
+                        { label: "주소", value: form.address },
+                        { label: "상세주소", value: form.addressDetail },
+                      ]
+                    : [{ label: "계약명", value: form.contractName }]),
+                  { label: "은행", value: form.bank },
+                  { label: "계좌번호", value: form.accountNumber },
+                  { label: "송금자명", value: form.senderName },
+                  {
+                    label: isRentContract ? "월세" : "송금액",
+                    value: `${formatMoney(form.amount)}원`,
+                  },
+                ] as { label: string; value: string }[]
+              ).map((row) => (
+                <div
+                  key={row.label}
+                  className="flex items-start justify-between gap-4 py-3.5"
                 >
-                  계약 내용을 확인해주세요
-                </h2>
-                <p className="mt-1.5 text-sm text-slate-500">
-                  등록 전에 입력하신 내용을 다시 한 번 확인해주세요.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsConfirmOpen(false)}
-                aria-label="닫기"
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-5 py-2 sm:px-7">
-              <dl className="divide-y divide-slate-100">
-                {(
-                  [
-                    { label: "계약 유형", value: form.contractType ?? "—" },
-                    ...(isRentContract
-                      ? [
-                          { label: "주소", value: form.address },
-                          { label: "상세주소", value: form.addressDetail },
-                        ]
-                      : [{ label: "계약명", value: form.contractName }]),
-                    { label: "은행", value: form.bank },
-                    { label: "계좌번호", value: form.accountNumber },
-                    { label: "송금자명", value: form.senderName },
-                    {
-                      label: isRentContract ? "월세" : "송금액",
-                      value: `${formatMoney(form.amount)}원`,
-                    },
-                  ] as { label: string; value: string }[]
-                ).map((row) => (
-                  <div
-                    key={row.label}
-                    className="flex items-start justify-between gap-4 py-3.5"
-                  >
-                    <dt className="shrink-0 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                      {row.label}
-                    </dt>
-                    <dd className="min-w-0 text-right text-sm font-medium text-slate-900">
-                      {row.value}
-                    </dd>
-                  </div>
-                ))}
-
-                <div className="py-3.5">
-                  <dt className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                    첨부 파일 · {form.attachments.length}개
+                  <dt className="shrink-0 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                    {row.label}
                   </dt>
-                  <dd>
-                    <ul className="space-y-2">
-                      {form.attachments.map((file) => {
-                        const Icon = getFileIcon(file);
-                        return (
-                          <li
-                            key={`${file.name}-${file.size}-${file.lastModified}`}
-                            className="flex items-center gap-2.5 rounded-xl bg-slate-50 px-3 py-2"
-                          >
-                            <Icon className="h-4 w-4 shrink-0 text-slate-500" />
-                            <span className="min-w-0 flex-1 truncate text-sm text-slate-800">
-                              {file.name}
-                            </span>
-                            <span className="shrink-0 text-xs text-slate-400">
-                              {formatFileSize(file.size)}
-                            </span>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                  <dd className="min-w-0 text-right text-sm font-medium text-slate-900">
+                    {row.value}
                   </dd>
                 </div>
-              </dl>
-            </div>
+              ))}
 
-            <div className="flex gap-2.5 border-t border-slate-100 px-5 py-4 sm:gap-3 sm:px-7 sm:py-5">
-              <button
-                type="button"
-                onClick={() => setIsConfirmOpen(false)}
-                className="inline-flex flex-1 items-center justify-center whitespace-nowrap rounded-2xl border border-slate-200 bg-white px-3 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:px-6"
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsConfirmOpen(false);
-                  router.push("/contracts/new/complete");
-                }}
-                className="inline-flex flex-[2] items-center justify-center whitespace-nowrap rounded-2xl bg-[#0038F1] px-3 py-3.5 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(0,56,241,0.24)] transition hover:bg-[#002fd0] sm:flex-1 sm:px-6"
-              >
-                계약 등록하기
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {isSavedAccountsOpen ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="saved-accounts-title"
-          className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 sm:px-6"
-        >
-          <div
-            aria-hidden="true"
-            onClick={() => setIsSavedAccountsOpen(false)}
-            className="absolute inset-0 bg-slate-950/55 backdrop-blur-sm"
-          />
-
-          <div className="relative z-10 flex max-h-[85vh] w-full max-w-[480px] flex-col overflow-hidden rounded-[28px] bg-white shadow-[0_36px_90px_rgba(15,23,42,0.28)]">
-            <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 pb-5 pt-6 sm:px-7">
-              <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#00abff]">
-                  Saved Accounts
-                </p>
-                <h2
-                  id="saved-accounts-title"
-                  className="mt-2 text-xl font-bold tracking-[-0.02em] text-slate-950"
-                >
-                  계좌 불러오기
-                </h2>
-                <p className="mt-1.5 text-sm text-slate-500">
-                  결제 이력이 있는 계좌 {SAVED_ACCOUNTS.length}건을 불러왔어요. 클릭하면 자동으로 입력됩니다.
-                </p>
+              <div className="py-3.5">
+                <dt className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                  첨부 파일 · {form.attachments.length}개
+                </dt>
+                <dd>
+                  <ul className="space-y-2">
+                    {form.attachments.map((file) => {
+                      const Icon = getFileIcon(file);
+                      return (
+                        <li
+                          key={`${file.name}-${file.size}-${file.lastModified}`}
+                          className="flex items-center gap-2.5 rounded-xl bg-slate-50 px-3 py-2"
+                        >
+                          <Icon className="h-4 w-4 shrink-0 text-slate-500" />
+                          <span className="min-w-0 flex-1 truncate text-sm text-slate-800">
+                            {file.name}
+                          </span>
+                          <span className="shrink-0 text-xs text-slate-400">
+                            {formatFileSize(file.size)}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </dd>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsSavedAccountsOpen(false)}
-                aria-label="닫기"
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+            </dl>
+          </div>
 
-            <div className="flex-1 overflow-y-auto px-3 py-2 sm:px-4">
+          <DialogFooter className="flex-row gap-2.5 sm:justify-end">
+            <button
+              type="button"
+              onClick={() => setIsConfirmOpen(false)}
+              className="inline-flex flex-1 items-center justify-center whitespace-nowrap rounded-2xl border border-slate-200 bg-white px-3 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:px-6"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsConfirmOpen(false);
+                router.push("/contracts/new/complete");
+              }}
+              className="inline-flex flex-[2] items-center justify-center whitespace-nowrap rounded-2xl bg-[#0038F1] px-3 py-3.5 text-sm font-semibold text-white transition hover:bg-[#002fd0] sm:px-6"
+            >
+              계약 등록하기
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isSavedAccountsOpen} onOpenChange={setIsSavedAccountsOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>계좌 불러오기</DialogTitle>
+            <DialogDescription>
+              {SAVED_ACCOUNTS.length > 0
+                ? `결제 이력이 있는 계좌 ${SAVED_ACCOUNTS.length}건을 불러왔어요. 선택하면 자동으로 인증까지 완료돼요.`
+                : "송금 이력이 없어서 불러올 계좌가 없어요."}
+            </DialogDescription>
+          </DialogHeader>
+
+          {SAVED_ACCOUNTS.length > 0 ? (
+            <div className="-mx-1 max-h-[50vh] overflow-y-auto px-1">
               <ul className="divide-y divide-slate-100">
                 {SAVED_ACCOUNTS.map((account) => {
                   const isSelected =
@@ -1237,13 +1534,17 @@ export function ContractRegistrationScreen() {
                             accountNumber: account.accountNumber,
                             isAccountVerified: true,
                           });
+                          setHasBeenVerifiedOnce(true);
                           setBankQuery(account.bank);
                           setIsBankMenuOpen(false);
                           setIsSavedAccountsOpen(false);
                         }}
-                        className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3.5 text-left transition ${
-                          isSelected ? "bg-[#0038F1]/5" : "hover:bg-slate-50"
-                        }`}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-2xl px-3 py-3.5 text-left transition",
+                          isSelected
+                            ? "bg-[#0038F1]/5"
+                            : "hover:bg-slate-50",
+                        )}
                       >
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500">
                           <Wallet className="h-4 w-4" />
@@ -1256,9 +1557,13 @@ export function ContractRegistrationScreen() {
                             <span className="text-sm text-slate-700">
                               {account.accountNumber}
                             </span>
+                            <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                              자동 인증
+                            </span>
                           </div>
                           <p className="mt-0.5 text-xs text-slate-500">
-                            예금주 {account.holder} · 마지막 송금 {account.lastPaidAt}
+                            예금주 {account.holder} · 마지막 송금{" "}
+                            {account.lastPaidAt}
                           </p>
                         </div>
                         {isSelected ? (
@@ -1272,94 +1577,57 @@ export function ContractRegistrationScreen() {
                 })}
               </ul>
             </div>
-
-            <div className="border-t border-slate-100 px-5 py-4 sm:px-7 sm:py-5">
-              <button
-                type="button"
-                onClick={() => setIsSavedAccountsOpen(false)}
-                className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-              >
-                닫기
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {isDocumentGuideOpen ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="document-guide-title"
-          className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 sm:px-6"
-        >
-          <div
-            aria-hidden="true"
-            onClick={() => setIsDocumentGuideOpen(false)}
-            className="absolute inset-0 bg-slate-950/55 backdrop-blur-sm"
-          />
-
-          <div className="relative z-10 flex max-h-[88vh] w-full max-w-[560px] flex-col overflow-hidden rounded-[28px] bg-white shadow-[0_36px_90px_rgba(15,23,42,0.28)]">
-            <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 pb-5 pt-6 sm:px-7">
-              <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#00abff]">
-                  Document Guide
+          ) : (
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-10 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm">
+                <Wallet className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-800">
+                  저장된 계좌가 없어요
                 </p>
-                <h2
-                  id="document-guide-title"
-                  className="mt-2 text-xl font-bold tracking-[-0.02em] text-slate-950"
-                >
-                  계약별 첨부서류 안내
-                </h2>
-                <p className="mt-1.5 text-sm text-slate-500">
-                  계약 유형에 따라 필요한 서류가 다릅니다. 아래 항목을 참고해주세요.
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  계좌를 직접 입력해 첫 송금을 등록해보세요.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsDocumentGuideOpen(false)}
-                aria-label="닫기"
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
-              >
-                <X className="h-4 w-4" />
-              </button>
             </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
-            <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-7">
-              <ul className="space-y-4">
-                {DOCUMENT_GUIDES.map((guide) => (
-                  <li
-                    key={guide.type}
-                    className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4"
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center rounded-full bg-[#0038F1]/10 px-3 py-1 text-xs font-semibold text-[#0038F1]">
-                        {guide.type}
-                      </span>
-                      <span className="text-sm font-semibold text-slate-900">
-                        {guide.docs}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                      {guide.description}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </div>
+      <Dialog open={isDocumentGuideOpen} onOpenChange={setIsDocumentGuideOpen}>
+        <DialogContent className="sm:max-w-[560px]">
+          <DialogHeader>
+            <DialogTitle>계약별 첨부서류 안내</DialogTitle>
+            <DialogDescription>
+              계약 유형에 따라 필요한 서류가 다릅니다. 아래 항목을 참고해주세요.
+            </DialogDescription>
+          </DialogHeader>
 
-            <div className="border-t border-slate-100 px-5 py-4 sm:px-7 sm:py-5">
-              <button
-                type="button"
-                onClick={() => setIsDocumentGuideOpen(false)}
-                className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-              >
-                닫기
-              </button>
-            </div>
+          <div className="-mx-1 max-h-[60vh] overflow-y-auto px-1">
+            <ul className="space-y-4">
+              {DOCUMENT_GUIDES.map((guide) => (
+                <li
+                  key={guide.type}
+                  className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center rounded-full bg-[#0038F1]/10 px-3 py-1 text-xs font-semibold text-[#0038F1]">
+                      {guide.type}
+                    </span>
+                    <span className="text-sm font-semibold text-slate-900">
+                      {guide.docs}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {guide.description}
+                  </p>
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>
-      ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

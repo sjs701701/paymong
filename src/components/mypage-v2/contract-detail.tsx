@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ReceiptText, Wallet } from "lucide-react";
+import { ArrowLeft, Ban, ReceiptText, Wallet } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,7 @@ export function ContractDetailView({
   onOpenUsage,
 }: ContractDetailViewProps) {
   const remaining = Math.max(detail.monthlyLimit - detail.usedThisMonth, 0);
+  const isLimitClosed = remaining <= 0;
   const usedPercent = detail.monthlyLimit
     ? Math.min(
         100,
@@ -187,11 +188,16 @@ export function ContractDetailView({
         <Button
           size="lg"
           onClick={onPay}
-          disabled={remaining <= 0}
-          className="h-auto w-full shrink-0 gap-2 rounded-xl bg-[#0038F1] py-4 text-base font-bold text-white shadow-sm hover:bg-[#002fd0] disabled:opacity-50"
+          disabled={isLimitClosed}
+          className={cn(
+            "h-auto w-full shrink-0 gap-2 rounded-xl py-4 text-base font-bold shadow-sm",
+            isLimitClosed
+              ? "bg-slate-300 text-slate-600 shadow-none hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-100"
+              : "bg-[#0038F1] text-white hover:bg-[#002fd0]",
+          )}
         >
-          <Wallet size={18} />
-          결제하기
+          {isLimitClosed ? <Ban size={18} /> : <Wallet size={18} />}
+          {isLimitClosed ? "한도마감" : "결제하기"}
         </Button>
       </div>
     </div>
