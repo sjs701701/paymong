@@ -4,7 +4,6 @@ import { ReactLenis, useLenis } from "lenis/react";
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useHydratedReducedMotion } from "@/lib/use-hydrated-reduced-motion";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -36,13 +35,6 @@ function LenisGsapSync() {
 }
 
 export function LenisProvider({ children }: { children: React.ReactNode }) {
-  const reducedMotion = useHydratedReducedMotion();
-
-  // Keep all hooks above this branch. Adding hooks below this return will break the Rules of Hooks.
-  if (reducedMotion) {
-    return <>{children}</>;
-  }
-
   return (
     <ReactLenis
       root
