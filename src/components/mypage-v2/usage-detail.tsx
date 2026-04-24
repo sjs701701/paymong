@@ -123,6 +123,20 @@ export function UsageDetailView({
   const [isTransferOpen, setIsTransferOpen] = useState(false);
   const [isTransferSuccessOpen, setIsTransferSuccessOpen] = useState(false);
   const [isTransferRequested, setIsTransferRequested] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+
+  const handleBack = () => {
+    if (isExiting) return;
+    const prefersMobileMotion =
+      typeof window !== "undefined" &&
+      !window.matchMedia("(min-width: 1024px)").matches;
+    if (!prefersMobileMotion) {
+      onBack();
+      return;
+    }
+    setIsExiting(true);
+    window.setTimeout(onBack, 300);
+  };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -130,7 +144,7 @@ export function UsageDetailView({
         <Button
           variant="ghost"
           size="icon-sm"
-          onClick={onBack}
+          onClick={handleBack}
           aria-label="뒤로가기"
           className="shrink-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
         >
@@ -140,7 +154,7 @@ export function UsageDetailView({
           <h2 className="truncate text-sm font-semibold text-slate-900">
             {contract.name}
           </h2>
-          <p className="mt-0.5 truncate text-[11px] text-slate-500">
+          <p className="mt-0.5 truncate text-xs text-slate-600">
             {detail.counterparty.bank} · {detail.counterparty.accountNumber} ·
             예금주 {detail.counterparty.holder}
           </p>
@@ -148,11 +162,19 @@ export function UsageDetailView({
         <span className="w-7 shrink-0" aria-hidden />
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto animate-in fade-in-0 slide-in-from-bottom-16 duration-300 ease-out lg:animate-none">
-        <div className="space-y-4 px-4 pt-4 pb-6 sm:px-6 sm:pt-5 sm:pb-6">
-          {receipt ? (
-            <>
-              <ReceiptCard title="카드결제정보">
+      <div
+        className={cn(
+          "relative flex min-h-0 flex-1 flex-col duration-300 ease-out lg:animate-none",
+          isExiting
+            ? "animate-out fade-out-0 slide-out-to-bottom-16 fill-mode-forwards"
+            : "animate-in fade-in-0 slide-in-from-bottom-16",
+        )}
+      >
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="space-y-4 px-4 pt-4 pb-24 sm:px-6 sm:pt-5 sm:pb-24">
+            {receipt ? (
+              <>
+                <ReceiptCard title="카드결제정보">
                 <ReceiptRow label="카드사" value={receipt.cardPayment.company} />
                 <ReceiptRow
                   label="승인번호"
@@ -221,56 +243,65 @@ export function UsageDetailView({
                 />
               </ReceiptCard>
 
-              <ReceiptCard title="가맹점 정보">
-                <ReceiptRow label="가맹점명" value={receipt.merchant.name} />
-                <ReceiptRow label="상점명" value={receipt.merchant.storeName} />
-                <ReceiptRow
-                  label="대표자명"
-                  value={receipt.merchant.representative}
-                />
-                <ReceiptRow
-                  label="사업자등록번호"
-                  value={receipt.merchant.businessNumber}
-                />
-                <ReceiptRow label="전화번호" value={receipt.merchant.phone} />
-                <ReceiptRow
-                  label="사업장 주소"
-                  value={receipt.merchant.address}
-                />
-              </ReceiptCard>
+                <ReceiptCard title="가맹점 정보">
+                  <ReceiptRow label="가맹점명" value={receipt.merchant.name} />
+                  <ReceiptRow
+                    label="상점명"
+                    value={receipt.merchant.storeName}
+                  />
+                  <ReceiptRow
+                    label="대표자명"
+                    value={receipt.merchant.representative}
+                  />
+                  <ReceiptRow
+                    label="사업자등록번호"
+                    value={receipt.merchant.businessNumber}
+                  />
+                  <ReceiptRow
+                    label="전화번호"
+                    value={receipt.merchant.phone}
+                  />
+                  <ReceiptRow
+                    label="사업장 주소"
+                    value={receipt.merchant.address}
+                  />
+                </ReceiptCard>
 
-              <div className="grid gap-2 sm:grid-cols-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  onClick={() => setIsCertOpen(true)}
-                  className="h-auto w-full gap-2 rounded-xl border-slate-200 bg-white py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                >
-                  <FileCheck2 size={16} />
-                  이체확인증
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  className="h-auto w-full gap-2 rounded-xl border-slate-200 bg-white py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                >
-                  <Download size={16} />
-                  PDF 다운
-                </Button>
-              </div>
-            </>
-          ) : (
-            <StatusFallbackCard usage={usage} />
-          )}
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    onClick={() => setIsCertOpen(true)}
+                    className="h-auto w-full gap-2 rounded-xl border-slate-200 bg-white py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    <FileCheck2 size={16} />
+                    이체확인증
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    className="h-auto w-full gap-2 rounded-xl border-slate-200 bg-white py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    <Download size={16} />
+                    PDF 다운
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <StatusFallbackCard usage={usage} />
+            )}
+          </div>
+        </div>
 
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 px-4 pb-4 pt-3 sm:px-6">
           {isPendingTransfer ? (
             <Button
               size="lg"
               disabled={isTransferRequested}
               onClick={() => setIsTransferOpen(true)}
-              className="h-auto w-full gap-2 rounded-xl bg-[#0038F1] py-4 text-base font-bold text-white shadow-sm hover:bg-[#002fd0] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:opacity-100 disabled:shadow-none"
+              className="pointer-events-auto h-auto w-full gap-2 rounded-xl bg-[#0038F1] py-4 text-base font-bold text-white shadow-[0_18px_40px_rgba(0,56,241,0.24)] hover:bg-[#002fd0] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:opacity-100 disabled:shadow-none"
             >
               {isTransferRequested ? (
                 <>
@@ -287,8 +318,8 @@ export function UsageDetailView({
           ) : (
             <Button
               size="lg"
-              onClick={onBack}
-              className="h-auto w-full gap-2 rounded-xl bg-[#0038F1] py-4 text-base font-bold text-white shadow-sm hover:bg-[#002fd0]"
+              onClick={handleBack}
+              className="pointer-events-auto h-auto w-full gap-2 rounded-xl bg-[#0038F1] py-4 text-base font-bold text-white shadow-[0_18px_40px_rgba(0,56,241,0.24)] hover:bg-[#002fd0]"
             >
               <Check size={18} />
               확인
@@ -307,7 +338,7 @@ export function UsageDetailView({
               결제완료된 건을 수취인 계좌로 송금 요청합니다.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex-row gap-2 border-t-0 bg-transparent pt-0 sm:flex-row sm:justify-end">
+          <DialogFooter className="flex-row gap-2 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"
@@ -349,7 +380,7 @@ export function UsageDetailView({
               페이몽에서 검토 후 00분 이내에 송금 처리 예정입니다.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex-row gap-2 border-t-0 bg-transparent pt-0 sm:flex-row sm:justify-end">
+          <DialogFooter className="flex-row gap-2 sm:flex-row sm:justify-end">
             <Button
               type="button"
               size="lg"
@@ -463,9 +494,11 @@ function StatusFallbackCard({ usage }: { usage: UsageHistoryItem }) {
   const message = (() => {
     switch (usage.status) {
       case "결제완료":
-        return "카드 결제는 완료되었으며, 송금이 실행될 예정입니다.";
+        return "카드 결제는 완료되었으며, 송금하기를 눌러 송금을 진행해주세요";
       case "예약":
-        return "예약된 송금입니다. 지정된 일자에 자동으로 이체됩니다.";
+        return usage.scheduledDate
+          ? `${formatReservedDateLabel(usage.scheduledDate)}에 자동으로 이체될 예정이에요.`
+          : "예약된 송금입니다. 지정된 일자에 자동으로 이체됩니다.";
       case "실패":
         return "송금이 실패했어요. 잔액 부족 또는 일시적인 오류일 수 있습니다.";
       default:
@@ -481,9 +514,15 @@ function StatusFallbackCard({ usage }: { usage: UsageHistoryItem }) {
         </span>
       </CardHeader>
       <CardContent className="space-y-3 px-5 text-sm">
-        <p className="leading-6 text-slate-600">{message}</p>
+        <p className="leading-6 text-slate-700">{message}</p>
         <Separator />
         <ReceiptRow label="거래일" value={usage.date} />
+        {usage.status === "예약" && usage.scheduledDate ? (
+          <ReceiptRow
+            label="예약 송금일"
+            value={formatReservedDateLabel(usage.scheduledDate)}
+          />
+        ) : null}
         <ReceiptRow label="송금자" value={usage.senderName} />
         <ReceiptRow
           label="금액"
@@ -493,4 +532,10 @@ function StatusFallbackCard({ usage }: { usage: UsageHistoryItem }) {
       </CardContent>
     </Card>
   );
+}
+
+function formatReservedDateLabel(iso: string) {
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return iso;
+  return `${Number(y)}년 ${Number(m)}월 ${Number(d)}일`;
 }

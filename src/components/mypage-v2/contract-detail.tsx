@@ -62,7 +62,7 @@ export function ContractDetailView({
           <h2 className="truncate text-sm font-semibold text-slate-900">
             {contract.name}
           </h2>
-          <p className="mt-0.5 truncate text-[11px] text-slate-500">
+          <p className="mt-0.5 truncate text-xs text-slate-600">
             {detail.counterparty.bank} · {detail.counterparty.accountNumber} ·
             예금주 {detail.counterparty.holder}
           </p>
@@ -84,7 +84,7 @@ export function ContractDetailView({
                   이번 달 남은 한도
                 </span>
               </span>
-              <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/70 ring-1 ring-white/10">
+              <span className="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-medium text-white/85 ring-1 ring-white/15">
                 매월 1일 초기화
               </span>
             </div>
@@ -96,7 +96,7 @@ export function ContractDetailView({
                   ₩{formatWon(remaining)}
                 </p>
               </div>
-              <div className="text-right text-xs text-white/55">
+              <div className="text-right text-xs text-white/80">
                 <p>
                   사용{" "}
                   <span className="font-semibold text-white">
@@ -126,10 +126,10 @@ export function ContractDetailView({
         <Card className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden rounded-2xl border-slate-200 bg-white py-5 ring-0">
           <CardHeader className="shrink-0 gap-1 px-5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                 이용 내역
               </span>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-slate-500">
                 {detail.usageHistory.length}건
               </span>
             </div>

@@ -551,7 +551,7 @@ export function FifthSection() {
           </defs>
 
           <foreignObject x="0" y="0" width="100%" height="100%" mask="url(#paymong-sixth-mask)">
-            <div xmlns="http://www.w3.org/1999/xhtml" className="h-full w-full">
+            <div className="h-full w-full">
               <SixthSectionShell
                 style={{
                   backgroundSize: "100% 200vh",

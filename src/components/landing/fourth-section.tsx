@@ -175,6 +175,10 @@ function PublicLottie({
             }
 
             const totalFrames = animation.getDuration(true);
+            if (typeof totalFrames !== "number") {
+              return;
+            }
+
             animation.goToAndStop(Math.max(0, totalFrames - 1), true);
           }}
         />

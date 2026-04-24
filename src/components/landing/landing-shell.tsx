@@ -13,7 +13,7 @@ export function LandingShell() {
 
   return (
     <LenisProvider>
-      <main className="relative isolate min-h-screen overflow-x-clip">
+      <main className="main-page-font relative isolate min-h-screen overflow-x-clip">
         <motion.div
           initial={reducedMotion ? false : { opacity: 0, y: -18 }}
           animate={{ opacity: 1, y: 0 }}

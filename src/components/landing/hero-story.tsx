@@ -646,7 +646,7 @@ function RibbonAssetOverlay({
     <img
       src={resolvedPath}
       alt=""
-      className={`hero-ribbon-asset${asset.pathBase.includes("/rent/") ? " hero-ribbon-asset--rent" : ""}${asset.pathBase.includes("/tuition/") ? " hero-ribbon-asset--tuition" : ""}${asset.pathBase.includes("/contract/") ? " hero-ribbon-asset--contract" : ""}`}
+      className={`hero-ribbon-asset${asset.pathBase.includes("/rent/") ? " hero-ribbon-asset--rent" : ""}${asset.pathBase.includes("/tuition/") ? " hero-ribbon-asset--tuition" : ""}${asset.pathBase.includes("/labor/") ? " hero-ribbon-asset--labor" : ""}${asset.pathBase.includes("/contract/") ? " hero-ribbon-asset--contract" : ""}`}
       style={asset.pathBase.includes("/tuition/")
         ? {
           filter: "drop-shadow(1px 1px 0 rgba(10, 15, 30, 0.5)) drop-shadow(1px 2px 0 rgba(10, 15, 30, 0.4)) drop-shadow(1px 3px 0 rgba(10, 15, 30, 0.3)) drop-shadow(3px 5px 3px rgba(10, 15, 30, 0.26))",
@@ -675,7 +675,7 @@ function SweepAssetOverlay({
     <img
       src={resolvedPath}
       alt=""
-      className={`hero-sweep-asset${keywordId === "tuition" ? " hero-sweep-asset--tuition" : ""}${keywordId === "contract" ? " hero-sweep-asset--contract" : ""}`}
+      className={`hero-sweep-asset${keywordId === "tuition" ? " hero-sweep-asset--tuition" : ""}${keywordId === "labor" ? " hero-sweep-asset--labor" : ""}${keywordId === "contract" ? " hero-sweep-asset--contract" : ""}`}
       style={keywordId === "tuition"
         ? {
           filter: "drop-shadow(5px 1px 0 rgba(10, 15, 30, 0.5)) drop-shadow(5px 2px 0 rgba(10, 15, 30, 0.4)) drop-shadow(5px 3px 0 rgba(10, 15, 30, 0.3)) drop-shadow(10px 5px 3px rgba(10, 15, 30, 0.26))",
@@ -702,7 +702,7 @@ function EchoAssetOverlay({
     <img
       src={resolvedPath}
       alt=""
-      className={`hero-echo-asset${asset.pathBase.includes("/rent/") ? " hero-echo-asset--rent" : ""}${asset.pathBase.includes("/tuition/") ? " hero-echo-asset--tuition" : ""}`}
+      className={`hero-echo-asset${asset.pathBase.includes("/rent/") ? " hero-echo-asset--rent" : ""}${asset.pathBase.includes("/tuition/") ? " hero-echo-asset--tuition" : ""}${asset.pathBase.includes("/labor/") ? " hero-echo-asset--labor" : ""}`}
     />
   );
 }
