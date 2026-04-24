@@ -1,15 +1,15 @@
 "use client";
 
 import type Lenis from "lenis";
-import { useReducedMotion } from "framer-motion";
 import { useLenis } from "lenis/react";
 import { useEffect, useRef } from "react";
+import { useHydratedReducedMotion } from "@/lib/use-hydrated-reduced-motion";
 
 export type HeroScrollPhase = "keyword-sequence" | "cta-docked" | "free-scroll";
 
 export function useHeroLenisControl(phase: HeroScrollPhase) {
   const lenis = useLenis();
-  const reducedMotion = useReducedMotion();
+  const reducedMotion = useHydratedReducedMotion();
   const lenisRef = useRef<Lenis | undefined>(undefined);
 
   useEffect(() => {

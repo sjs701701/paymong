@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, type CSSProperties, forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import gsap from "gsap";
 import Lottie from "lottie-react";
 import { useRouter } from "next/navigation";
@@ -13,6 +13,7 @@ import { SixthSection } from "@/components/landing/sixth-section";
 import { FaqSection } from "@/components/landing/faq-section";
 import { FooterSection } from "@/components/landing/footer-section";
 import { type HeroScrollPhase, useHeroLenisControl } from "@/lib/use-hero-lenis-control";
+import { useHydratedReducedMotion } from "@/lib/use-hydrated-reduced-motion";
 import { ReviewsSection } from "@/components/landing/reviews-section";
 
 type KeywordId = "rent" | "tuition" | "labor" | "contract";
@@ -939,7 +940,7 @@ export function HeroStory({
   const [ctaWidth, setCtaWidth] = useState(0);
   const [viewportWidth, setViewportWidth] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(0);
-  const reducedMotion = Boolean(useReducedMotion());
+  const reducedMotion = useHydratedReducedMotion();
   useHeroLenisControl(heroScrollPhase);
 
   const writeCardStylesForProgress = useCallback((progress: number) => {

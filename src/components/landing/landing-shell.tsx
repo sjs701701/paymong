@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { FixedHeader } from "@/components/landing/fixed-header";
 import { HeroStory } from "@/components/landing/hero-story";
 import { LenisProvider } from "@/lib/lenis-provider";
+import { useHydratedReducedMotion } from "@/lib/use-hydrated-reduced-motion";
 
 export function LandingShell() {
-  const reducedMotion = useReducedMotion();
+  const reducedMotion = useHydratedReducedMotion();
   const [isHeaderAutoHideEnabled, setIsHeaderAutoHideEnabled] = useState(false);
 
   return (

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { Calendar, Star, Wallet } from "lucide-react";
-import { useReducedMotion } from "framer-motion";
+import { useHydratedReducedMotion } from "@/lib/use-hydrated-reduced-motion";
 
 type ReviewItem = {
   author: string;
@@ -54,7 +54,7 @@ function getStablePillIndex(seed: string) {
 }
 
 export function ReviewsSection() {
-  const reducedMotion = useReducedMotion();
+  const reducedMotion = useHydratedReducedMotion();
   const sectionRef = useRef<HTMLElement | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const autoOffset = useRef(0);

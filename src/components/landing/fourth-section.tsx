@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Lottie from "lottie-react";
 import type { LottieRefCurrentProps } from "lottie-react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
+import { useHydratedReducedMotion } from "@/lib/use-hydrated-reduced-motion";
 
 type FourthSectionCard = {
   id: string;
@@ -493,7 +494,7 @@ function OdometerNumber({
 }
 
 export function FourthSection() {
-  const reducedMotion = useReducedMotion();
+  const reducedMotion = useHydratedReducedMotion();
   const sectionRef = useRef<HTMLElement | null>(null);
   const [isOdometerActive, setIsOdometerActive] = useState(false);
 
