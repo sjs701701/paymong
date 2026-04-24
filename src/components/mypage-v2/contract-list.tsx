@@ -22,7 +22,11 @@ type ContractListProps = {
   onSearchChange: (value: string) => void;
   onClearSearch: () => void;
   onSelect: (id: number) => void;
-  onListScrollChange?: (scrollTop: number) => void;
+  onListScrollChange?: (metrics: {
+    scrollTop: number;
+    scrollHeight: number;
+    clientHeight: number;
+  }) => void;
 };
 
 export function ContractList({

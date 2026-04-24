@@ -87,12 +87,18 @@ function MyPageV2Inner() {
     return () => observer.disconnect();
   }, []);
 
-  const handleListScroll = useCallback((scrollTop: number) => {
+  const handleListScroll = useCallback((metrics: {
+    scrollTop: number;
+    scrollHeight: number;
+    clientHeight: number;
+  }) => {
     if (!isMobileViewportRef.current) {
       setIsHeaderHidden((current) => (current ? false : current));
       return;
     }
 
+    const maxScrollTop = Math.max(metrics.scrollHeight - metrics.clientHeight, 0);
+    const scrollTop = Math.max(0, Math.min(metrics.scrollTop, maxScrollTop));
     const prev = lastScrollTopRef.current;
     const delta = scrollTop - prev;
     lastScrollTopRef.current = scrollTop;
@@ -102,6 +108,17 @@ function MyPageV2Inner() {
       return;
     }
     if (Math.abs(delta) < 6) return;
+
+    const bottomDistance = maxScrollTop - scrollTop;
+    const previousBottomDistance = maxScrollTop - prev;
+    if (
+      delta < 0 &&
+      bottomDistance < 24 &&
+      previousBottomDistance < 24
+    ) {
+      return;
+    }
+
     const shouldHideHeader = delta > 0;
     setIsHeaderHidden((current) =>
       current === shouldHideHeader ? current : shouldHideHeader,

@@ -307,13 +307,13 @@ function UserMenuInner({
                   type="button"
                   aria-label="메뉴 닫기"
                   onClick={() => closeMenu()}
-                  className="fixed inset-0 z-[45] hidden cursor-default bg-slate-950/10 sm:block"
+                  className="fixed inset-0 z-[90] hidden cursor-default bg-slate-950/10 sm:block"
                 />
                 <div
                   ref={menuPanelRef}
                   role="menu"
                   className={cn(
-                    "fixed inset-0 z-50 flex h-[100dvh] flex-col overflow-hidden bg-white duration-200 ease-out sm:inset-auto sm:right-5 sm:top-20 sm:h-auto sm:w-[min(calc(100vw-2rem),22rem)] sm:rounded-[1.75rem] sm:border sm:border-slate-200 sm:shadow-[0_24px_70px_rgba(15,23,42,0.18)]",
+                    "fixed inset-0 z-[100] flex h-[100dvh] flex-col overflow-hidden bg-white duration-200 ease-out sm:inset-auto sm:right-5 sm:top-20 sm:h-auto sm:w-[min(calc(100vw-2rem),22rem)] sm:rounded-[1.75rem] sm:border sm:border-slate-200 sm:shadow-[0_24px_70px_rgba(15,23,42,0.18)]",
                     isExiting
                       ? "animate-out slide-out-to-right fill-mode-forwards sm:fade-out-0 sm:slide-out-to-right-0 sm:slide-out-to-top-2"
                       : "animate-in slide-in-from-right sm:fade-in-0 sm:slide-in-from-right-0 sm:slide-in-from-top-2",
@@ -484,12 +484,12 @@ function UserMenuInner({
               해당 기능은 현재 준비 중이에요. 오픈되면 빠르게 알려드릴게요.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="sm:justify-end">
+          <DialogFooter>
             <Button
               type="button"
               size="lg"
               onClick={() => setPrepLabel(null)}
-              className="h-auto w-full rounded-xl bg-[#0038F1] px-5 py-3 text-sm font-semibold text-white hover:bg-[#002fd0] sm:w-auto"
+              className="h-auto rounded-xl bg-[#0038F1] px-5 py-3 text-sm font-semibold text-white hover:bg-[#002fd0]"
             >
               확인
             </Button>

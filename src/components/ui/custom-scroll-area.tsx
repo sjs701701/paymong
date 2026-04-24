@@ -15,7 +15,11 @@ type CustomScrollAreaProps = {
   className?: string;
   thumbClassName?: string;
   minThumbHeight?: number;
-  onScrollChange?: (scrollTop: number) => void;
+  onScrollChange?: (metrics: {
+    scrollTop: number;
+    scrollHeight: number;
+    clientHeight: number;
+  }) => void;
 };
 
 const DEFAULT_THUMB_CLASS = "bg-slate-300 hover:bg-slate-400";
@@ -31,7 +35,11 @@ export function CustomScrollArea({
   const contentRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
   const scrollRafRef = useRef<number | null>(null);
-  const latestScrollTopRef = useRef(0);
+  const latestScrollMetricsRef = useRef({
+    scrollTop: 0,
+    scrollHeight: 0,
+    clientHeight: 0,
+  });
   const shouldSyncThumbRef = useRef(false);
   const isScrollableRef = useRef(false);
   const thumbHeightRef = useRef(0);
@@ -109,14 +117,19 @@ export function CustomScrollArea({
 
   const handleScroll = useCallback(
     (event: ReactUIEvent<HTMLDivElement>) => {
-      latestScrollTopRef.current = event.currentTarget.scrollTop;
+      const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
+      latestScrollMetricsRef.current = {
+        scrollTop,
+        scrollHeight,
+        clientHeight,
+      };
 
       if (scrollRafRef.current != null) return;
 
       scrollRafRef.current = window.requestAnimationFrame(() => {
         scrollRafRef.current = null;
         updateThumb();
-        onScrollChange?.(latestScrollTopRef.current);
+        onScrollChange?.(latestScrollMetricsRef.current);
       });
     },
     [onScrollChange, updateThumb],

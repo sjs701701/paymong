@@ -19,6 +19,7 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { UserMenu } from "@/components/shared/user-menu";
 import {
   Card,
   CardContent,
@@ -335,7 +336,8 @@ export function PaymentFormView({
             예금주 {detail.counterparty.holder}
           </p>
         </div>
-        <span className="w-7 shrink-0" aria-hidden />
+        <UserMenu trigger="icon" className="shrink-0 lg:hidden" />
+        <span className="hidden w-7 shrink-0 lg:block" aria-hidden />
       </div>
 
       <form
@@ -358,12 +360,13 @@ export function PaymentFormView({
             <h2 className="text-xl font-bold tracking-[-0.02em] text-slate-900 sm:text-2xl">
               {submitLabel}
             </h2>
-            <p className="text-sm text-slate-600">
-              송금 시{" "}
-              <span className="font-semibold text-slate-900">
-                {detail.counterparty.holder}
+            <p className="text-sm leading-6 text-slate-600">
+              결제 완료 후 이용내역에서{" "}
+              <span className="font-semibold text-slate-900">송금하기</span>를
+              눌러야 송금 요청이 접수돼요.
+              <span className="block text-xs text-slate-500">
+                페이몽 확인 후 {detail.counterparty.holder}님 계좌로 송금 처리됩니다.
               </span>
-              님 계좌로 이체됩니다.
             </p>
           </div>
 
