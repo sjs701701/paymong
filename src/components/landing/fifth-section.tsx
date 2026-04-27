@@ -248,7 +248,7 @@ function FeatureCard({
   card: SequenceCard;
 }) {
   return (
-    <article className="flex h-[500px] w-[360px] shrink-0 flex-col overflow-hidden rounded-[2rem] border border-black/5 bg-white p-8 shadow-[0_8px_30px_rgba(0,0,0,0.04)] md:w-[420px]">
+    <article className="flex h-[460px] w-[300px] shrink-0 flex-col overflow-hidden rounded-[1.6rem] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:h-[500px] sm:w-[360px] sm:rounded-[2rem] sm:p-8 md:w-[420px]">
       <h3 className="text-2xl font-semibold tracking-[-0.05em] text-slate-950">{card.title}</h3>
       <p className="mt-2 text-[1rem] leading-[1.7] text-slate-500">{card.description}</p>
       <div className="mt-6 min-h-0 flex-1">
@@ -330,6 +330,11 @@ export function FifthSection() {
 
     let targetX = window.innerWidth / 2;
     let targetY = window.innerHeight / 2;
+    // Track the last "real" width so iOS Safari URL bar toggles (height-only
+    // resize) don't trigger ScrollTrigger.refresh — the mask strokeWidth/hole
+    // radius use innerHeight via `invalidateOnRefresh`, and refreshing on each
+    // URL bar tick causes visible jitter while scrolling.
+    let lastStableWidth = window.innerWidth;
 
     const updateMaskPosition = (x: number, y: number) => {
       const { x: centerX, y: centerY } = maskCenterRef.current;
@@ -347,13 +352,20 @@ export function FifthSection() {
     };
 
     const handleResize = () => {
-      if (targetX === window.innerWidth / 2) {
-        targetX = window.innerWidth / 2;
+      const nextWidth = window.innerWidth;
+      const widthChanged = Math.abs(nextWidth - lastStableWidth) > 24;
+
+      if (targetX === nextWidth / 2) {
+        targetX = nextWidth / 2;
         targetY = window.innerHeight / 2;
       }
 
       updateMaskPosition(targetX, targetY);
-      ScrollTrigger.refresh();
+
+      if (widthChanged) {
+        lastStableWidth = nextWidth;
+        ScrollTrigger.refresh();
+      }
     };
 
     updateMaskPosition(targetX, targetY);
@@ -493,12 +505,12 @@ export function FifthSection() {
             ref={heroTextRef}
             className="absolute inset-0 z-20 flex flex-col items-center justify-center px-5 pt-10 text-center"
           >
-            <div className="mb-6">
-              <span className="text-base font-medium tracking-wide text-slate-500">
+            <div className="mb-4 sm:mb-6">
+              <span className="text-sm font-medium tracking-wide text-slate-500 sm:text-base">
                 다른 곳에선 찾을 수 없는
               </span>
             </div>
-            <h2 className="text-[clamp(3.6rem,8vw,7.4rem)] font-semibold leading-[0.95] tracking-[-0.08em] text-black">
+            <h2 className="text-[clamp(2.4rem,8vw,7.4rem)] font-semibold leading-[0.95] tracking-[-0.08em] text-black">
               오직 페이몽에서만
             </h2>
           </div>

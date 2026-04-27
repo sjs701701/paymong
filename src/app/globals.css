@@ -206,6 +206,14 @@ button {
   z-index: 5;
 }
 
+.hero-title-line--top {
+  transform: translateX(-240px);
+}
+
+.hero-title-line--statement {
+  transform: translateX(1.5rem);
+}
+
 .hero-orbit-asset {
   position: absolute;
   z-index: 30;
@@ -714,7 +722,9 @@ button {
   justify-content: center;
   align-items: center;
   gap: 0.625rem;
-  inline-size: var(--cta-expanded-width, auto);
+  width: var(--cta-expanded-width, auto);
+  min-width: 0;
+  box-sizing: border-box;
   padding: 13px 52px;
   /* border: 2px solid #0a0f1e; */
   border-radius: 9999px;
@@ -727,9 +737,9 @@ button {
   contain: layout paint;
   transform: translateZ(0);
   backface-visibility: hidden;
-  will-change: transform, inline-size, opacity;
+  will-change: transform, width, opacity;
   transition:
-    inline-size 0.5s cubic-bezier(.165, .84, .44, 1),
+    width 0.5s cubic-bezier(.165, .84, .44, 1),
     padding 1.48s cubic-bezier(.165, .84, .44, 1),
     gap 1.48s cubic-bezier(.165, .84, .44, 1),
     border-radius 1.48s cubic-bezier(.165, .84, .44, 1),
@@ -879,7 +889,7 @@ button {
 }
 
 .cta-btn--docked {
-  inline-size: var(--cta-docked-width);
+  width: var(--cta-docked-width);
   gap: 0;
   padding: 13px 18px;
   border-radius: 999px;
@@ -933,7 +943,7 @@ button {
 
 .cta-btn--returning {
   transition:
-    inline-size 0.5s cubic-bezier(.165, .84, .44, 1) 0s,
+    width 0.5s cubic-bezier(.165, .84, .44, 1) 0s,
     padding 0.5s cubic-bezier(.165, .84, .44, 1) 0s,
     gap 0.5s cubic-bezier(.165, .84, .44, 1) 0s,
     border-radius 0.5s cubic-bezier(.165, .84, .44, 1) 0s,
@@ -985,7 +995,7 @@ button {
 }
 
 .cta-btn--preview {
-  inline-size: var(--cta-expanded-width);
+  width: var(--cta-expanded-width);
   gap: 0.625rem;
   padding: 13px 52px;
   transition-delay: 0s, 0s, 0s, 0s, 0s, 0s;
@@ -1090,7 +1100,7 @@ button {
   width: min(1440px, calc(100% - 2rem));
   height: var(--video-layout-height);
   display: grid;
-  grid-template-columns: minmax(0, 22rem) auto minmax(0, 22rem);
+  grid-template-columns: minmax(0, 21rem) auto minmax(0, 21rem);
   align-items: start;
   gap: clamp(1.25rem, 3vw, 3.5rem);
 }
@@ -1652,7 +1662,98 @@ button {
   text-wrap: balance;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1023.98px) {
+  .hero-next-shell-layout {
+    width: min(100%, calc(100% - 1.5rem));
+    grid-template-columns: 0 minmax(0, 1fr) 0;
+    gap: 0;
+  }
+
+  .hero-video-story-layout {
+    width: min(100%, calc(100% - 1.5rem));
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  .hero-video-story-layout__center {
+    order: 1;
+  }
+
+  .hero-video-side--left,
+  .hero-video-side--right {
+    order: 2;
+    width: min(calc(100% - 1rem), 30.5rem);
+    margin-inline: auto;
+  }
+
+  .hero-video-side--right {
+    min-height: 14rem;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  .hero-title-line--top {
+    transform: translateX(-80px);
+  }
+
+  .hero-title-line--statement {
+    transform: translateX(0.75rem);
+  }
+
+  .hero-ribbon-asset {
+    top: -8%;
+    right: 8%;
+  }
+}
+
+@media (max-width: 767.98px) {
+  :root {
+    --cta-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Match the video frame width to the left summary card. The center grid
+     item normally has `justify-self: center` (no explicit width), which causes
+     a child `width: 100%` to collapse to zero. We give the grid item itself
+     the same compact width formula the left card uses, then let the frame fill
+     100% of that parent. Inline `style.width` from JS is overridden via
+     !important; height/border-radius stay intact. */
+  .hero-video-story-layout__center {
+    width: min(calc(100% - 1rem), 30.5rem);
+  }
+
+  .hero-next-shell-frame {
+    width: 100% !important;
+  }
+
+  /* Section 2 left summary cards: stack cards on top of each other instead of
+     the desktop "appear → shrink" behavior. Each card just slides in at full
+     size and the next card overlays on top of the previous one (z-index by
+     step id, ascending). The shrink animation is disabled by forcing the
+     `--summary-collapse` driver variable to 0 for cards in the left column. */
+  .hero-video-side--left {
+    height: 12rem;
+  }
+
+  .hero-video-side--left .hero-video-note--summary {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    --summary-collapse: 0 !important;
+    --summary-reveal-offset-y: 56px !important;
+  }
+
+  .hero-video-side--left .hero-video-note--summary[data-step-id="2"] {
+    z-index: 1;
+  }
+
+  .hero-video-side--left .hero-video-note--summary[data-step-id="3"] {
+    z-index: 2;
+  }
+
+  .hero-video-side--left .hero-video-note--summary[data-step-id="4"] {
+    z-index: 3;
+  }
+
   .hero-title-shell {
     min-height: clamp(18rem, 56vw, 24rem);
   }
@@ -1661,14 +1762,45 @@ button {
     inset: -1.25rem -0.4rem -2.2rem;
   }
 
+  .hero-title-stage--overlay {
+    z-index: 6;
+  }
+
+  .hero-title-stage--under-text {
+    z-index: 3;
+  }
+
+  .hero-title-line {
+    max-width: calc(100vw - 2rem) !important;
+    transform: none !important;
+    align-self: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    font-size: clamp(2.12rem, 10.9vw, 3rem) !important;
+    letter-spacing: -0.055em !important;
+  }
+
+  .hero-title-line--statement {
+    margin-top: 0.72rem !important;
+    white-space: nowrap !important;
+  }
+
+  .hero-keyword-window {
+    width: 3.08em !important;
+  }
+
+  .hero-keyword-pill {
+    width: 2.72em !important;
+  }
+
   .hero-design-slot--orbit {
     display: none;
   }
 
   .hero-orbit-asset {
-    top: -7.5%;
-    left: -0.8%;
-    width: clamp(7rem, 24vw, 9rem);
+    top: 43%;
+    left: -18%;
+    width: clamp(5.8rem, 20vw, 7.5rem);
   }
 
   .hero-orbit-asset--labor {
@@ -1692,8 +1824,8 @@ button {
   }
 
   .hero-ribbon-asset {
-    top: 5%;
-    right: 4.8%;
+    top: -13%;
+    right: 3.8%;
     width: clamp(8.4rem, 27vw, 10.8rem);
     height: clamp(4.4rem, 12vw, 5.4rem);
   }
@@ -1731,9 +1863,9 @@ button {
   }
 
   .hero-sweep-asset {
-    top: 7.5%;
-    left: -15%;
-    width: clamp(13.2rem, 55.44vw, 17.16rem);
+    top: 48%;
+    left: -28%;
+    width: clamp(10rem, 46vw, 14rem);
     height: auto;
   }
 
@@ -1777,47 +1909,39 @@ button {
     padding: 0.32rem 0.58rem;
   }
 
-  .hero-next-shell-layout {
-    width: min(100%, calc(100% - 1.5rem));
-    grid-template-columns: 0 minmax(0, 1fr) 0;
-    gap: 0;
-  }
-
-  .hero-video-story-layout {
-    width: min(100%, calc(100% - 1.5rem));
-    grid-template-columns: minmax(0, 1fr);
-    gap: 1rem;
-  }
-
-  .hero-video-story-layout__center {
-    order: 1;
-  }
-
-  .hero-video-side--left,
-  .hero-video-side--right {
-    order: 2;
-    width: min(100%, 32rem);
-    margin-inline: auto;
-  }
-
-  .hero-video-side--right {
-    min-height: 14rem;
-  }
-
   .hero-video-note--summary {
     min-height: calc(8.8rem - 4.05rem * var(--summary-collapse));
   }
 
   .fourth-proof-card {
-    min-height: 30rem;
+    min-height: 26rem;
+    padding: 1.2rem;
+    border-radius: 1.6rem;
+  }
+
+  .fourth-proof-card__copy {
+    gap: 0.7rem;
+    padding-top: 1.2rem;
+  }
+
+  .fourth-proof-card__title {
+    font-size: clamp(1.3rem, 5.4vw, 1.7rem);
+  }
+
+  .fourth-proof-card__description {
+    font-size: 0.92rem;
+    line-height: 1.6;
   }
 
   .fourth-proof-card__media {
-    height: 14rem;
+    height: 12.5rem;
+    border-radius: 1.3rem;
   }
 
-  .cta-btn {
-    padding-inline: 1.9rem;
+  .cta-btn:not(.cta-btn--docked) {
+    width: var(--cta-expanded-width, auto);
+    gap: 0.5rem;
+    padding-inline: 1.45rem;
   }
 
   .text-top,
@@ -1825,8 +1949,33 @@ button {
     font-size: 1.02rem;
   }
 
+  .hero-title-line {
+    font-size: clamp(2.12rem, 10.9vw, 3rem) !important;
+  }
+
   .cta-btn--docked {
     padding-inline: 0.9rem;
+    transition:
+      width 0.62s cubic-bezier(0.22, 1, 0.36, 1),
+      padding 0.62s cubic-bezier(0.22, 1, 0.36, 1),
+      gap 0.62s cubic-bezier(0.22, 1, 0.36, 1),
+      border-radius 0.62s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.62s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.2s ease;
+    transition-delay: 0s;
+  }
+
+  .cta-btn--docked .text-box {
+    transition:
+      max-width 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+      margin 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.22s ease;
+  }
+
+  .cta-btn--docked .text-wrapper {
+    transition:
+      transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.22s ease;
   }
 
   .fourth-proof-section__headline-copy {

@@ -533,11 +533,11 @@ export function FourthSection() {
   return (
     <section
       ref={sectionRef}
-      className="section-two-onward-font fourth-proof-section relative z-40 overflow-hidden px-6 py-20 sm:px-10 sm:py-24 lg:px-20 lg:py-28"
+      className="section-two-onward-font fourth-proof-section relative z-40 overflow-hidden px-5 py-16 sm:px-10 sm:py-24 lg:px-20 lg:py-28"
     >
-      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-14 lg:gap-16">
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-10 sm:gap-14 lg:gap-16">
         <div className="mx-auto flex w-full max-w-[1120px] flex-col items-center text-center">
-          <h2 className="fourth-proof-section__headline text-[clamp(2.8rem,7vw,6.8rem)] font-semibold leading-[0.94] tracking-[-0.08em] text-[var(--text-primary)]">
+          <h2 className="fourth-proof-section__headline text-[clamp(2rem,7vw,6.8rem)] font-semibold leading-[0.96] tracking-[-0.08em] text-[var(--text-primary)] sm:leading-[0.94]">
             <span className="fourth-proof-section__headline-line">
               <OdometerNumber value={ODOMETER_TARGET} isActive={isOdometerActive} />
               <span className="fourth-proof-section__headline-copy"> 번 이상 진행된 계약</span>

@@ -14,6 +14,7 @@ import { FaqSection } from "@/components/landing/faq-section";
 import { FooterSection } from "@/components/landing/footer-section";
 import { type HeroScrollPhase, useHeroLenisControl } from "@/lib/use-hero-lenis-control";
 import { useHydratedReducedMotion } from "@/lib/use-hydrated-reduced-motion";
+import { useViewport } from "@/lib/use-viewport";
 import { ReviewsSection } from "@/components/landing/reviews-section";
 
 type KeywordId = "rent" | "tuition" | "labor" | "contract";
@@ -77,8 +78,6 @@ const LAST_KEYWORD_INDEX = keywordStates.length - 1;
 const KEYWORD_COOLDOWN_MS = 520;
 const DESKTOP_FRAME_HEIGHT_RATIO = 0.64;
 const MOBILE_FRAME_HEIGHT_RATIO = 0.56;
-const DESKTOP_FRAME_LIFT = 132;
-const MOBILE_FRAME_LIFT = 92;
 const DESKTOP_FRAME_PEEK = 140;
 const MOBILE_FRAME_PEEK = 100;
 const VIDEO_STAGE_PIN_SCROLL = 3200;
@@ -507,6 +506,16 @@ function withAlpha(hex: string, alpha: number) {
 }
 
 function buildDecorAssets(keywordId: KeywordId): KeywordDecorAsset[] {
+  if (keywordId === "labor") {
+    return [
+      {
+        slot: "orbit",
+        label: "orbit-shell",
+        pathBase: `/design/hero-keywords/${keywordId}/orbit-shell`,
+      },
+    ];
+  }
+
   return [
     {
       slot: "orbit",
@@ -743,11 +752,11 @@ function HeadlineRotator({
       </div>
 
       <div className="relative z-10 flex w-full max-w-[1360px] flex-col">
-        <p className="-translate-x-[240px] flex w-full max-w-[15.5em] items-end justify-start self-start text-left text-[clamp(3rem,7.8vw,7.9rem)] font-semibold leading-[1.02] tracking-[-0.06em] text-[var(--text-primary)]">
-          <span className="inline-flex w-[4.8em] shrink-0 items-end justify-end overflow-hidden">
+        <p className="hero-title-line hero-title-line--top flex w-full max-w-[15.5em] items-end justify-start self-start text-left text-[clamp(3rem,7.8vw,7.9rem)] font-semibold leading-[1.02] tracking-[-0.06em] text-[var(--text-primary)]">
+          <span className="hero-keyword-window inline-flex w-[4.8em] shrink-0 items-end justify-end overflow-hidden">
             <AnimatePresence mode="wait">
               <span
-                className="inline-flex h-[1.08em] w-[2.95em] items-center justify-center whitespace-nowrap rounded-full px-[0.12em]"
+                className="hero-keyword-pill inline-flex h-[1.08em] w-[2.95em] items-center justify-center whitespace-nowrap rounded-full px-[0.12em]"
                 style={{ backgroundColor: activeItem.accentColor }}
                 >
                   <motion.span
@@ -766,7 +775,7 @@ function HeadlineRotator({
           </span>
           <span className="shrink-0 tracking-[-0.03em]">{HERO_COPY.suffix}</span>
         </p>
-        <p className="mt-5 translate-x-[1.5rem] w-full max-w-[13.2em] self-end whitespace-nowrap text-right text-[clamp(3rem,7.8vw,7.9rem)] font-semibold leading-[0.98] tracking-[-0.06em] text-[var(--text-primary)]">
+        <p className="hero-title-line hero-title-line--statement mt-5 w-full max-w-[13.2em] self-end whitespace-nowrap text-right text-[clamp(3rem,7.8vw,7.9rem)] font-semibold leading-[0.98] tracking-[-0.06em] text-[var(--text-primary)]">
           {HERO_COPY.statement}
         </p>
       </div>
@@ -938,9 +947,13 @@ export function HeroStory({
   const [isFooterInView, setIsFooterInView] = useState(false);
   const [isCtaReturning, setIsCtaReturning] = useState(false);
   const [ctaWidth, setCtaWidth] = useState(0);
-  const [viewportWidth, setViewportWidth] = useState(0);
-  const [viewportHeight, setViewportHeight] = useState(0);
   const reducedMotion = useHydratedReducedMotion();
+  const {
+    width: viewportWidth,
+    height: viewportHeight,
+    isCompactHeroLayout,
+    isStackedVideoLayout,
+  } = useViewport();
   useHeroLenisControl(heroScrollPhase);
 
   const writeCardStylesForProgress = useCallback((progress: number) => {
@@ -1070,17 +1083,6 @@ export function HeroStory({
   }, []);
 
   useLayoutEffect(() => {
-    const updateViewport = () => {
-      setViewportWidth(window.innerWidth);
-      setViewportHeight(window.innerHeight);
-    };
-
-    updateViewport();
-    window.addEventListener("resize", updateViewport);
-    return () => window.removeEventListener("resize", updateViewport);
-  }, []);
-
-  useLayoutEffect(() => {
     const cta = ctaRef.current;
     if (!cta) return;
 
@@ -1118,16 +1120,18 @@ export function HeroStory({
   }, []);
 
   useEffect(() => {
-    if (viewportHeight === 0 || ctaWidth === 0) return;
+    if (viewportWidth === 0 || viewportHeight === 0 || ctaWidth === 0) return;
 
-    const refreshId = window.requestAnimationFrame(() => {
+    // Debounce viewport-driven refreshes so mobile browser chrome changes do
+    // not jitter the pinned storytelling section.
+    const timer = window.setTimeout(() => {
       ScrollTrigger.refresh();
-    });
+    }, 180);
 
     return () => {
-      window.cancelAnimationFrame(refreshId);
+      window.clearTimeout(timer);
     };
-  }, [ctaWidth, viewportHeight]);
+  }, [ctaWidth, viewportHeight, viewportWidth]);
 
   useEffect(() => {
     document.documentElement.style.setProperty(
@@ -1709,26 +1713,39 @@ export function HeroStory({
     : 1;
   const stackedVideoSteps = STACKED_VIDEO_STEPS;
 
-  const isMobile = viewportWidth > 0 ? viewportWidth < 640 : false;
-  const frameWidthBoost = isMobile ? 24 : 40;
-  const frameHeightBoost = isMobile ? 28 : 44;
+  const isCompactFrameLayout = isCompactHeroLayout;
+  const frameWidthBoost = isCompactFrameLayout ? 24 : 40;
+  const frameHeightBoost = isCompactFrameLayout ? 28 : 44;
+  const frameWidthTrim = isCompactFrameLayout ? 0 : 18;
   const baseFrameHeight = viewportHeight > 0
-    ? viewportHeight * (isMobile ? MOBILE_FRAME_HEIGHT_RATIO : DESKTOP_FRAME_HEIGHT_RATIO)
-    : (isMobile ? 520 : 640);
-  const frameHeight = Math.max(baseFrameHeight, isMobile ? 420 : 560) + frameHeightBoost;
+    ? viewportHeight * (isCompactFrameLayout ? MOBILE_FRAME_HEIGHT_RATIO : DESKTOP_FRAME_HEIGHT_RATIO)
+    : (isCompactFrameLayout ? 520 : 640);
+  const frameHeight = Math.max(baseFrameHeight, isCompactFrameLayout ? 420 : 560) + frameHeightBoost;
+  const expandedCtaWidth = ctaWidth + (isCompactHeroLayout ? 24 : 32);
   const centerFrameWidth = Math.max(
-    ctaWidth + (isMobile ? 32 : 48),
-    isMobile ? 296 : 360,
-  ) + frameWidthBoost;
-  const dockedCtaWidth = isMobile ? 88 : 96;
+    expandedCtaWidth + (isCompactFrameLayout ? 32 : 48),
+    isCompactFrameLayout ? 296 : 360,
+  ) + frameWidthBoost - frameWidthTrim;
+  const dockedCtaWidth = isCompactHeroLayout ? 88 : 96;
   const ctaShellTop = viewportHeight > 0
-    ? Math.round(viewportHeight * (isMobile ? 0.745 : 0.715))
-    : (isMobile ? 560 : 620);
+    ? Math.round(viewportHeight * (isCompactHeroLayout ? 0.65 : 0.715))
+    : (isCompactHeroLayout ? 560 : 620);
   const ctaDockedTop = viewportHeight > 0
-    ? viewportHeight - (isMobile ? 82 : 94)
-    : (isMobile ? 730 : 860);
-  const framePeek = isMobile ? MOBILE_FRAME_PEEK : DESKTOP_FRAME_PEEK;
-  const nextSectionOverlap = framePeek + (isMobile ? MOBILE_FRAME_LIFT : DESKTOP_FRAME_LIFT);
+    ? viewportHeight - (isCompactHeroLayout ? 82 : 94)
+    : (isCompactHeroLayout ? 730 : 860);
+  const framePeek = isCompactFrameLayout ? MOBILE_FRAME_PEEK : DESKTOP_FRAME_PEEK;
+  const responsiveFramePeek = isCompactHeroLayout ? 152 : 76;
+  const videoStageTopGutter = isCompactHeroLayout
+    ? 20
+    : isStackedVideoLayout
+      ? 24
+      : 0;
+  const desktopFrameCenterLift = viewportHeight > 0
+    ? Math.max((viewportHeight - frameHeight) / 2, 0)
+    : 0;
+  const nextSectionOverlap = isStackedVideoLayout
+    ? responsiveFramePeek + videoStageTopGutter
+    : framePeek + desktopFrameCenterLift;
   const videoStageHeight = viewportHeight > 0
     ? viewportHeight + VIDEO_STAGE_PIN_SCROLL
     : 0;
@@ -1736,10 +1753,18 @@ export function HeroStory({
     marginTop: `-${nextSectionOverlap}px`,
     height: `${videoStageHeight}px`,
   } satisfies CSSProperties;
+  const stableViewportStyle = {
+    height: viewportHeight > 0 ? `${viewportHeight}px` : "100svh",
+  } satisfies CSSProperties;
+  const videoStickyStyle = {
+    ...stableViewportStyle,
+    boxSizing: "border-box",
+    paddingTop: `${videoStageTopGutter}px`,
+  } satisfies CSSProperties;
   const nextFrameStyle = {
     width: `${centerFrameWidth}px`,
     height: `${frameHeight}px`,
-    borderRadius: isMobile ? "22px" : "28px",
+    borderRadius: isCompactFrameLayout ? "22px" : "28px",
   } satisfies CSSProperties;
   // TODO(paymong-launch): Re-check section 2 alignment before release.
   // The video frame height is computed here, while the surrounding left/right layout heights
@@ -1749,17 +1774,17 @@ export function HeroStory({
     ["--cta-shell-top" as string]: `${ctaShellTop}px`,
     ["--cta-shell-docked-top" as string]: `${ctaDockedTop}px`,
     ["--cta-shell-shift" as string]: isCtaDocked
-      ? `${ctaDockedTop - ctaShellTop}px`
+      ? `calc(${ctaDockedTop - ctaShellTop}px - var(--cta-safe-area-bottom, 0px))`
       : "0px",
     ["--cta-docked-width" as string]: `${dockedCtaWidth}px`,
     ...(ctaWidth > 0
-      ? { ["--cta-expanded-width" as string]: `${ctaWidth}px` }
+      ? { ["--cta-expanded-width" as string]: `${expandedCtaWidth}px` }
       : {}),
   } satisfies CSSProperties;
 
   return (
     <section ref={sectionRef} className="relative">
-      <div className="sticky top-0 z-30 h-svh overflow-hidden">
+      <div className="sticky top-0 z-30 overflow-hidden" style={stableViewportStyle}>
         <div ref={heroContainerRef} className="relative flex h-full items-center justify-center overflow-hidden bg-white">
           <div
             ref={auraRef}
@@ -1853,7 +1878,10 @@ export function HeroStory({
         className="section-two-onward-font relative z-40"
         style={nextShellRegionStyle}
       >
-        <div className="sticky top-0 flex h-svh items-center justify-center overflow-hidden">
+        <div
+          className={`sticky top-0 flex justify-center overflow-hidden ${isStackedVideoLayout ? "items-start" : "items-center"}`}
+          style={videoStickyStyle}
+        >
           <div
             ref={nextSectionBackgroundRef}
             className="hero-video-stage-background pointer-events-none absolute inset-0"
@@ -1903,27 +1931,33 @@ export function HeroStory({
               </div>
             </div>
 
-            <div
-              className={`hero-video-side hero-video-side--right ${showSidePanels ? "is-visible" : ""}`}
-              aria-hidden={!showSidePanels}
-            >
-              {showSidePanels
-                ? stackedVideoSteps.map((step, index) => (
-                    <article
-                      key={step.id}
-                      ref={detailCardRefSetters[index]}
-                      className="hero-video-note hero-video-note--detail"
-                      data-state={step.id === resolvedVideoStep ? "active" : step.id < resolvedVideoStep ? "past" : "future"}
-                      style={{
-                        zIndex: step.id === resolvedVideoStep ? 3 : step.id < resolvedVideoStep ? 1 : 2,
-                      }}
-                    >
-                      <DetailImageSlot ref={detailSlotRefSetters[index]} stepId={step.id} />
-                      <p className="hero-video-note__text">{renderSummaryText(step.detail)}</p>
-                    </article>
-                  ))
-                : null}
-            </div>
+            {/* Right detail panel: shown only when the layout has room for two
+                side panels. On compact (mobile) widths we drop the entire panel
+                — including its Lottie/video DetailImageSlot and confetti hook —
+                so only the video frame and the left summary card remain. */}
+            {!isCompactHeroLayout && (
+              <div
+                className={`hero-video-side hero-video-side--right ${showSidePanels ? "is-visible" : ""}`}
+                aria-hidden={!showSidePanels}
+              >
+                {showSidePanels
+                  ? stackedVideoSteps.map((step, index) => (
+                      <article
+                        key={step.id}
+                        ref={detailCardRefSetters[index]}
+                        className="hero-video-note hero-video-note--detail"
+                        data-state={step.id === resolvedVideoStep ? "active" : step.id < resolvedVideoStep ? "past" : "future"}
+                        style={{
+                          zIndex: step.id === resolvedVideoStep ? 3 : step.id < resolvedVideoStep ? 1 : 2,
+                        }}
+                      >
+                        <DetailImageSlot ref={detailSlotRefSetters[index]} stepId={step.id} />
+                        <p className="hero-video-note__text">{renderSummaryText(step.detail)}</p>
+                      </article>
+                    ))
+                  : null}
+              </div>
+            )}
           </div>
         </div>
       </section>

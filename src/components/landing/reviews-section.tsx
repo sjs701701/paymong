@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { Calendar, Star, Wallet } from "lucide-react";
 import { useHydratedReducedMotion } from "@/lib/use-hydrated-reduced-motion";
+import { useViewport } from "@/lib/use-viewport";
 
 type ReviewItem = {
   author: string;
@@ -37,10 +38,11 @@ const REVIEW_KEYWORD_PILLS: ReviewKeywordPill[] = [
 ];
 
 const ITEM_SPACING = 220;
+const ITEM_SPACING_COMPACT = 175;
+const COMPACT_CARD_MAX_WIDTH = 640;
 const CARD_STAGE_HEIGHT = 500;
 const AUTO_ROTATE_SPEED = 1.2;
 const SCROLL_MULTIPLIER = 1.2;
-const LOOP_HEIGHT = REVIEW_DATA.length * ITEM_SPACING;
 const CARD_CENTER = CARD_STAGE_HEIGHT / 2;
 
 function getStablePillIndex(seed: string) {
@@ -55,6 +57,10 @@ function getStablePillIndex(seed: string) {
 
 export function ReviewsSection() {
   const reducedMotion = useHydratedReducedMotion();
+  const { width: viewportWidth } = useViewport();
+  const isCompactCard = viewportWidth <= COMPACT_CARD_MAX_WIDTH;
+  const itemSpacing = isCompactCard ? ITEM_SPACING_COMPACT : ITEM_SPACING;
+  const loopHeight = REVIEW_DATA.length * itemSpacing;
   const sectionRef = useRef<HTMLElement | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const autoOffset = useRef(0);
@@ -67,20 +73,25 @@ export function ReviewsSection() {
       const el = cardRefs.current[index];
       if (!el) continue;
 
-      const basePos = index * ITEM_SPACING;
-      let yOffset = (basePos - currentOffset) % LOOP_HEIGHT;
-      if (yOffset < 0) yOffset += LOOP_HEIGHT;
-      yOffset -= (LOOP_HEIGHT / 2) - CARD_CENTER;
+      const basePos = index * itemSpacing;
+      let yOffset = (basePos - currentOffset) % loopHeight;
+      if (yOffset < 0) yOffset += loopHeight;
+      yOffset -= (loopHeight / 2) - CARD_CENTER;
 
       const distanceFromCenter = Math.abs(yOffset - CARD_CENTER);
       const opacity = Math.max(0, 1 - (distanceFromCenter / 500));
-      const shiftX = -(Math.max(0, 1 - distanceFromCenter / 300)) * 60;
+      // Desktop: active card swings -60px (leftward) for parallax. Mobile uses
+      // a flat horizontal anchor so the wider full-width stage doesn't leave
+      // cards leaning hard to the left.
+      const shiftX = isCompactCard
+        ? 0
+        : -(Math.max(0, 1 - distanceFromCenter / 300)) * 60;
 
       el.style.transform = `translateX(${shiftX}px) translateY(${yOffset - CARD_CENTER}px)`;
       el.style.opacity = String(opacity);
       el.style.zIndex = String(Math.round(100 - distanceFromCenter));
     }
-  }, [reducedMotion]);
+  }, [reducedMotion, itemSpacing, loopHeight, isCompactCard]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -103,7 +114,7 @@ export function ReviewsSection() {
     const tick = () => {
       if (!reducedMotion) {
         autoOffset.current += AUTO_ROTATE_SPEED;
-        if (autoOffset.current >= LOOP_HEIGHT) autoOffset.current -= LOOP_HEIGHT;
+        if (autoOffset.current >= loopHeight) autoOffset.current -= loopHeight;
       }
       updateCards();
       frameId = requestAnimationFrame(tick);
@@ -111,27 +122,27 @@ export function ReviewsSection() {
 
     frameId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frameId);
-  }, [reducedMotion, updateCards]);
+  }, [reducedMotion, updateCards, loopHeight]);
 
   return (
     <section
       id="section3"
       ref={sectionRef}
-      className="reviews-section-background section-two-onward-font relative z-40 h-svh w-full overflow-hidden bg-white px-6 py-12 text-slate-900 sm:px-10 lg:px-24"
+      className="reviews-section-background section-two-onward-font relative z-40 min-h-svh w-full overflow-hidden bg-white px-6 py-10 text-slate-900 sm:px-10 sm:py-12 lg:h-svh lg:px-24"
     >
-      <div className="mx-auto grid h-full w-full max-w-[1440px] grid-cols-1 items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.94fr)] lg:gap-20">
-        <div className="relative z-[110] max-w-xl space-y-8">
-          <h2 className="text-5xl font-bold leading-[0.94] tracking-[-0.08em] text-slate-900 sm:text-6xl lg:text-7xl">
+      <div className="mx-auto grid h-full w-full max-w-[1440px] grid-cols-1 items-center gap-8 sm:gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.94fr)] lg:gap-20">
+        <div className="relative z-[110] mx-auto w-full max-w-xl space-y-6 text-center sm:space-y-8 lg:mx-0 lg:text-left">
+          <h2 className="text-4xl font-bold leading-[0.96] tracking-[-0.08em] text-slate-900 sm:text-6xl sm:leading-[0.94] lg:text-7xl">
             고객님들의
             <br />
             정직한 후기입니다.
           </h2>
-          <p className="max-w-lg text-lg font-light leading-relaxed text-slate-500 sm:text-xl">
+          <p className="mx-auto max-w-lg text-base font-light leading-relaxed text-slate-500 sm:text-xl lg:mx-0">
             이미 00,000명 이상의 고객님들이 페이몽을 통해 계약을 완료하셨습니다.
           </p>
           <button
-            className="cta-paymong group overflow-hidden rounded-full px-16 py-5 text-lg font-semibold"
-            style={{ backgroundColor: "#3B6FF5", padding: "1.25rem 4rem", fontSize: "1.25rem", fontWeight: 700 }}
+            className="cta-paymong group overflow-hidden rounded-full px-8 py-3 text-base font-bold sm:px-12 sm:py-4 sm:text-lg lg:px-16 lg:py-5 lg:text-xl"
+            style={{ backgroundColor: "#3B6FF5" }}
           >
             <span className="cta-paymong__bg-fill rounded-full" />
             <span className="cta-paymong__text-box">
@@ -144,91 +155,61 @@ export function ReviewsSection() {
         </div>
 
         <div className="relative flex h-full items-center justify-center" style={{ perspective: "1000px" }}>
-          <div className="relative flex h-[500px] w-full max-w-md items-center justify-center overflow-visible">
-            {REVIEW_DATA.map((item, index) => (
+          <div className="relative flex h-[500px] w-full items-center justify-center overflow-hidden sm:max-w-md lg:overflow-visible">
+            {REVIEW_DATA.map((item, index) => {
+              const pill = REVIEW_KEYWORD_PILLS[getStablePillIndex(`${item.author}-${item.date}`)];
+
+              return (
                 <div
                   key={item.author + item.date}
                   ref={(el) => { cardRefs.current[index] = el; }}
                   className="absolute w-full cursor-pointer"
                   style={{ willChange: "transform, opacity" }}
                 >
-                  <div
-                    style={{
-                      backgroundColor: "#ffffff",
-                      borderRadius: "2.5rem",
-                      padding: "1.4rem 2rem",
-                      border: "1px solid rgba(0,0,0,0.04)",
-                      boxShadow: "0 20px 50px rgba(0,0,0,0.12), 0 8px 20px rgba(0,0,0,0.06)",
-                    }}
-                  >
+                  <div className="rounded-3xl border border-black/[0.04] bg-white px-4 py-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.08),0_6px_14px_rgba(0,0,0,0.04)] sm:rounded-[2.5rem] sm:px-8 sm:py-[1.4rem] sm:shadow-[0_20px_50px_rgba(0,0,0,0.12),0_8px_20px_rgba(0,0,0,0.06)]">
                     {/* 상단: 별점 + 작성자 */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-                      <div style={{ display: "flex", gap: "3px" }}>
+                    <div className="mb-2 flex items-center justify-between sm:mb-3">
+                      <div className="flex gap-[3px]">
                         {Array.from({ length: item.stars }).map((_, i) => (
-                          <Star key={i} size={16} fill="#fb923c" color="#fb923c" />
+                          <Star key={i} className="h-[13px] w-[13px] sm:h-4 sm:w-4" fill="#fb923c" color="#fb923c" />
                         ))}
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
-                        <span
-                          style={{
-                            backgroundColor: "#f8fafc",
-                            color: "#64748b",
-                            fontSize: "0.8125rem",
-                            fontWeight: 500,
-                            padding: "0.3rem 1rem",
-                            borderRadius: "9999px",
-                            border: "1px solid rgba(0,0,0,0.04)",
-                          }}
-                        >
+                      <div className="flex items-center gap-1.5 sm:gap-[0.45rem]">
+                        <span className="rounded-full border border-black/[0.04] bg-slate-50 px-2 py-[3px] text-[11px] font-medium text-slate-500 sm:px-4 sm:py-[0.3rem] sm:text-[0.8125rem]">
                           {item.author}
                         </span>
                         <span
-                          style={{
-                            backgroundColor: REVIEW_KEYWORD_PILLS[getStablePillIndex(`${item.author}-${item.date}`)].backgroundColor,
-                            color: "#ffffff",
-                            fontSize: "0.8125rem",
-                            fontWeight: 700,
-                            padding: "0.3rem 0.95rem",
-                            borderRadius: "9999px",
-                            boxShadow: "0 8px 18px rgba(10,15,30,0.12)",
-                          }}
+                          className="rounded-full px-2 py-[3px] text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(10,15,30,0.12)] sm:px-[0.95rem] sm:py-[0.3rem] sm:text-[0.8125rem]"
+                          style={{ backgroundColor: pill.backgroundColor }}
                         >
-                          {REVIEW_KEYWORD_PILLS[getStablePillIndex(`${item.author}-${item.date}`)].label}
+                          {pill.label}
                         </span>
                       </div>
                     </div>
 
                     {/* 본문 */}
-                    <p
-                      style={{
-                        fontSize: "1.1rem",
-                        fontWeight: 700,
-                        color: "#1e293b",
-                        lineHeight: 1.6,
-                        marginBottom: "0.75rem",
-                        wordBreak: "keep-all",
-                      }}
-                    >
+                    <p className="mb-2 break-keep text-[0.92rem] font-bold leading-[1.5] text-slate-800 sm:mb-3 sm:text-[1.1rem] sm:leading-relaxed">
                       &ldquo;{item.review}&rdquo;
                     </p>
 
                     {/* 구분선 */}
-                    <div style={{ width: "100%", height: "1px", backgroundColor: "#f1f5f9", marginBottom: "0.6rem" }} />
+                    <div className="mb-1.5 h-px w-full bg-slate-100 sm:mb-[0.6rem]" />
 
                     {/* 하단: 날짜 + 금액 */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "#94a3b8" }}>
-                        <Calendar size={14} color="#cbd5e1" />
-                        <span style={{ fontSize: "0.8125rem" }}>{item.date}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-slate-400 sm:gap-[0.4rem]">
+                        <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5" color="#cbd5e1" />
+                        <span className="text-[11px] sm:text-[0.8125rem]">{item.date}</span>
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                        <Wallet size={14} color="#93c5fd" />
-                        <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#3B6FF5" }}>{item.amount}</span>
+                      <div className="flex items-center gap-1.5 sm:gap-[0.4rem]">
+                        <Wallet className="h-3 w-3 sm:h-3.5 sm:w-3.5" color="#93c5fd" />
+                        <span className="text-[11px] font-bold text-[#3B6FF5] sm:text-[0.8125rem]">{item.amount}</span>
                       </div>
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+            })}
           </div>
         </div>
       </div>
