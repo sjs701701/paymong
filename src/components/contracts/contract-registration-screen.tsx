@@ -68,8 +68,8 @@ const CONTRACT_TYPES: ContractType[] = [
   "보증금",
   "교육비",
   "인건비/용역비",
-  "수리비/인테리어",
   "보험료",
+  "수리비/인테리어",
   "사업대금",
   "기타",
 ];
@@ -351,7 +351,7 @@ function SectionHeader({
             : isLocked
               ? "border border-slate-200 bg-slate-100 text-slate-300"
               : isActive
-                ? "bg-[#0038F1] text-white shadow-[0_10px_22px_rgba(0,56,241,0.24)]"
+                ? "bg-[#0038F1] text-white"
                 : "border border-slate-200 bg-white text-slate-400",
         )}
       >
@@ -797,36 +797,36 @@ export function ContractRegistrationScreen() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-x-clip bg-[#eef2fa] font-sans text-[#151515]">
+    <div className="section-two-onward-font relative min-h-screen overflow-x-clip bg-[#eef2fa] text-[#151515]">
       <DashboardHeader
         hidden={isHeaderHidden}
         className="sticky z-30 md:relative md:top-auto md:border-b-0 md:bg-transparent md:px-8 md:py-6 md:backdrop-blur-none md:translate-y-0"
         innerClassName="mx-auto max-w-[1360px]"
       />
 
-      <main className="relative z-10 px-4 pb-[180px] pt-2 sm:px-6 lg:px-8 lg:pb-16">
+      <main className="relative z-10 px-4 pb-[150px] pt-2 sm:px-6 lg:px-8 lg:pb-16">
         <div className="mx-auto max-w-[1200px]">
-          <button
-            type="button"
-            onClick={() => {
-              if (
-                typeof window !== "undefined" &&
-                document.referrer &&
-                new URL(document.referrer).origin === window.location.origin
-              ) {
-                router.back();
-                return;
-              }
-              router.push("/mypage-v2");
-            }}
-            className="group mb-6 inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-950"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-            뒤로가기
-          </button>
+          <div className="relative mt-6 mb-8 flex items-center lg:mt-0 lg:mb-8 lg:gap-4">
+            <button
+              type="button"
+              aria-label="뒤로가기"
+              onClick={() => {
+                if (
+                  typeof window !== "undefined" &&
+                  document.referrer &&
+                  new URL(document.referrer).origin === window.location.origin
+                ) {
+                  router.back();
+                  return;
+                }
+                router.push("/mypage-v2");
+              }}
+              className="group relative z-10 inline-flex items-center text-slate-600 transition-colors hover:text-slate-950"
+            >
+              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            </button>
 
-          <div className="mb-8 max-w-[620px]">
-            <h1 className="text-3xl font-bold tracking-[-0.03em] text-slate-950 sm:text-4xl lg:text-[2.5rem]">
+            <h1 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-bold tracking-[-0.03em] text-slate-950 lg:static lg:left-auto lg:top-auto lg:translate-x-0 lg:translate-y-0 lg:text-2xl">
               계약등록
             </h1>
           </div>
@@ -1409,7 +1409,7 @@ export function ContractRegistrationScreen() {
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 lg:hidden">
         <div className="pointer-events-auto mx-auto max-w-[920px] px-4 pb-4 pt-2 sm:px-6">
-          <div className="rounded-[22px] border border-slate-200 bg-white/95 p-3 shadow-[0_18px_50px_rgba(15,23,42,0.12)] backdrop-blur-sm">
+          <div className="rounded-[22px] border border-slate-200 bg-white/95 p-3 shadow-[0_-14px_44px_rgba(15,23,42,0.18)] backdrop-blur-sm">
             <div className="mb-2 flex items-center justify-between gap-3 px-1">
               <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
                 진행률

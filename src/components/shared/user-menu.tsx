@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Suspense,
@@ -17,8 +18,9 @@ import {
   ClipboardList,
   Download,
   FilePlus,
-  Headphones,
+  Gift,
   LogOut,
+  Megaphone,
   Menu,
   MessageCircle,
   Newspaper,
@@ -81,7 +83,8 @@ function AppleLogo({ className }: BrandIconProps) {
 
 type UserMenuItemKey =
   | "faq"
-  | "cs"
+  | "notice"
+  | "event"
   | "magazine"
   | "guide"
   | "review"
@@ -109,10 +112,11 @@ const USER_MENU_SECTIONS: Array<{
     ],
   },
   {
-    title: "도움말 · 소식",
+    title: "게시판",
     items: [
       { key: "faq", label: "자주하는 질문", icon: CircleHelp },
-      { key: "cs", label: "고객센터", icon: Headphones },
+      { key: "notice", label: "공지사항", icon: Megaphone },
+      { key: "event", label: "이벤트", icon: Gift },
       { key: "magazine", label: "페이몽 매거진", icon: Newspaper },
       { key: "guide", label: "이용가이드", icon: BookOpen },
       { key: "review", label: "이용후기", icon: MessageCircle },
@@ -321,7 +325,24 @@ function UserMenuInner({
                 >
                   <div className="flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:flex-none sm:overflow-visible sm:pb-0">
                     <div className="p-3">
-                      <div className="mb-2 flex justify-end sm:hidden">
+                      <div className="mb-2 flex items-center justify-between sm:hidden">
+                        <button
+                          type="button"
+                          aria-label="메인 페이지로 이동"
+                          onClick={() =>
+                            closeMenu(() => router.push("/"))
+                          }
+                          className="inline-flex items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0038F1]/40"
+                        >
+                          <Image
+                            src="/brand/paymong-header-logo.svg"
+                            alt="Paymong"
+                            width={148}
+                            height={32}
+                            priority
+                            className="h-6 w-auto object-contain"
+                          />
+                        </button>
                         <button
                           type="button"
                           onClick={() => closeMenu()}
