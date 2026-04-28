@@ -12,7 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import {
   AlertCircle,
-  ArrowLeft,
+  ChevronLeft,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -823,7 +823,7 @@ export function ContractRegistrationScreen() {
               }}
               className="group relative z-10 inline-flex items-center text-slate-600 transition-colors hover:text-slate-950"
             >
-              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+              <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             </button>
 
             <h1 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-bold tracking-[-0.03em] text-slate-950 lg:static lg:left-auto lg:top-auto lg:translate-x-0 lg:translate-y-0 lg:text-2xl">

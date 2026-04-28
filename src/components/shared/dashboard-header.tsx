@@ -29,7 +29,7 @@ export const DashboardHeader = forwardRef<HTMLElement, DashboardHeaderProps>(
       <header
         ref={ref}
         className={cn(
-          "absolute inset-x-0 top-0 z-50 border-b border-slate-200 bg-white/85 px-4 py-4 backdrop-blur-sm md:px-5",
+          "absolute inset-x-0 top-0 z-50 border-b border-slate-200 bg-white px-4 py-4 md:px-5",
           "transition-transform duration-200 ease-out",
           hidden && "-translate-y-full",
           className,

@@ -11,7 +11,7 @@ import {
 } from "react";
 import {
   AlertCircle,
-  ArrowLeft,
+  ChevronLeft,
   CheckCircle2,
   Info,
   Shield,
@@ -317,7 +317,7 @@ export function PaymentFormView({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center gap-3 border-b border-slate-200 bg-white/70 px-4 py-3 backdrop-blur-sm sm:px-6">
+      <div className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
         <Button
           variant="ghost"
           size="icon-sm"
@@ -325,7 +325,7 @@ export function PaymentFormView({
           aria-label="뒤로가기"
           className="shrink-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
         >
-          <ArrowLeft size={16} />
+          <ChevronLeft size={16} />
         </Button>
         <div className="min-w-0 flex-1 text-center lg:text-left">
           <h2 className="truncate text-sm font-semibold text-slate-900">

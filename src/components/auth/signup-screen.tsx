@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ChevronLeft, ExternalLink } from "lucide-react";
 
 export function SignupScreen() {
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -47,7 +47,7 @@ export function SignupScreen() {
             href="/login"
             className="group mb-8 inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-950"
           >
-            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             뒤로가기
           </Link>
 

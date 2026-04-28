@@ -185,6 +185,7 @@ function UserMenuInner({
   const isOnContractListHome =
     isOnContractsPage && searchParams.toString() === "";
   const isOnContractRegister = pathname === "/contracts/new";
+  const isOnFaq = pathname === "/help/faq";
 
   const closeMenu = useCallback(
     (onAfterClose?: () => void) => {
@@ -248,6 +249,12 @@ function UserMenuInner({
       if (item.key === "contract-register") {
         if (!isOnContractRegister) {
           router.push("/contracts/new");
+        }
+        return;
+      }
+      if (item.key === "faq") {
+        if (!isOnFaq) {
+          router.push("/help/faq");
         }
         return;
       }
@@ -374,7 +381,8 @@ function UserMenuInner({
                                   (item.key === "contracts" &&
                                     isOnContractsPage) ||
                                   (item.key === "contract-register" &&
-                                    isOnContractRegister);
+                                    isOnContractRegister) ||
+                                  (item.key === "faq" && isOnFaq);
                                 return (
                                   <button
                                     key={item.key}

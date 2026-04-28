@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Check, Download, FileCheck2, Send } from "lucide-react";
+import { ChevronLeft, Check, Download, FileCheck2, Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/shared/user-menu";
@@ -141,7 +141,7 @@ export function UsageDetailView({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center gap-3 border-b border-slate-200 bg-white/70 px-4 py-4 backdrop-blur-sm sm:px-6 lg:py-3">
+      <div className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:px-6 lg:py-3">
         <Button
           variant="ghost"
           size="icon-sm"
@@ -149,7 +149,7 @@ export function UsageDetailView({
           aria-label="뒤로가기"
           className="shrink-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
         >
-          <ArrowLeft size={16} />
+          <ChevronLeft size={16} />
         </Button>
         <div className="min-w-0 flex-1 text-center lg:text-left">
           <h2 className="truncate text-sm font-semibold text-slate-900">
