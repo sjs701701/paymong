@@ -3,7 +3,9 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
+
+import { BackButton } from "@/components/shared/back-button";
 
 export function SignupScreen() {
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -43,13 +45,14 @@ export function SignupScreen() {
 
       <main className="relative z-10 mt-10 flex flex-1 flex-col items-center justify-center px-4 pb-20">
         <div className="w-full max-w-[480px]">
-          <Link
-            href="/login"
-            className="group mb-8 inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-950"
+          <BackButton
+            variant="ghost"
+            fallbackHref="/login"
+            iconClassName="transition-transform group-hover:-translate-x-1"
+            className="group mb-8 h-auto inline-flex items-center gap-2 rounded-none p-0 text-sm font-medium text-slate-600 hover:bg-transparent hover:text-slate-950"
           >
-            <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             뒤로가기
-          </Link>
+          </BackButton>
 
           <h1 className="mb-2 text-[34px] font-semibold leading-tight tracking-tight text-slate-950">
             휴대폰 번호 인증으로

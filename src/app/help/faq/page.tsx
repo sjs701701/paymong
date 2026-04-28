@@ -3,6 +3,7 @@
 import { type ChangeEvent, type ReactNode, useMemo, useState } from "react";
 import { ChevronDown, Search, X } from "lucide-react";
 
+import { HelpTabs } from "@/components/help/help-tabs";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
@@ -62,65 +63,79 @@ export default function FaqPage() {
 
   return (
     <div>
-      <div className="sticky top-[var(--help-sticky-offset)] z-10 -mx-4 space-y-3 bg-[#eef2fa] px-4 pt-4 pb-3 sm:-mx-6 sm:px-6 sm:pt-5">
-        <div className="relative">
-          <Search
-            size={18}
-            className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-slate-400"
-          />
-          <Input
-            id="faq-search"
-            type="text"
-            value={search}
-            onChange={(event: ChangeEvent<HTMLInputElement>) =>
-              setSearch(event.target.value)
-            }
-            placeholder="궁금한 키워드를 검색해보세요"
-            className={cn(
-              "h-auto rounded-xl border-slate-200 bg-white py-3 pl-11 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-[#00abff]",
-              search ? "pr-11" : "pr-4",
-            )}
-          />
-          {search ? (
-            <button
-              type="button"
-              onClick={() => setSearch("")}
-              aria-label="검색어 지우기"
-              className="absolute inset-y-0 right-0 z-10 flex items-center pr-3 text-slate-400 transition-colors hover:text-slate-600"
-            >
-              <span className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-slate-100">
-                <X size={14} />
-              </span>
-            </button>
-          ) : null}
-        </div>
+      <div
+        className="sticky top-[var(--help-header-height)] z-20 bg-[#eef2fa] transition-transform duration-200 ease-out will-change-transform"
+        style={{
+          transform: "translateY(var(--help-header-shift))",
+        }}
+      >
+        <nav
+          aria-label="게시판 탭"
+          className="border-b border-slate-200 bg-white"
+        >
+          <HelpTabs />
+        </nav>
 
-        <div className="-mx-4 sm:-mx-6">
-          <div className="flex gap-2 overflow-x-auto px-4 pb-1 sm:px-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {FAQ_CATEGORIES.map((cat) => {
-              const isActive = category === cat.key;
-              return (
-                <button
-                  key={cat.key}
-                  type="button"
-                  onClick={() => setCategory(cat.key)}
-                  aria-pressed={isActive}
-                  className={cn(
-                    "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-75",
-                    isActive
-                      ? "border-[#0038F1] bg-[#0038F1] text-white"
-                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
-                  )}
-                >
-                  {cat.label}
-                </button>
-              );
-            })}
+        <div className="mx-auto w-full max-w-[920px] space-y-3 px-4 pt-4 pb-3 sm:px-6 sm:pt-5">
+          <div className="relative">
+            <Search
+              size={18}
+              className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-slate-400"
+            />
+            <Input
+              id="faq-search"
+              type="text"
+              value={search}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                setSearch(event.target.value)
+              }
+              placeholder="궁금한 키워드를 검색해보세요"
+              className={cn(
+                "h-auto rounded-xl border-slate-200 bg-white py-3 pl-11 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-[#00abff]",
+                search ? "pr-11" : "pr-4",
+              )}
+            />
+            {search ? (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                aria-label="검색어 지우기"
+                className="absolute inset-y-0 right-0 z-10 flex items-center pr-3 text-slate-400 transition-colors hover:text-slate-600"
+              >
+                <span className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-slate-100">
+                  <X size={14} />
+                </span>
+              </button>
+            ) : null}
+          </div>
+
+          <div className="-mx-4 sm:-mx-6">
+            <div className="flex gap-2 overflow-x-auto px-4 pb-1 sm:px-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {FAQ_CATEGORIES.map((cat) => {
+                const isActive = category === cat.key;
+                return (
+                  <button
+                    key={cat.key}
+                    type="button"
+                    onClick={() => setCategory(cat.key)}
+                    aria-pressed={isActive}
+                    className={cn(
+                      "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-75",
+                      isActive
+                        ? "border-[#0038F1] bg-[#0038F1] text-white"
+                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+                    )}
+                  >
+                    {cat.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="space-y-4 pt-4">
+      <div className="mx-auto w-full max-w-[920px] space-y-4 px-4 pt-4 sm:px-6">
 
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">

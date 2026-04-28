@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, Check, Download, FileCheck2, Send } from "lucide-react";
+import { Check, Download, FileCheck2, Send } from "lucide-react";
 
+import { BackButton } from "@/components/shared/back-button";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/shared/user-menu";
 import {
@@ -126,31 +127,28 @@ export function UsageDetailView({
   const [isTransferRequested, setIsTransferRequested] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
-  const handleBack = () => {
-    if (isExiting) return;
+  const handleBeforeBack = () => {
+    if (isExiting) return false;
     const prefersMobileMotion =
       typeof window !== "undefined" &&
       !window.matchMedia("(min-width: 1024px)").matches;
-    if (!prefersMobileMotion) {
-      onBack();
-      return;
+    if (prefersMobileMotion) {
+      setIsExiting(true);
+      return 300;
     }
-    setIsExiting(true);
-    window.setTimeout(onBack, 300);
+    return 0;
   };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:px-6 lg:py-3">
-        <Button
+        <BackButton
           variant="ghost"
           size="icon-sm"
-          onClick={handleBack}
-          aria-label="뒤로가기"
+          onFallback={onBack}
+          onBeforeNavigate={handleBeforeBack}
           className="shrink-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-        >
-          <ChevronLeft size={16} />
-        </Button>
+        />
         <div className="min-w-0 flex-1 text-center lg:text-left">
           <h2 className="truncate text-sm font-semibold text-slate-900">
             {contract.name}
@@ -319,7 +317,7 @@ export function UsageDetailView({
           ) : (
             <Button
               size="lg"
-              onClick={handleBack}
+              onClick={onBack}
               className="pointer-events-auto h-auto w-full gap-2 rounded-xl bg-[#0038F1] py-4 text-base font-bold text-white hover:bg-[#002fd0]"
             >
               <Check size={18} />

@@ -17,13 +17,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Lottie, { type LottieRefCurrentProps } from "lottie-react";
 import {
   AlertTriangle,
-  ChevronLeft,
   Check,
   ClipboardList,
   ShieldAlert,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/shared/back-button";
 import { DashboardHeader } from "@/components/shared/dashboard-header";
 import { UserMenu } from "@/components/shared/user-menu";
 import { cn } from "@/lib/utils";
@@ -177,6 +177,7 @@ function MyPageV2Inner() {
     selectedContractId != null ? CONTRACT_DETAILS[selectedContractId] ?? null : null;
 
   const handleSelect = (id: number) => {
+    setIsHeaderHidden(false);
     updateParams({ contract: String(id), action: null, usage: null });
   };
 
@@ -229,74 +230,81 @@ function MyPageV2Inner() {
       />
 
       <section
-        className="relative flex min-h-0 flex-1 overflow-hidden pt-[var(--mobile-header-offset)] transition-[padding-top] duration-200 ease-out lg:pt-[var(--dashboard-header-height)]"
+        className="relative flex min-h-0 flex-1 overflow-hidden pt-[var(--dashboard-header-height)]"
         style={
           {
-            "--mobile-header-offset": `${
-              isHeaderHidden ? 0 : headerHeight
-            }px`,
             "--dashboard-header-height": `${headerHeight}px`,
+            "--dashboard-header-shift": `${
+              isHeaderHidden ? -headerHeight : 0
+            }px`,
+            "--dashboard-content-extension": `${
+              isHeaderHidden ? headerHeight : 0
+            }px`,
           } as CSSProperties
         }
       >
-        <div className="flex min-h-0 w-full flex-col bg-white lg:w-[380px] lg:shrink-0 lg:border-r lg:border-slate-200 xl:w-[420px]">
-          <ContractList
-            contracts={filteredContracts}
-            selectedId={selectedContractId}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            onClearSearch={() => setSearchQuery("")}
-            onSelect={handleSelect}
-            onListScrollChange={handleListScroll}
-          />
-        </div>
-
         <div
-          className={cn(
-            "absolute inset-0 z-[60] flex min-h-0 flex-col bg-[#eef2fa] transition-transform duration-300 ease-out",
-            view === "list" ? "translate-x-full" : "translate-x-0",
-            "lg:static lg:z-0 lg:flex-1 lg:translate-x-0 lg:transition-none",
-          )}
+          className="relative flex h-full min-h-0 w-full"
         >
-          {view === "payment" && selectedContract && selectedDetail ? (
-            <PaymentFormView
-              contract={selectedContract}
-              detail={selectedDetail}
-              initialDraft={paymentDrafts[selectedContract.id]}
-              submitLabel={
-                selectedContract.status === "반려" ? "보완하기" : "결제하기"
-              }
-              onDraftChange={handleSelectedPaymentDraftChange}
-              onBack={handleBackToDetail}
-              onCompleted={handlePaymentCompleted}
+          <div className="flex min-h-0 w-full flex-col bg-white lg:w-[380px] lg:shrink-0 lg:border-r lg:border-slate-200 xl:w-[420px]">
+            <ContractList
+              contracts={filteredContracts}
+              selectedId={selectedContractId}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              onClearSearch={() => setSearchQuery("")}
+              onSelect={handleSelect}
+              onListScrollChange={handleListScroll}
             />
-          ) : selectedContract && selectedContract.status !== "승인됨" ? (
-            <UnavailableState
-              contract={selectedContract}
-              onBack={handleBackToList}
-              onSupplement={handleGoToPayment}
-            />
-          ) : view === "usage" &&
-            selectedContract &&
-            selectedDetail &&
-            selectedUsage ? (
-            <UsageDetailView
-              contract={selectedContract}
-              detail={selectedDetail}
-              usage={selectedUsage}
-              onBack={handleBackToDetail}
-            />
-          ) : selectedContract && selectedDetail ? (
-            <ContractDetailView
-              contract={selectedContract}
-              detail={selectedDetail}
-              onBack={handleBackToList}
-              onPay={handleGoToPayment}
-              onOpenUsage={handleOpenUsage}
-            />
-          ) : (
-            <EmptyState />
-          )}
+          </div>
+
+          <div
+            className={cn(
+              "absolute inset-0 z-[60] flex min-h-0 flex-col bg-[#eef2fa] transition-transform duration-300 ease-out",
+              view === "list" ? "translate-x-full" : "translate-x-0",
+              "lg:static lg:z-0 lg:flex-1 lg:translate-x-0 lg:transition-none",
+            )}
+          >
+            {view === "payment" && selectedContract && selectedDetail ? (
+              <PaymentFormView
+                contract={selectedContract}
+                detail={selectedDetail}
+                initialDraft={paymentDrafts[selectedContract.id]}
+                submitLabel={
+                  selectedContract.status === "반려" ? "보완하기" : "결제하기"
+                }
+                onDraftChange={handleSelectedPaymentDraftChange}
+                onBack={handleBackToDetail}
+                onCompleted={handlePaymentCompleted}
+              />
+            ) : selectedContract && selectedContract.status !== "승인됨" ? (
+              <UnavailableState
+                contract={selectedContract}
+                onBack={handleBackToList}
+                onSupplement={handleGoToPayment}
+              />
+            ) : view === "usage" &&
+              selectedContract &&
+              selectedDetail &&
+              selectedUsage ? (
+              <UsageDetailView
+                contract={selectedContract}
+                detail={selectedDetail}
+                usage={selectedUsage}
+                onBack={handleBackToDetail}
+              />
+            ) : selectedContract && selectedDetail ? (
+              <ContractDetailView
+                contract={selectedContract}
+                detail={selectedDetail}
+                onBack={handleBackToList}
+                onPay={handleGoToPayment}
+                onOpenUsage={handleOpenUsage}
+              />
+            ) : (
+              <EmptyState />
+            )}
+          </div>
         </div>
       </section>
     </main>
@@ -327,15 +335,12 @@ function UnavailableState({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-4 lg:px-6 lg:py-3">
-        <Button
+        <BackButton
           variant="ghost"
           size="icon-sm"
-          onClick={onBack}
-          aria-label="뒤로가기"
+          onFallback={onBack}
           className="shrink-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900 lg:hidden"
-        >
-          <ChevronLeft size={16} />
-        </Button>
+        />
         <span className="flex-1 text-center text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 lg:text-left">
           계약 상세
         </span>
@@ -411,15 +416,14 @@ function RejectedState({
           </p>
         </div>
 
-        <Button
+        <BackButton
           variant="outline"
           size="lg"
-          onClick={onBack}
+          onFallback={onBack}
           className="h-auto w-full rounded-xl border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 lg:hidden"
         >
-          <ChevronLeft size={16} />
           리스트로 돌아가기
-        </Button>
+        </BackButton>
         <Button
           size="lg"
           onClick={onSupplement}
@@ -597,15 +601,14 @@ function UnderReviewState({ contract, onBack }: UnavailableStateProps) {
           </ol>
         </div>
 
-        <Button
+        <BackButton
           variant="outline"
           size="lg"
-          onClick={onBack}
+          onFallback={onBack}
           className="h-auto w-full rounded-xl border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 lg:hidden"
         >
-          <ChevronLeft size={16} />
           리스트로 돌아가기
-        </Button>
+        </BackButton>
       </div>
     </div>
   );

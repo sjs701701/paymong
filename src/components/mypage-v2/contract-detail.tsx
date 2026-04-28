@@ -1,9 +1,10 @@
 "use client";
 
-import { ChevronLeft, Ban, ReceiptText, Wallet } from "lucide-react";
+import { Ban, ReceiptText, Wallet } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/shared/back-button";
 import { UserMenu } from "@/components/shared/user-menu";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { CustomScrollArea } from "@/components/ui/custom-scroll-area";
@@ -183,15 +184,12 @@ export function ContractDetailView({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:px-6 lg:py-3">
-        <Button
+        <BackButton
           variant="ghost"
           size="icon-sm"
-          onClick={onBack}
-          aria-label="뒤로가기"
+          onFallback={onBack}
           className="shrink-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900 lg:hidden"
-        >
-          <ChevronLeft size={16} />
-        </Button>
+        />
         <div className="min-w-0 flex-1 text-center lg:text-left">
           <h2 className="truncate text-sm font-semibold text-slate-900">
             {contract.name}

@@ -186,6 +186,10 @@ function UserMenuInner({
     isOnContractsPage && searchParams.toString() === "";
   const isOnContractRegister = pathname === "/contracts/new";
   const isOnFaq = pathname === "/help/faq";
+  const isOnNotice =
+    pathname === "/help/notice" || pathname.startsWith("/help/notice/");
+  const isOnEvent =
+    pathname === "/help/event" || pathname.startsWith("/help/event/");
 
   const closeMenu = useCallback(
     (onAfterClose?: () => void) => {
@@ -255,6 +259,18 @@ function UserMenuInner({
       if (item.key === "faq") {
         if (!isOnFaq) {
           router.push("/help/faq");
+        }
+        return;
+      }
+      if (item.key === "notice") {
+        if (!isOnNotice) {
+          router.push("/help/notice");
+        }
+        return;
+      }
+      if (item.key === "event") {
+        if (!isOnEvent) {
+          router.push("/help/event");
         }
         return;
       }
@@ -382,7 +398,9 @@ function UserMenuInner({
                                     isOnContractsPage) ||
                                   (item.key === "contract-register" &&
                                     isOnContractRegister) ||
-                                  (item.key === "faq" && isOnFaq);
+                                  (item.key === "faq" && isOnFaq) ||
+                                  (item.key === "notice" && isOnNotice) ||
+                                  (item.key === "event" && isOnEvent);
                                 return (
                                   <button
                                     key={item.key}

@@ -12,7 +12,6 @@ import {
 import { useRouter } from "next/navigation";
 import {
   AlertCircle,
-  ChevronLeft,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -35,6 +34,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { BackButton } from "@/components/shared/back-button";
 import { DashboardHeader } from "@/components/shared/dashboard-header";
 import { cn } from "@/lib/utils";
 
@@ -800,31 +800,19 @@ export function ContractRegistrationScreen() {
     <div className="section-two-onward-font relative min-h-screen overflow-x-clip bg-[#eef2fa] text-[#151515]">
       <DashboardHeader
         hidden={isHeaderHidden}
-        className="sticky z-30 md:relative md:top-auto md:border-b-0 md:bg-transparent md:px-8 md:py-6 md:backdrop-blur-none md:translate-y-0"
+        className="sticky z-30 md:translate-y-0"
         innerClassName="mx-auto max-w-[1360px]"
       />
 
-      <main className="relative z-10 px-4 pb-[150px] pt-2 sm:px-6 lg:px-8 lg:pb-16">
+      <main className="relative z-10 px-4 pb-[150px] pt-2 sm:px-6 lg:px-8 lg:pt-10 lg:pb-16">
         <div className="mx-auto max-w-[1200px]">
-          <div className="relative mt-6 mb-8 flex items-center lg:mt-0 lg:mb-8 lg:gap-4">
-            <button
-              type="button"
-              aria-label="뒤로가기"
-              onClick={() => {
-                if (
-                  typeof window !== "undefined" &&
-                  document.referrer &&
-                  new URL(document.referrer).origin === window.location.origin
-                ) {
-                  router.back();
-                  return;
-                }
-                router.push("/mypage-v2");
-              }}
-              className="group relative z-10 inline-flex items-center text-slate-600 transition-colors hover:text-slate-950"
-            >
-              <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-            </button>
+          <div className="relative mt-6 mb-8 flex items-center lg:mt-0 lg:mb-10 lg:gap-4">
+            <BackButton
+              variant="ghost"
+              fallbackHref="/mypage-v2"
+              iconClassName="transition-transform group-hover:-translate-x-1"
+              className="group relative z-10 h-auto rounded-none p-0 text-slate-600 hover:bg-transparent hover:text-slate-950"
+            />
 
             <h1 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-bold tracking-[-0.03em] text-slate-950 lg:static lg:left-auto lg:top-auto lg:translate-x-0 lg:translate-y-0 lg:text-2xl">
               계약등록
