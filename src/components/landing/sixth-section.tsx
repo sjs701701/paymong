@@ -341,11 +341,8 @@ function SixthSectionOdometerBlock({
   useEffect(() => {
     let hasTriggered = false;
 
-    const triggerOdometer = () => {
-      if (hasTriggered || window.scrollY < SIXTH_ODOMETER_TRIGGER_SCROLL_Y) {
-        return;
-      }
-
+    const fire = () => {
+      if (hasTriggered) return;
       hasTriggered = true;
       setIsOdometerActive(false);
       requestAnimationFrame(() => {
@@ -353,6 +350,47 @@ function SixthSectionOdometerBlock({
           setIsOdometerActive(true);
         });
       });
+    };
+
+    const isMobile =
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 767.98px)").matches;
+
+    if (isMobile) {
+      // Mobile: the legacy absolute-pixel scrollY threshold (10539) doesn't
+      // line up with mobile section heights — it was firing well inside
+      // section 5 instead of when section 6 was about to arrive. Observe
+      // the actual SixthSection element and fire as it approaches the
+      // viewport (rootMargin extends the observation rect downward by 50%
+      // of viewport so the digit roll starts right around when section 5's
+      // mask reveal is at its late phase, where the odometer block is
+      // becoming visible inside the mask).
+      const sixthSection = document.querySelector(
+        "[data-sixth-section-root]",
+      );
+      if (sixthSection) {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                fire();
+              }
+            });
+          },
+          { rootMargin: "0px 0px 50% 0px", threshold: 0 },
+        );
+        observer.observe(sixthSection);
+        return () => observer.disconnect();
+      }
+    }
+
+    // Desktop (and mobile fallback when section 6 element isn't found):
+    // legacy scrollY threshold — unchanged.
+    const triggerOdometer = () => {
+      if (hasTriggered || window.scrollY < SIXTH_ODOMETER_TRIGGER_SCROLL_Y) {
+        return;
+      }
+      fire();
     };
 
     triggerOdometer();

@@ -1467,7 +1467,11 @@ export function HeroStory({
         willChange: "transform, opacity",
       });
       gsap.set(nextSectionBackground, {
-        opacity: 0,
+        // Mobile keeps the section-2 gradient opaque from the start so when
+        // user scrolls past hero, section 2 rises into viewport already
+        // styled (no cross-fade needed; z-40 covers section 1's z-30 sticky).
+        // Desktop preserves the legacy 0 -> 1 cross-fade timing.
+        opacity: isCompactHeroLayout ? 1 : 0,
         willChange: "opacity",
       });
       gsap.set(titleBlock, {
@@ -1498,7 +1502,14 @@ export function HeroStory({
     return () => {
       ctx.revert();
     };
-  }, [activeIndex, ctaWidth, isCtaDocked, viewportHeight, viewportWidth]);
+  }, [
+    activeIndex,
+    ctaWidth,
+    isCompactHeroLayout,
+    isCtaDocked,
+    viewportHeight,
+    viewportWidth,
+  ]);
 
   useEffect(() => {
     const heroContainer = heroContainerRef.current;
@@ -1508,6 +1519,25 @@ export function HeroStory({
     const nextSectionBg = nextSectionBackgroundRef.current;
 
     if (!heroContainer || !titleBlock || !heroStage || activeIndex !== LAST_KEYWORD_INDEX) {
+      return;
+    }
+
+    // Mobile-only override: skip the dissolve transition. Section 2 should
+    // physically rise up to cover section 1 (z-40 over z-30) as the user
+    // scrolls past hero, not appear via cross-fade. Keep section 1 fully
+    // opaque and section 2's backdrop ready at opacity 1.
+    if (isCompactHeroLayout) {
+      gsap.killTweensOf(
+        [heroContainer, titleBlock, heroStage, aura, nextSectionBg].filter(Boolean),
+      );
+      gsap.set(heroContainer, { opacity: 1, visibility: "visible" });
+      gsap.set(titleBlock, { y: 0, scale: 1, opacity: 1, filter: "blur(0px)" });
+      gsap.set(heroStage, { opacity: 1 });
+      if (aura) gsap.set(aura, { opacity: AURA_OPACITIES[activeIndex] });
+      if (nextSectionBg) gsap.set(nextSectionBg, { opacity: 1 });
+      if (!isCtaDocked) {
+        wasDockedRef.current = false;
+      }
       return;
     }
 
@@ -1597,7 +1627,7 @@ export function HeroStory({
     return () => {
       tween.kill();
     };
-  }, [activeIndex, isCtaDocked]);
+  }, [activeIndex, isCtaDocked, isCompactHeroLayout]);
 
   useEffect(() => {
     const nextSection = nextSectionRef.current;
@@ -1715,12 +1745,17 @@ export function HeroStory({
 
   const isCompactFrameLayout = isCompactHeroLayout;
   const frameWidthBoost = isCompactFrameLayout ? 24 : 40;
-  const frameHeightBoost = isCompactFrameLayout ? 28 : 44;
+  // NOTE(paymong-mobile-fit): On mobile, the frame floor was 420px + 28
+  // boost which exceeded short-viewport iPhones (e.g. SE) and forced the
+  // left summary card to clip below the sticky overflow. Lower mobile floor
+  // and zero out the boost so frame + left-card area fits in 100dvh on the
+  // smallest reasonable viewport (≈568px). Desktop values unchanged.
+  const frameHeightBoost = isCompactFrameLayout ? 0 : 44;
   const frameWidthTrim = isCompactFrameLayout ? 0 : 18;
   const baseFrameHeight = viewportHeight > 0
     ? viewportHeight * (isCompactFrameLayout ? MOBILE_FRAME_HEIGHT_RATIO : DESKTOP_FRAME_HEIGHT_RATIO)
     : (isCompactFrameLayout ? 520 : 640);
-  const frameHeight = Math.max(baseFrameHeight, isCompactFrameLayout ? 420 : 560) + frameHeightBoost;
+  const frameHeight = Math.max(baseFrameHeight, isCompactFrameLayout ? 280 : 560) + frameHeightBoost;
   const expandedCtaWidth = ctaWidth + (isCompactHeroLayout ? 24 : 32);
   const centerFrameWidth = Math.max(
     expandedCtaWidth + (isCompactFrameLayout ? 32 : 48),

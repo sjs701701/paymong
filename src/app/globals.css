@@ -1952,17 +1952,37 @@ button {
     margin-top: 0;
   }
 
-  /* Mobile CTA: lock to initial section-1 placement and disable every
-     scroll-driven transform/width change. We `!important`-force it
-     because JS keeps toggling .cta-btn--docked/--returning/--preview
-     and we want zero visual reaction on mobile. */
+  /* Section backdrops use gradients ending at rgba(0,56,241,0.04) — ~96%
+     transparent — which lets section 1 (kept at opacity 1 on mobile so
+     section 2 can rise to cover it) bleed through every translucent
+     bottom strip. Force these gradient classes fully opaque on mobile,
+     using both the class selector AND a higher-specificity
+     element.class selector so anything Tailwind-generated can't slip
+     past the cascade. Desktop keeps the gradient because section 1 is
+     faded out via GSAP cross-fade and there's nothing visible behind. */
+  .hero-video-stage-background,
+  .reviews-section-background,
+  section.hero-video-stage-background,
+  section.reviews-section-background {
+    background-color: #ffffff !important;
+    background-image: none !important;
+  }
+
+  /* Mobile CTA: behaves as part of section 1's content — stays at the
+     same viewport position (position: fixed) without docking/width changes,
+     and gets covered by section 2 (z-40) as it rises up because the CTA
+     sits at z-index 35, between section-1 sticky (z-30) and section-2.
+     `!important` is required because JS keeps toggling
+     .cta-btn--docked/--returning/--preview and we want zero visual reaction
+     on mobile. */
   .hero-cta-shell,
   .hero-cta-shell--docked,
   .hero-cta-shell--returning {
-    position: absolute !important;
+    position: fixed !important;
     transform: translate3d(0, -50%, 0) !important;
     transition: none !important;
     transition-delay: 0s !important;
+    z-index: 35 !important;
   }
 
   .cta-btn,

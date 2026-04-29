@@ -498,7 +498,7 @@ export function FifthSection() {
   }, [maskPathData]);
 
   return (
-    <div ref={wrapperRef} className="relative h-[600vh] w-full">
+    <div ref={wrapperRef} className="relative z-40 h-[600vh] w-full">
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         <section className="hero-video-stage-background absolute inset-0 z-10">
           <div

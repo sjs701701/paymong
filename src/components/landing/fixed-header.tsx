@@ -385,7 +385,7 @@ export function FixedHeader({
           data-auto-hide-enabled={autoHideEnabled ? "true" : "false"}
           data-header-hidden={headerHidden ? "true" : "false"}
           className={`fixed top-6 left-0 right-0 z-50 flex items-center justify-between px-4 pointer-events-none transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform md:px-8 ${
-            headerHidden ? "-translate-y-[140%]" : "translate-y-0"
+            headerHidden ? "-translate-y-[220%] lg:-translate-y-[140%]" : "translate-y-0"
           }`}
         >
           <div className="mx-auto flex w-full max-w-[1360px] items-center justify-between gap-4">
