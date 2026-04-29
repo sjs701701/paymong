@@ -123,8 +123,8 @@ export default function HelpLayout({
       <DashboardHeader
         ref={headerRef}
         hidden={isHeaderHidden}
-        className="sticky z-30"
-        innerClassName="mx-auto max-w-[1360px]"
+        className="sticky z-30 px-0 md:px-0"
+        innerClassName="mx-auto max-w-[920px] px-4 sm:px-6"
       />
 
       {!pageHandlesTabs ? (

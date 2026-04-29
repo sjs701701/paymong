@@ -800,8 +800,8 @@ export function ContractRegistrationScreen() {
     <div className="section-two-onward-font relative min-h-screen overflow-x-clip bg-[#eef2fa] text-[#151515]">
       <DashboardHeader
         hidden={isHeaderHidden}
-        className="sticky z-30 md:translate-y-0"
-        innerClassName="mx-auto max-w-[1360px]"
+        className="sticky z-30 px-0 md:translate-y-0 md:px-0"
+        innerClassName="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-0"
       />
 
       <main className="relative z-10 px-4 pb-[150px] pt-2 sm:px-6 lg:px-8 lg:pt-10 lg:pb-16">
