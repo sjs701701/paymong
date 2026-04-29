@@ -230,7 +230,11 @@ function MyPageV2Inner() {
       />
 
       <section
-        className="relative flex min-h-0 flex-1 overflow-hidden pt-[var(--dashboard-header-height)]"
+        className={cn(
+          "relative flex min-h-0 flex-1 overflow-hidden",
+          view === "list" ? "pt-[var(--dashboard-header-height)]" : "pt-0",
+          "lg:pt-[var(--dashboard-header-height)]",
+        )}
         style={
           {
             "--dashboard-header-height": `${headerHeight}px`,
