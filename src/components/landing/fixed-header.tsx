@@ -5,6 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { UserMenu } from "@/components/shared/user-menu";
+import { useIsLoggedIn } from "@/lib/use-is-logged-in";
+
 const HEADER_LOGO_PATH = "/brand/paymong-header-logo.svg";
 const HEADER_LOGO_WHITE_PATH = "/brand/white-logo/paymong-header-logo-white.svg";
 const HEADER_AUTO_HIDE_SYNC_EVENT = "paymong:header-auto-hide-sync";
@@ -26,11 +29,10 @@ type PillStyle = {
 };
 
 const defaultCategories: HeaderCategory[] = [
-  { name: "\uACE0\uAC1D\uC13C\uD130", href: "#" },
+  { name: "\uC790\uC8FC\uD558\uB294 \uC9C8\uBB38", href: "#" },
   { name: "\uC774\uC6A9\uAC00\uC774\uB4DC", href: "#" },
   { name: "\uC774\uC6A9\uD6C4\uAE30", href: "#" },
   { name: "\uB9C8\uC77C\uB9AC\uC9C0\uC0F5", href: "#" },
-  { name: "\uC138\uAE08\uACC4\uC0B0\uC11C/\uBD80\uAC00\uC138", href: "#" },
 ];
 
 const initialPillStyle: PillStyle = {
@@ -100,13 +102,15 @@ export function FixedHeader({
   categories?: HeaderCategory[];
   autoHideEnabled?: boolean;
 }) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const [useWhiteLogo, setUseWhiteLogo] = useState(false);
   const [pillStyle, setPillStyle] = useState<PillStyle>(initialPillStyle);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previousScrollYRef = useRef(0);
   const previewLogoActiveRef = useRef(false);
+
+  const isLoggedIn = useIsLoggedIn();
+  const startHref = isLoggedIn ? "/mypage-v2" : "/login";
 
   useEffect(() => {
     previousScrollYRef.current = window.scrollY;
@@ -432,54 +436,34 @@ export function FixedHeader({
               ))}
             </nav>
 
-            <div className="glass-panel hidden h-[60px] items-center gap-2 px-2 pointer-events-auto lg:flex">
-              <div className="glass-effect" />
-              <div className="glass-tint" />
-              <div className="glass-shine" />
+            <Link
+              href={startHref}
+              style={{ backgroundColor: "#0145f2", color: "#edf1f5" }}
+              className="pointer-events-auto hidden h-[60px] items-center rounded-full px-6 text-[15px] font-medium shadow-none transition-[filter] hover:brightness-95 lg:inline-flex"
+            >
+              {"\uC2DC\uC791\uD558\uAE30"}
+            </Link>
+
+            <div className="flex items-center gap-2 pointer-events-auto lg:hidden">
               <Link
-                href="/login"
-                className="nav-item glass-content-top rounded-full px-5 py-2 text-[15px] font-medium transition-colors hover:bg-black/5"
-              >
-                {"\uB85C\uADF8\uC778"}
-              </Link>
-              <Link
-                href="/start"
-                className="action-pill glass-content-top rounded-full px-5 py-2 text-[15px] font-medium text-white"
+                href={startHref}
+                style={{ backgroundColor: "#0145f2", color: "#edf1f5" }}
+                className="inline-flex h-11 items-center rounded-full px-4 text-[13px] font-medium shadow-none transition-[filter] hover:brightness-95"
               >
                 {"\uC2DC\uC791\uD558\uAE30"}
               </Link>
-            </div>
-
-            <div className="glass-panel flex h-[60px] items-center justify-center px-4 pointer-events-auto lg:hidden">
-              <div className="glass-effect" />
-              <div className="glass-tint" />
-              <div className="glass-shine" />
-              <button
-                type="button"
-                aria-label="\uBA54\uB274 \uC5F4\uAE30"
-                aria-expanded={isMobileMenuOpen}
-                className="glass-content-top flex h-6 w-6 flex-col justify-center gap-[5px]"
-                onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+              <div
+                className="glass-panel relative inline-flex h-11 w-11 items-center justify-center"
+                style={{ boxShadow: "none" }}
               >
-                <span
-                  className={`block h-[2px] w-full rounded-full transition-transform duration-300 ${
-                    isMobileMenuOpen ? "translate-y-[7px] rotate-45" : ""
-                  }`}
-                  style={{ backgroundColor: "var(--c-content)" }}
+                <div className="glass-effect" />
+                <div className="glass-tint" />
+                <div className="glass-shine" />
+                <UserMenu
+                  trigger="icon"
+                  triggerClassName="glass-content-top h-9 w-9 border-transparent bg-transparent text-[#1f2a44] shadow-none hover:bg-black/5"
                 />
-                <span
-                  className={`block h-[2px] w-full rounded-full transition-opacity duration-300 ${
-                    isMobileMenuOpen ? "opacity-0" : "opacity-100"
-                  }`}
-                  style={{ backgroundColor: "var(--c-content)" }}
-                />
-                <span
-                  className={`block h-[2px] w-full rounded-full transition-transform duration-300 ${
-                    isMobileMenuOpen ? "-translate-y-[7px] -rotate-45" : ""
-                  }`}
-                  style={{ backgroundColor: "var(--c-content)" }}
-                />
-              </button>
+              </div>
             </div>
           </div>
         </header>

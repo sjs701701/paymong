@@ -1938,12 +1938,6 @@ button {
     border-radius: 1.3rem;
   }
 
-  .cta-btn:not(.cta-btn--docked) {
-    width: var(--cta-expanded-width, auto);
-    gap: 0.5rem;
-    padding-inline: 1.45rem;
-  }
-
   .text-top,
   .text-bottom {
     font-size: 1.02rem;
@@ -1953,34 +1947,81 @@ button {
     font-size: clamp(2.12rem, 10.9vw, 3rem) !important;
   }
 
-  .cta-btn--docked {
-    padding-inline: 0.9rem;
-    transition:
-      width 0.62s cubic-bezier(0.22, 1, 0.36, 1),
-      padding 0.62s cubic-bezier(0.22, 1, 0.36, 1),
-      gap 0.62s cubic-bezier(0.22, 1, 0.36, 1),
-      border-radius 0.62s cubic-bezier(0.22, 1, 0.36, 1),
-      box-shadow 0.62s cubic-bezier(0.22, 1, 0.36, 1),
-      transform 0.2s ease;
-    transition-delay: 0s;
-  }
-
-  .cta-btn--docked .text-box {
-    transition:
-      max-width 0.42s cubic-bezier(0.22, 1, 0.36, 1),
-      margin 0.42s cubic-bezier(0.22, 1, 0.36, 1),
-      opacity 0.22s ease;
-  }
-
-  .cta-btn--docked .text-wrapper {
-    transition:
-      transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
-      opacity 0.22s ease;
-  }
-
   .fourth-proof-section__headline-copy {
     display: inline;
     margin-top: 0;
+  }
+
+  /* Mobile CTA: lock to initial section-1 placement and disable every
+     scroll-driven transform/width change. We `!important`-force it
+     because JS keeps toggling .cta-btn--docked/--returning/--preview
+     and we want zero visual reaction on mobile. */
+  .hero-cta-shell,
+  .hero-cta-shell--docked,
+  .hero-cta-shell--returning {
+    position: absolute !important;
+    transform: translate3d(0, -50%, 0) !important;
+    transition: none !important;
+    transition-delay: 0s !important;
+  }
+
+  .cta-btn,
+  .cta-btn--docked,
+  .cta-btn--returning,
+  .cta-btn--preview {
+    width: var(--cta-expanded-width, auto) !important;
+    gap: 0.625rem !important;
+    padding: 13px 52px !important;
+    border-radius: 9999px !important;
+    box-shadow:
+      0 10px 25px -5px rgba(0, 0, 0, 0.1),
+      0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+    transition: none !important;
+    transition-delay: 0s !important;
+  }
+
+  .cta-btn .text-box,
+  .cta-btn--docked .text-box,
+  .cta-btn--returning .text-box,
+  .cta-btn--preview .text-box {
+    max-width: 13rem !important;
+    margin: 0 !important;
+    opacity: 1 !important;
+    transition: none !important;
+  }
+
+  .cta-btn .text-wrapper,
+  .cta-btn--docked .text-wrapper,
+  .cta-btn--returning .text-wrapper {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .cta-btn .text-top,
+  .cta-btn--docked .text-top,
+  .cta-btn--returning .text-top,
+  .cta-btn--preview .text-top {
+    color: var(--text-initial) !important;
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+  }
+
+  .cta-btn .text-bottom,
+  .cta-btn--docked .text-bottom,
+  .cta-btn--returning .text-bottom,
+  .cta-btn--preview .text-bottom {
+    transform: translateY(120%) !important;
+    opacity: 0 !important;
+  }
+
+  .cta-btn .bg-fill,
+  .cta-btn--docked .bg-fill,
+  .cta-btn--returning .bg-fill,
+  .cta-btn--preview .bg-fill {
+    transform: translateY(100%) !important;
+    transition: none !important;
   }
 }
 

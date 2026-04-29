@@ -19,6 +19,7 @@ import {
   Download,
   FilePlus,
   Gift,
+  LogIn,
   LogOut,
   Megaphone,
   Menu,
@@ -44,6 +45,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { setLoggedIn, useIsLoggedIn } from "@/lib/use-is-logged-in";
 import { cn } from "@/lib/utils";
 
 type BrandIconProps = {
@@ -130,19 +132,43 @@ const USER_MENU_SECTIONS: Array<{
   },
 ];
 
+// Items the user can open without being logged in. Anything else opens a
+// "로그인 해주세요" prompt that routes to /login on confirm.
+const ACCESSIBLE_WITHOUT_AUTH: ReadonlySet<UserMenuItemKey> = new Set([
+  "faq",
+  "notice",
+  "event",
+  "magazine",
+  "guide",
+  "review",
+]);
+
 type UserMenuProps = {
   trigger?: "badge" | "icon";
   className?: string;
+  triggerClassName?: string;
 };
 
-export function UserMenu({ trigger = "badge", className }: UserMenuProps = {}) {
+export function UserMenu({
+  trigger = "badge",
+  className,
+  triggerClassName,
+}: UserMenuProps = {}) {
   return (
     <Suspense
       fallback={
-        <UserMenuTriggerFallback trigger={trigger} className={className} />
+        <UserMenuTriggerFallback
+          trigger={trigger}
+          className={className}
+          triggerClassName={triggerClassName}
+        />
       }
     >
-      <UserMenuInner trigger={trigger} className={className} />
+      <UserMenuInner
+        trigger={trigger}
+        className={className}
+        triggerClassName={triggerClassName}
+      />
     </Suspense>
   );
 }
@@ -150,6 +176,7 @@ export function UserMenu({ trigger = "badge", className }: UserMenuProps = {}) {
 function UserMenuTriggerFallback({
   trigger,
   className,
+  triggerClassName,
 }: UserMenuProps & { trigger: NonNullable<UserMenuProps["trigger"]> }) {
   return (
     <div
@@ -159,6 +186,7 @@ function UserMenuTriggerFallback({
           ? "h-9 w-9 overflow-hidden rounded-full text-transparent"
           : "h-9 min-w-28 gap-2 rounded-xl px-4 sm:h-10 sm:min-w-32 sm:px-5",
         className,
+        triggerClassName,
       )}
     >
       <span>홍길동 님</span>
@@ -169,6 +197,7 @@ function UserMenuTriggerFallback({
 function UserMenuInner({
   trigger,
   className,
+  triggerClassName,
 }: UserMenuProps & { trigger: NonNullable<UserMenuProps["trigger"]> }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -178,8 +207,11 @@ function UserMenuInner({
   const [isAppDownloadOpen, setIsAppDownloadOpen] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [prepLabel, setPrepLabel] = useState<string | null>(null);
+  const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const menuPanelRef = useRef<HTMLDivElement>(null);
+
+  const isLoggedIn = useIsLoggedIn();
 
   const isOnContractsPage = pathname === "/mypage-v2";
   const isOnContractListHome =
@@ -243,6 +275,10 @@ function UserMenuInner({
     key: UserMenuItemKey;
     label: string;
   }) => {
+    if (!isLoggedIn && !ACCESSIBLE_WITHOUT_AUTH.has(item.key)) {
+      closeMenu(() => setIsLoginPromptOpen(true));
+      return;
+    }
     closeMenu(() => {
       if (item.key === "contracts") {
         if (!isOnContractListHome) {
@@ -284,7 +320,10 @@ function UserMenuInner({
   };
 
   const handleLogout = () => {
-    closeMenu(() => router.push("/login"));
+    closeMenu(() => {
+      setLoggedIn(false);
+      router.push("/login");
+    });
   };
 
   return (
@@ -301,6 +340,7 @@ function UserMenuInner({
             trigger === "icon"
               ? "h-9 w-9 rounded-full [&>span:first-child]:hidden"
               : "h-9 min-w-28 gap-2 rounded-xl px-4 sm:h-10 sm:min-w-32 sm:px-5",
+            triggerClassName,
           )}
         >
           <span>홍길동 님</span>
@@ -339,6 +379,7 @@ function UserMenuInner({
                 <div
                   ref={menuPanelRef}
                   role="menu"
+                  data-lenis-prevent
                   className={cn(
                     "fixed inset-0 z-[100] flex h-[100dvh] flex-col overflow-hidden bg-white duration-200 ease-out sm:inset-auto sm:right-5 sm:top-20 sm:h-auto sm:w-[min(calc(100vw-2rem),22rem)] sm:rounded-[1.75rem] sm:border sm:border-slate-200 sm:shadow-[0_24px_70px_rgba(15,23,42,0.18)]",
                     isExiting
@@ -375,14 +416,32 @@ function UserMenuInner({
                           <ChevronRight size={22} strokeWidth={2.5} />
                         </button>
                       </div>
-                      <div className="rounded-2xl bg-slate-100 px-4 py-4">
-                        <p className="text-base font-bold text-slate-950">
-                          홍길동
-                        </p>
-                        <p className="mt-1 text-sm font-medium text-slate-500">
-                          010-1234-5678
-                        </p>
-                      </div>
+                      {isLoggedIn ? (
+                        <div className="rounded-2xl bg-slate-100 px-4 py-4">
+                          <p className="text-base font-bold text-slate-950">
+                            홍길동
+                          </p>
+                          <p className="mt-1 text-sm font-medium text-slate-500">
+                            010-1234-5678
+                          </p>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            closeMenu(() => router.push("/login"))
+                          }
+                          className="flex w-full items-center justify-between gap-3 rounded-2xl bg-slate-100 px-4 py-6 text-left transition hover:bg-slate-200 focus-visible:bg-slate-200 focus-visible:outline-none"
+                        >
+                          <span className="text-base font-bold text-slate-950">
+                            로그인이 필요해요
+                          </span>
+                          <LogIn
+                            size={20}
+                            className="shrink-0 text-slate-500"
+                          />
+                        </button>
+                      )}
 
                       <div className="mt-3 space-y-4 sm:space-y-2.5">
                         {USER_MENU_SECTIONS.map((section, sectionIndex) => (
@@ -536,6 +595,39 @@ function UserMenuInner({
               type="button"
               size="lg"
               onClick={() => setPrepLabel(null)}
+              className="h-auto rounded-xl bg-[#0038F1] px-5 py-3 text-sm font-semibold text-white hover:bg-[#002fd0]"
+            >
+              확인
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isLoginPromptOpen}
+        onOpenChange={(open) => {
+          if (!open) setIsLoginPromptOpen(false);
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <div className="mb-1 flex h-10 w-10 items-center justify-center rounded-full bg-[#0038F1]/10 text-[#0038F1]">
+              <UserRoundCheck size={18} />
+            </div>
+            <DialogTitle>로그인 해주세요</DialogTitle>
+            <DialogDescription>
+              해당 메뉴는 로그인 후 이용할 수 있어요. 확인을 누르면 로그인
+              화면으로 이동합니다.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              size="lg"
+              onClick={() => {
+                setIsLoginPromptOpen(false);
+                router.push("/login");
+              }}
               className="h-auto rounded-xl bg-[#0038F1] px-5 py-3 text-sm font-semibold text-white hover:bg-[#002fd0]"
             >
               확인

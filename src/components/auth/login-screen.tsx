@@ -5,6 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { setLoggedIn } from "@/lib/use-is-logged-in";
+
 type ImageColumnProps = {
   direction: "up" | "down";
   duration: string;
@@ -130,6 +132,7 @@ export function LoginScreen() {
     // TODO(paymong-auth): Replace this temporary hard-coded OTP check
     // with the real verification module/API once the auth integration is ready.
     if (joinedCode === "000000") {
+      setLoggedIn(true);
       router.push("/mypage-v2");
       return;
     }

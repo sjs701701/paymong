@@ -39,9 +39,9 @@ export function ContractList({
   onListScrollChange,
 }: ContractListProps) {
   return (
-    <div className="relative h-full min-h-0 overflow-hidden [--contract-list-footer-height:82px]">
+    <div className="relative h-full min-h-0 overflow-visible [--contract-list-footer-height:82px] lg:overflow-hidden">
       <div
-        className="absolute inset-x-0 top-0 flex h-[calc(100%-var(--contract-list-footer-height)+var(--dashboard-content-extension,0px))] min-h-0 flex-col transition-[height,transform] duration-200 ease-out will-change-transform lg:h-[calc(100%-var(--contract-list-footer-height))] lg:translate-y-0 lg:transition-none"
+        className="absolute inset-x-0 top-0 flex h-[calc(100%-var(--contract-list-footer-height)+var(--dashboard-content-extension,0px))] min-h-0 flex-col bg-white transition-[height,transform] duration-200 ease-out will-change-transform lg:h-[calc(100%-var(--contract-list-footer-height))] lg:translate-y-0 lg:bg-transparent lg:transition-none"
         style={{
           transform: "translateY(var(--dashboard-header-shift,0px))",
         }}
