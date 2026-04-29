@@ -131,7 +131,7 @@ export function UsageDetailView({
     if (isExiting) return false;
     const prefersMobileMotion =
       typeof window !== "undefined" &&
-      !window.matchMedia("(min-width: 1024px)").matches;
+      !window.matchMedia("(min-width: 750px)").matches;
     if (prefersMobileMotion) {
       setIsExiting(true);
       return 300;

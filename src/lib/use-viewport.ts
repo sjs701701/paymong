@@ -8,7 +8,11 @@ import { useEffect, useLayoutEffect, useState } from "react";
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-const COMPACT_HERO_MAX_WIDTH = 767.98;
+// Aligned with the lowered `--breakpoint-lg: 750px` token in globals.css
+// so foldable phones unfolded (Galaxy Z Fold ~884, Pixel Fold ~840) and
+// 750x649-class small-tablet viewports all skip the compact-hero treatment
+// and get the desktop landing layout.
+const COMPACT_HERO_MAX_WIDTH = 749.98;
 const STACKED_VIDEO_MAX_WIDTH = 1023.98;
 
 const DESKTOP_FALLBACK_WIDTH = 1440;

@@ -42,7 +42,7 @@ export default function HelpLayout({
   }, [pathname]);
 
   useEffect(() => {
-    const mobileQuery = window.matchMedia("(max-width: 767px)");
+    const mobileQuery = window.matchMedia("(max-width: 749px)");
     const syncViewport = () => {
       isMobileViewportRef.current = mobileQuery.matches;
       if (!mobileQuery.matches) {

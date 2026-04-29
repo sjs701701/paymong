@@ -60,6 +60,7 @@ export function ContractDetailView({
 
   const limitCard = (
     <Card
+      data-paymong-limit-card
       className={cn(
         "relative shrink-0 gap-3 overflow-hidden rounded-2xl border-0 py-4 shadow-none ring-0 lg:gap-4 lg:py-5",
         isLimitClosed
@@ -249,7 +250,10 @@ export function ContractDetailView({
       </div>
 
       {/* ===== DESKTOP LAYOUT ===== */}
-      <div className="hidden min-h-0 flex-1 flex-col gap-4 px-6 pb-5 pt-4 lg:flex">
+      <div
+        data-paymong-limit-detail-wrapper
+        className="hidden min-h-0 flex-1 flex-col gap-4 px-6 pb-5 pt-4 lg:flex"
+      >
         {limitCard}
 
         <Card className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden rounded-2xl border-slate-200 bg-white py-5 ring-0">

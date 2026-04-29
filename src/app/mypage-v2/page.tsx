@@ -126,7 +126,7 @@ function MyPageV2Inner() {
   }, []);
 
   useEffect(() => {
-    const mobileQuery = window.matchMedia("(max-width: 767px)");
+    const mobileQuery = window.matchMedia("(max-width: 749px)");
     const syncViewport = () => {
       isMobileViewportRef.current = mobileQuery.matches;
       if (!mobileQuery.matches) {
@@ -250,7 +250,7 @@ function MyPageV2Inner() {
         <div
           className="relative flex h-full min-h-0 w-full"
         >
-          <div className="flex min-h-0 w-full flex-col bg-white lg:w-[380px] lg:shrink-0 lg:border-r lg:border-slate-200 xl:w-[420px]">
+          <div className="flex min-h-0 w-full flex-col bg-white lg:w-[clamp(260px,38vw,420px)] lg:shrink-0 lg:border-r lg:border-slate-200">
             <ContractList
               contracts={filteredContracts}
               selectedId={selectedContractId}

@@ -354,7 +354,7 @@ function SixthSectionOdometerBlock({
 
     const isMobile =
       typeof window !== "undefined" &&
-      window.matchMedia("(max-width: 767.98px)").matches;
+      window.matchMedia("(max-width: 749.98px)").matches;
 
     if (isMobile) {
       // Mobile: the legacy absolute-pixel scrollY threshold (10539) doesn't

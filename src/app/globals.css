@@ -4,6 +4,68 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* NOTE(paymong-fold-short): Tailwind variant for fold-class viewports —
+   wide enough to qualify as desktop (min-width 750px, matching the lowered
+   `--breakpoint-lg` token) but short on height (≤ 720px). Galaxy Z Fold
+   landscape, 750x649-class small tablets, etc. Use `fold-short:` prefix
+   to compress vertical spacing/typography that would otherwise crowd the
+   viewport. */
+@custom-variant fold-short (@media (min-width: 750px) and (max-height: 720px));
+
+/* Direct CSS overrides for fold-short viewport — bypassing Tailwind variant
+   cascade ordering ambiguity. Targets data-attributes set on specific
+   subpage elements that need to compress their vertical footprint when
+   the viewport is wide-but-short. !important ensures these win over any
+   `lg:` utility from the same elements regardless of source order. */
+@media (min-width: 750px) and (max-height: 720px) {
+  /* mypage-v2 contract-detail: tighten the desktop wrapper around the
+     limit card + 이용내역 list so the list gets more visible rows. */
+  [data-paymong-limit-detail-wrapper] {
+    gap: 0.5rem !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+
+  /* mypage-v2 contract-detail: limit card — keep moderate padding/gap
+     for visual breathing room, but pull every text size down a notch
+     so the overall footprint stays compact (~120px). The earlier
+     attempt was too aggressive on padding (felt cramped) so the trick
+     here is "smaller fonts, normal spacing" rather than the inverse. */
+  [data-paymong-limit-card] {
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+    gap: 0.5rem !important;
+  }
+  [data-paymong-limit-card] [data-slot="card-header"] {
+    gap: 0.125rem !important;
+  }
+  [data-paymong-limit-card] [data-slot="card-content"] > * + * {
+    margin-top: 0.5rem !important;
+  }
+  /* Section label ("남은 한도") + status pill in the header */
+  [data-paymong-limit-card] [data-slot="card-header"] span > span {
+    font-size: 0.65rem !important;
+    line-height: 1 !important;
+  }
+  /* Big amount text */
+  [data-paymong-limit-card] [data-slot="card-content"] > p:first-child {
+    font-size: 1.125rem !important;
+    line-height: 1.15 !important;
+  }
+  /* Sub line "사용됨 ... / 전체한도 ..." */
+  [data-paymong-limit-card] [data-slot="card-content"] > p:nth-child(2) {
+    font-size: 0.65rem !important;
+    line-height: 1.35 !important;
+  }
+  /* Progress track + the overlaid percentage label */
+  [data-paymong-limit-card] [data-slot="progress-track"] {
+    height: 0.9375rem !important;
+  }
+  [data-paymong-limit-card] [data-slot="card-content"] > div:last-child > span {
+    font-size: 0.625rem !important;
+  }
+}
+
 /* ── Lenis smooth-scroll ───────────────────────────── */
 html.lenis,
 html.lenis body {
@@ -83,6 +145,15 @@ body::-webkit-scrollbar {
 }
 
 @theme inline {
+  /* NOTE(paymong-fold-breakpoint): Lower the `lg` breakpoint from Tailwind's
+     default 64rem (1024px) to 750px so foldable phones in unfolded state
+     (Galaxy Z Fold ~884px CSS width, Pixel Fold ~840px) and 750x649-class
+     small-tablet viewports all get the desktop layout instead of the
+     single-column mobile layout. Other breakpoints (sm 640, md 768,
+     xl 1280, 2xl 1536) remain at Tailwind defaults. The
+     `(max-width: 749.98px)` mobile-only media queries below are aligned
+     with this so there's no inconsistency zone. */
+  --breakpoint-lg: 750px;
   --color-background: var(--bg);
   --color-foreground: var(--text-primary);
   --font-sans: "SF Pro Text", "SF Pro KR", "Apple SD Gothic Neo", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
@@ -1706,7 +1777,7 @@ button {
   }
 }
 
-@media (max-width: 767.98px) {
+@media (max-width: 749.98px) {
   :root {
     --cta-safe-area-bottom: env(safe-area-inset-bottom, 0px);
   }

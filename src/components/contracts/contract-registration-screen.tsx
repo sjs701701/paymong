@@ -577,7 +577,7 @@ export function ContractRegistrationScreen() {
   }, [isBankMenuOpen]);
 
   useEffect(() => {
-    const mobileQuery = window.matchMedia("(max-width: 767px)");
+    const mobileQuery = window.matchMedia("(max-width: 749px)");
 
     const handleScroll = () => {
       if (!mobileQuery.matches) {
