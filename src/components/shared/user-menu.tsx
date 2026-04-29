@@ -555,15 +555,17 @@ function UserMenuInner({
                             </div>
                           </CollapsibleContent>
                         </Collapsible>
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={handleLogout}
-                          className="mt-0.5 flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left text-sm font-semibold text-rose-600 hover:bg-rose-50 focus-visible:bg-rose-50 focus-visible:outline-none sm:py-2"
-                        >
-                          <LogOut size={18} className="shrink-0 text-rose-500" />
-                          <span className="min-w-0 flex-1">로그아웃</span>
-                        </button>
+                        {isLoggedIn ? (
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={handleLogout}
+                            className="mt-0.5 flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left text-sm font-semibold text-rose-600 hover:bg-rose-50 focus-visible:bg-rose-50 focus-visible:outline-none sm:py-2"
+                          >
+                            <LogOut size={18} className="shrink-0 text-rose-500" />
+                            <span className="min-w-0 flex-1">로그아웃</span>
+                          </button>
+                        ) : null}
                       </div>
                     </div>
                   </div>

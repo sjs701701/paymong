@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { UserMenu } from "@/components/shared/user-menu";
-import { useIsLoggedIn } from "@/lib/use-is-logged-in";
+import { setLoggedIn, useIsLoggedIn } from "@/lib/use-is-logged-in";
 
 const HEADER_LOGO_PATH = "/brand/paymong-header-logo.svg";
 const HEADER_LOGO_WHITE_PATH = "/brand/white-logo/paymong-header-logo-white.svg";
@@ -293,6 +293,24 @@ export function FixedHeader({
     }));
   };
 
+  const handleStartButtonPointer = (
+    event: ReactMouseEvent<HTMLAnchorElement>,
+  ) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    event.currentTarget.style.setProperty(
+      "--start-x",
+      `${event.clientX - rect.left}px`,
+    );
+    event.currentTarget.style.setProperty(
+      "--start-y",
+      `${event.clientY - rect.top}px`,
+    );
+  };
+
+  const handleLogout = () => {
+    setLoggedIn(false);
+  };
+
   return (
     <>
       <LiquidGlassFilter />
@@ -378,6 +396,59 @@ export function FixedHeader({
             position: relative;
             z-index: 3;
           }
+
+          .liquid-header-scope .desktop-header-panel {
+            background: #f3f4f6;
+            border: none;
+            box-shadow: none;
+          }
+
+          .liquid-header-scope .desktop-header-panel .glass-effect {
+            backdrop-filter: none;
+            filter: none;
+          }
+
+          .liquid-header-scope .desktop-header-panel .glass-tint {
+            background: #f3f4f6;
+          }
+
+          .liquid-header-scope .desktop-header-panel .glass-shine {
+            box-shadow: none;
+          }
+
+          .liquid-header-scope .desktop-start-button {
+            --start-x: 50%;
+            --start-y: 50%;
+            position: relative;
+            isolation: isolate;
+            overflow: hidden;
+            background: #06152d;
+            color: #edf1f5;
+          }
+
+          .liquid-header-scope .desktop-start-button::before {
+            content: "";
+            position: absolute;
+            left: var(--start-x);
+            top: var(--start-y);
+            z-index: -1;
+            width: 14rem;
+            height: 14rem;
+            border-radius: 9999px;
+            background: #0145f2;
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+          }
+
+          .liquid-header-scope .desktop-start-button:hover::before,
+          .liquid-header-scope .desktop-start-button:focus-visible::before {
+            transform: translate(-50%, -50%) scale(1);
+          }
+
+          .liquid-header-scope .desktop-logout-button {
+            background: #f3f4f6;
+            color: #06152d;
+          }
         `}</style>
 
         <header
@@ -388,10 +459,10 @@ export function FixedHeader({
             headerHidden ? "-translate-y-[220%] lg:-translate-y-[140%]" : "translate-y-0"
           }`}
         >
-          <div className="mx-auto flex w-full max-w-[1360px] items-center justify-between gap-4">
+          <div className="mx-auto flex w-full max-w-[1360px] items-center justify-between gap-4 lg:grid lg:grid-cols-[1fr_auto_1fr]">
             <Link
               href="/"
-              className="relative z-10 inline-flex items-center pointer-events-auto drop-shadow-md"
+              className="relative z-10 inline-flex items-center pointer-events-auto drop-shadow-md lg:justify-self-start"
             >
               <Image
                 src={useWhiteLogo ? HEADER_LOGO_WHITE_PATH : HEADER_LOGO_PATH}
@@ -405,7 +476,7 @@ export function FixedHeader({
             </Link>
 
             <nav
-              className="glass-panel relative hidden h-[60px] items-center gap-1 px-2 pointer-events-auto lg:flex"
+              className="glass-panel desktop-header-panel relative hidden h-[60px] items-center gap-1 px-2 pointer-events-auto lg:flex"
               onMouseLeave={handleMouseLeave}
             >
               <div className="glass-effect" />
@@ -436,18 +507,36 @@ export function FixedHeader({
               ))}
             </nav>
 
-            <Link
-              href={startHref}
-              style={{ backgroundColor: "#0145f2", color: "#edf1f5" }}
-              className="pointer-events-auto hidden h-[60px] items-center rounded-full px-6 text-[15px] font-medium shadow-none transition-[filter] hover:brightness-95 lg:inline-flex"
-            >
-              {"\uC2DC\uC791\uD558\uAE30"}
-            </Link>
+            <div className="hidden items-center gap-2 lg:flex lg:justify-self-end">
+              {isLoggedIn ? (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="desktop-logout-button pointer-events-auto inline-flex h-[60px] items-center rounded-full px-6 text-[15px] font-medium shadow-none transition-[filter] hover:brightness-95"
+                >
+                  {"\uB85C\uADF8\uC544\uC6C3"}
+                </button>
+              ) : null}
+              <Link
+                href={startHref}
+                onMouseEnter={handleStartButtonPointer}
+                onMouseMove={handleStartButtonPointer}
+                onFocus={(event) => {
+                  event.currentTarget.style.setProperty("--start-x", "50%");
+                  event.currentTarget.style.setProperty("--start-y", "50%");
+                }}
+                className="desktop-start-button pointer-events-auto inline-flex h-[60px] items-center rounded-full px-6 text-[15px] font-medium shadow-none"
+              >
+                <span className="relative z-10">
+                  {"\uC2DC\uC791\uD558\uAE30"}
+                </span>
+              </Link>
+            </div>
 
             <div className="flex items-center gap-2 pointer-events-auto lg:hidden">
               <Link
                 href={startHref}
-                style={{ backgroundColor: "#0145f2", color: "#edf1f5" }}
+                style={{ backgroundColor: "#06152d", color: "#edf1f5" }}
                 className="inline-flex h-11 items-center rounded-full px-4 text-[13px] font-medium shadow-none transition-[filter] hover:brightness-95"
               >
                 {"\uC2DC\uC791\uD558\uAE30"}

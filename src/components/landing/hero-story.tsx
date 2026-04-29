@@ -11,6 +11,7 @@ import { FourthSection } from "@/components/landing/fourth-section";
 import { FifthSection } from "@/components/landing/fifth-section";
 import { SixthSection } from "@/components/landing/sixth-section";
 import { FaqSection } from "@/components/landing/faq-section";
+import { AppDownloadSection } from "@/components/landing/app-download-section";
 import { FooterSection } from "@/components/landing/footer-section";
 import { type HeroScrollPhase, useHeroLenisControl } from "@/lib/use-hero-lenis-control";
 import { useHydratedReducedMotion } from "@/lib/use-hydrated-reduced-motion";
@@ -2000,6 +2001,8 @@ export function HeroStory({
       <SixthSection />
 
       <FaqSection />
+
+      <AppDownloadSection />
 
       <div ref={footerTriggerRef}>
         <FooterSection />

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { BadgeCheck } from "lucide-react";
 import gsap from "gsap";
+import Image from "next/image";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   SixthSectionShell,
@@ -52,11 +53,70 @@ const DEFAULT_MASK_PATH =
   "M 30 170 C 20 170 15 165 15 155 V 60 C 15 45 25 35 40 35 C 48 35 55 40 60 48 L 100 110 L 140 48 C 145 40 152 35 160 35 C 175 35 185 45 185 60 V 155 C 185 165 180 170 170 170 C 160 170 155 165 155 155 V 85 L 115 145 C 108 155 92 155 85 145 L 45 85 V 155 C 45 165 40 170 30 170 Z";
 const HEADER_PREVIEW_LOGO_SYNC_EVENT = "paymong:header-preview-logo-sync";
 
+const VISUAL_IMAGES: Record<
+  SequenceCard["visual"],
+  {
+    src: string;
+    alt: string;
+    backdrop: string;
+    imageClassName?: string;
+  }
+> = {
+  fees: {
+    src: "/landing/fifth-section/fee-compare-3d.png",
+    alt: "3D fee comparison symbol with glass tag and coins",
+    backdrop: "from-[#F8FBFF] via-white to-[#EAF4FF]",
+    imageClassName: "scale-[1.08]",
+  },
+  mileage: {
+    src: "/landing/fifth-section/mileage-points-3d.png",
+    alt: "3D fluffy star and mileage point tokens",
+    backdrop: "from-[#FFF8E7] via-white to-[#F3ECFF]",
+    imageClassName: "scale-[1.04]",
+  },
+  shop: {
+    src: "/landing/fifth-section/mileage-shop-3d.png",
+    alt: "3D mileage shop gift objects",
+    backdrop: "from-[#EAF7FF] via-white to-[#FFF1E8]",
+    imageClassName: "scale-[1.1]",
+  },
+  vat: {
+    src: "/landing/fifth-section/vat-flow-3d.png",
+    alt: "3D VAT document and checkmark seal",
+    backdrop: "from-[#ECFFF8] via-white to-[#F1F7FF]",
+  },
+  magazine: {
+    src: "/landing/fifth-section/magazine-insight-3d.png",
+    alt: "3D finance magazine and insight objects",
+    backdrop: "from-[#FFF7EA] via-white to-[#F0EDFF]",
+    imageClassName: "scale-[1.06]",
+  },
+};
+
 function SequenceCardVisual({
   visual,
 }: {
   visual: SequenceCard["visual"];
 }) {
+  const image = VISUAL_IMAGES[visual];
+
+  if (image) {
+    return (
+      <div
+        className={`relative h-full w-full overflow-hidden rounded-[1.45rem] bg-gradient-to-br ${image.backdrop}`}
+      >
+        <div className="absolute inset-x-6 bottom-5 h-14 rounded-full bg-black/10 blur-2xl" />
+        <Image
+          src={image.src}
+          alt={image.alt}
+          fill
+          sizes="(max-width: 640px) 280px, (max-width: 1024px) 340px, 390px"
+          className={`object-contain p-2 transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04] sm:p-3 ${image.imageClassName ?? ""}`}
+        />
+      </div>
+    );
+  }
+
   if (visual === "fees") {
     return (
       <div className="flex h-full flex-col rounded-[1.8rem] border border-black/5 bg-[#f8f9fb] p-5">
@@ -248,10 +308,14 @@ function FeatureCard({
   card: SequenceCard;
 }) {
   return (
-    <article className="flex h-[460px] w-[300px] shrink-0 flex-col overflow-hidden rounded-[1.6rem] border border-black/5 bg-white p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:h-[500px] sm:w-[360px] sm:rounded-[2rem] sm:p-8 md:w-[420px]">
-      <h3 className="text-2xl font-semibold tracking-[-0.05em] text-slate-950">{card.title}</h3>
-      <p className="mt-2 text-[1rem] leading-[1.7] text-slate-500">{card.description}</p>
-      <div className="mt-6 min-h-0 flex-1">
+    <article className="group flex h-[460px] w-[300px] shrink-0 flex-col overflow-hidden rounded-[1.6rem] border border-black/5 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.08)] sm:h-[500px] sm:w-[360px] sm:rounded-[2rem] sm:p-8 md:w-[420px]">
+      <h3 className="text-2xl font-semibold leading-[1.14] tracking-[-0.05em] text-slate-950 sm:text-[1.7rem]">
+        {card.title}
+      </h3>
+      <p className="mt-2 line-clamp-3 text-[0.95rem] leading-[1.65] text-slate-500 sm:text-[1rem]">
+        {card.description}
+      </p>
+      <div className="mt-auto h-[250px] min-h-0 pt-5 sm:h-[260px] sm:pt-6 md:h-[270px]">
         <SequenceCardVisual visual={card.visual} />
       </div>
     </article>
