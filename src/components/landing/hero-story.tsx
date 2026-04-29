@@ -1502,14 +1502,7 @@ export function HeroStory({
     return () => {
       ctx.revert();
     };
-  }, [
-    activeIndex,
-    ctaWidth,
-    isCompactHeroLayout,
-    isCtaDocked,
-    viewportHeight,
-    viewportWidth,
-  ]);
+  }, [activeIndex, ctaWidth, isCtaDocked, viewportHeight, isCompactHeroLayout]);
 
   useEffect(() => {
     const heroContainer = heroContainerRef.current;
