@@ -217,6 +217,7 @@ function UserMenuInner({
   const isOnContractListHome =
     isOnContractsPage && searchParams.toString() === "";
   const isOnContractRegister = pathname === "/contracts/new";
+  const isOnShop = pathname === "/shop" || pathname.startsWith("/shop/");
   const isOnFaq = pathname === "/help/faq";
   const isOnNotice =
     pathname === "/help/notice" || pathname.startsWith("/help/notice/");
@@ -228,7 +229,7 @@ function UserMenuInner({
       if (isExiting) return;
       const isMobile =
         typeof window !== "undefined" &&
-        !window.matchMedia("(min-width: 640px)").matches;
+        !window.matchMedia("(min-width: 920px)").matches;
       if (!isMobile) {
         setIsOpen(false);
         onAfterClose?.();
@@ -289,6 +290,12 @@ function UserMenuInner({
       if (item.key === "contract-register") {
         if (!isOnContractRegister) {
           router.push("/contracts/new");
+        }
+        return;
+      }
+      if (item.key === "mileage") {
+        if (!isOnShop) {
+          router.push("/shop");
         }
         return;
       }
@@ -374,22 +381,22 @@ function UserMenuInner({
                   type="button"
                   aria-label="메뉴 닫기"
                   onClick={() => closeMenu()}
-                  className="fixed inset-0 z-[90] hidden cursor-default bg-slate-950/10 sm:block"
+                  className="fixed inset-0 z-[90] hidden cursor-default bg-slate-950/10 min-[920px]:block"
                 />
                 <div
                   ref={menuPanelRef}
                   role="menu"
                   data-lenis-prevent
                   className={cn(
-                    "fixed inset-0 z-[100] flex h-[100dvh] flex-col overflow-hidden bg-white duration-200 ease-out sm:inset-auto sm:right-5 sm:top-20 sm:h-auto sm:w-[min(calc(100vw-2rem),22rem)] sm:rounded-[1.75rem] sm:border sm:border-slate-200 sm:shadow-[0_24px_70px_rgba(15,23,42,0.18)]",
+                    "fixed inset-0 z-[100] flex h-[100dvh] flex-col overflow-hidden bg-white duration-200 ease-out min-[920px]:inset-auto min-[920px]:right-5 min-[920px]:top-20 min-[920px]:h-auto min-[920px]:w-[min(calc(100vw-2rem),22rem)] min-[920px]:rounded-[1.75rem] min-[920px]:border min-[920px]:border-slate-200 min-[920px]:shadow-[0_24px_70px_rgba(15,23,42,0.18)]",
                     isExiting
-                      ? "animate-out slide-out-to-right fill-mode-forwards sm:fade-out-0 sm:slide-out-to-right-0 sm:slide-out-to-top-2"
-                      : "animate-in slide-in-from-right sm:fade-in-0 sm:slide-in-from-right-0 sm:slide-in-from-top-2",
+                      ? "animate-out slide-out-to-right fill-mode-forwards min-[920px]:fade-out-0 min-[920px]:slide-out-to-right-0 min-[920px]:slide-out-to-top-2"
+                      : "animate-in slide-in-from-right min-[920px]:fade-in-0 min-[920px]:slide-in-from-right-0 min-[920px]:slide-in-from-top-2",
                   )}
                 >
-                  <div className="flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)] sm:flex-none sm:overflow-visible sm:pb-0">
+                  <div className="flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)] min-[920px]:flex-none min-[920px]:overflow-visible min-[920px]:pb-0">
                     <div className="p-3">
-                      <div className="mb-2 flex items-center justify-between sm:hidden">
+                      <div className="mb-2 flex items-center justify-between min-[920px]:hidden">
                         <button
                           type="button"
                           aria-label="메인 페이지로 이동"
@@ -443,10 +450,10 @@ function UserMenuInner({
                         </button>
                       )}
 
-                      <div className="mt-3 space-y-4 sm:space-y-2.5">
+                      <div className="mt-3 space-y-4 min-[920px]:space-y-2.5">
                         {USER_MENU_SECTIONS.map((section, sectionIndex) => (
                           <div key={section.title}>
-                            <p className="px-4 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 sm:pb-1">
+                            <p className="px-4 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 min-[920px]:pb-1">
                               {section.title}
                             </p>
                             <div className="space-y-0.5">
@@ -457,6 +464,7 @@ function UserMenuInner({
                                     isOnContractsPage) ||
                                   (item.key === "contract-register" &&
                                     isOnContractRegister) ||
+                                  (item.key === "mileage" && isOnShop) ||
                                   (item.key === "faq" && isOnFaq) ||
                                   (item.key === "notice" && isOnNotice) ||
                                   (item.key === "event" && isOnEvent);
@@ -470,7 +478,7 @@ function UserMenuInner({
                                     }
                                     onClick={() => handleMenuItemClick(item)}
                                     className={cn(
-                                      "flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left text-sm font-semibold focus-visible:outline-none sm:py-2",
+                                      "flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left text-sm font-semibold focus-visible:outline-none min-[920px]:py-2",
                                       isCurrent
                                         ? "bg-[#0038F1]/10 text-[#0038F1]"
                                         : "text-slate-800 hover:bg-slate-100 focus-visible:bg-slate-100",
@@ -513,7 +521,7 @@ function UserMenuInner({
                             render={
                               <button
                                 type="button"
-                                className="flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left text-sm font-semibold text-slate-800 hover:bg-slate-100 focus-visible:bg-slate-100 focus-visible:outline-none sm:py-2"
+                                className="flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left text-sm font-semibold text-slate-800 hover:bg-slate-100 focus-visible:bg-slate-100 focus-visible:outline-none min-[920px]:py-2"
                               />
                             }
                           >
@@ -560,7 +568,7 @@ function UserMenuInner({
                             type="button"
                             role="menuitem"
                             onClick={handleLogout}
-                            className="mt-0.5 flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left text-sm font-semibold text-rose-600 hover:bg-rose-50 focus-visible:bg-rose-50 focus-visible:outline-none sm:py-2"
+                            className="mt-0.5 flex w-full items-center gap-4 rounded-2xl px-4 py-3 text-left text-sm font-semibold text-rose-600 hover:bg-rose-50 focus-visible:bg-rose-50 focus-visible:outline-none min-[920px]:py-2"
                           >
                             <LogOut size={18} className="shrink-0 text-rose-500" />
                             <span className="min-w-0 flex-1">로그아웃</span>

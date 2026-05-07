@@ -204,13 +204,16 @@ export function ContractDetailView({
       </div>
 
       {/* ===== MOBILE LAYOUT ===== */}
-      <div className="relative flex min-h-0 flex-1 flex-col lg:hidden">
-        <div className="min-h-0 flex-1 overflow-y-auto">
+      <div
+        data-paymong-contract-detail-mobile
+        className="relative flex min-h-0 flex-1 flex-col lg:hidden"
+      >
+        <div className="min-h-0 flex-1 overflow-y-auto bg-white">
           <div className="flex flex-col gap-3 px-4 pt-3 sm:px-6 sm:pt-5">
             {limitCard}
 
             <div className="overflow-clip rounded-2xl border border-slate-200 bg-white">
-              <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-2xl border-b border-slate-100 bg-white px-5 py-4">
+              <div className="sticky -top-[2px] z-10 flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4">
                 <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                   이용 내역
                 </span>

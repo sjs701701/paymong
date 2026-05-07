@@ -126,7 +126,7 @@ function MyPageV2Inner() {
   }, []);
 
   useEffect(() => {
-    const mobileQuery = window.matchMedia("(max-width: 749px)");
+    const mobileQuery = window.matchMedia("(max-width: 719px)");
     const syncViewport = () => {
       isMobileViewportRef.current = mobileQuery.matches;
       if (!mobileQuery.matches) {

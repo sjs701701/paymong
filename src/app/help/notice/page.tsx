@@ -113,7 +113,7 @@ export default function NoticePage() {
           <HelpTabs />
         </nav>
 
-        <div className="mx-auto w-full max-w-[920px] px-4 pt-4 pb-3 sm:px-6 sm:pt-5">
+        <div className="mx-auto w-full max-w-[1200px] px-4 pt-4 pb-3 sm:px-6 sm:pt-5">
           <form onSubmit={handleSubmit} className="relative">
             <Search
               size={18}
@@ -148,7 +148,7 @@ export default function NoticePage() {
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-[920px] space-y-4 px-4 pt-4 sm:px-6">
+      <div className="mx-auto w-full max-w-[1200px] space-y-4 px-4 pt-4 sm:px-6">
         {committedSearch.trim() ? (
           <p className="text-xs text-slate-500">
             <span className="font-semibold text-slate-700">

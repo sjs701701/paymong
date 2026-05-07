@@ -76,7 +76,7 @@ export default function FaqPage() {
           <HelpTabs />
         </nav>
 
-        <div className="mx-auto w-full max-w-[920px] space-y-3 px-4 pt-4 pb-3 sm:px-6 sm:pt-5">
+        <div className="mx-auto w-full max-w-[1200px] space-y-3 px-4 pt-4 pb-3 sm:px-6 sm:pt-5">
           <div className="relative">
             <Search
               size={18}
@@ -135,7 +135,7 @@ export default function FaqPage() {
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-[920px] space-y-4 px-4 pt-4 sm:px-6">
+      <div className="mx-auto w-full max-w-[1200px] space-y-4 px-4 pt-4 sm:px-6">
 
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">

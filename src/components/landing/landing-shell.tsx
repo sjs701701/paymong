@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { FixedHeader } from "@/components/landing/fixed-header";
 import { HeroStory } from "@/components/landing/hero-story";
@@ -9,7 +8,6 @@ import { useHydratedReducedMotion } from "@/lib/use-hydrated-reduced-motion";
 
 export function LandingShell() {
   const reducedMotion = useHydratedReducedMotion();
-  const [isHeaderAutoHideEnabled, setIsHeaderAutoHideEnabled] = useState(false);
 
   return (
     <LenisProvider>
@@ -19,9 +17,9 @@ export function LandingShell() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         >
-          <FixedHeader autoHideEnabled={isHeaderAutoHideEnabled} />
+          <FixedHeader />
         </motion.div>
-        <HeroStory onLastKeywordStateChange={setIsHeaderAutoHideEnabled} />
+        <HeroStory />
       </main>
     </LenisProvider>
   );

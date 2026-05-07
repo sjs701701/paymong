@@ -577,7 +577,7 @@ export function ContractRegistrationScreen() {
   }, [isBankMenuOpen]);
 
   useEffect(() => {
-    const mobileQuery = window.matchMedia("(max-width: 749px)");
+    const mobileQuery = window.matchMedia("(max-width: 719px)");
 
     const handleScroll = () => {
       if (!mobileQuery.matches) {
@@ -801,12 +801,12 @@ export function ContractRegistrationScreen() {
       <DashboardHeader
         hidden={isHeaderHidden}
         className="sticky z-30 px-0 md:translate-y-0 md:px-0"
-        innerClassName="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-0"
+        innerClassName="mx-auto max-w-[1200px] px-4 sm:px-6 min-[920px]:px-0"
       />
 
-      <main className="relative z-10 px-4 pb-[150px] pt-2 sm:px-6 lg:px-8 lg:pt-10 lg:pb-16">
+      <main className="relative z-10 px-4 pb-[150px] pt-2 sm:px-6 min-[920px]:px-8 min-[920px]:pt-10 min-[920px]:pb-16">
         <div className="mx-auto max-w-[1200px]">
-          <div className="relative mt-6 mb-8 flex items-center lg:mt-0 lg:mb-10 lg:gap-4">
+          <div className="relative mt-6 mb-8 flex items-center min-[920px]:mt-0 min-[920px]:mb-10 min-[920px]:gap-4">
             <BackButton
               variant="ghost"
               fallbackHref="/mypage-v2"
@@ -814,7 +814,7 @@ export function ContractRegistrationScreen() {
               className="group relative z-10 h-auto rounded-none p-0 text-slate-600 hover:bg-transparent hover:text-slate-950"
             />
 
-            <h1 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-bold tracking-[-0.03em] text-slate-950 lg:static lg:left-auto lg:top-auto lg:translate-x-0 lg:translate-y-0 lg:text-2xl">
+            <h1 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-bold tracking-[-0.03em] text-slate-950 min-[920px]:static min-[920px]:left-auto min-[920px]:top-auto min-[920px]:translate-x-0 min-[920px]:translate-y-0 min-[920px]:text-2xl">
               계약등록
             </h1>
           </div>
@@ -828,7 +828,7 @@ export function ContractRegistrationScreen() {
             >
               {formStatusMessage}
             </div>
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-8">
+            <div className="grid gap-6 min-[920px]:grid-cols-[minmax(0,1fr)_340px] min-[920px]:gap-8">
               <div className="overflow-hidden rounded-[32px] border border-slate-200/80 bg-white/90 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur-sm">
                 <section
                   ref={contractTypeSectionRef}
@@ -1382,7 +1382,7 @@ export function ContractRegistrationScreen() {
                 </section>
               </div>
 
-              <aside className="hidden lg:sticky lg:top-6 lg:block lg:self-start">
+              <aside className="hidden min-[920px]:sticky min-[920px]:top-6 min-[920px]:block min-[920px]:self-start">
                 <SummaryPanel
                   form={form}
                   sectionStatuses={sectionStatuses}
@@ -1395,7 +1395,7 @@ export function ContractRegistrationScreen() {
         </div>
       </main>
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 lg:hidden">
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 min-[920px]:hidden">
         <div className="pointer-events-auto mx-auto max-w-[920px] px-4 pb-4 pt-2 sm:px-6">
           <div className="rounded-[22px] border border-slate-200 bg-white/95 p-3 shadow-[0_-14px_44px_rgba(15,23,42,0.18)] backdrop-blur-sm">
             <div className="mb-2 flex items-center justify-between gap-3 px-1">

@@ -42,7 +42,7 @@ export default function HelpLayout({
   }, [pathname]);
 
   useEffect(() => {
-    const mobileQuery = window.matchMedia("(max-width: 749px)");
+    const mobileQuery = window.matchMedia("(max-width: 719px)");
     const syncViewport = () => {
       isMobileViewportRef.current = mobileQuery.matches;
       if (!mobileQuery.matches) {
@@ -124,7 +124,7 @@ export default function HelpLayout({
         ref={headerRef}
         hidden={isHeaderHidden}
         className="sticky z-30 px-0 md:px-0"
-        innerClassName="mx-auto max-w-[920px] px-4 sm:px-6"
+        innerClassName="mx-auto max-w-[1200px] px-4 sm:px-6"
       />
 
       {!pageHandlesTabs ? (
@@ -142,7 +142,7 @@ export default function HelpLayout({
       <div
         className={cn(
           "w-full flex-1 pb-4 sm:pb-5",
-          !pageHandlesTabs && "mx-auto max-w-[920px] px-4 sm:px-6",
+          !pageHandlesTabs && "mx-auto max-w-[1200px] px-4 sm:px-6",
         )}
       >
         {children}
