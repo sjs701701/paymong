@@ -268,8 +268,8 @@ function SheetShell({ open, title, onClose, children }: SheetShellProps) {
         role="dialog"
         aria-modal="true"
         className={cn(
-          "absolute right-0 bottom-0 left-0 mx-auto flex max-h-[80vh] w-full max-w-md flex-col rounded-t-2xl bg-white shadow-2xl transition-transform duration-300 ease-out sm:bottom-1/2 sm:translate-y-1/2 sm:rounded-2xl",
-          open ? "translate-y-0" : "translate-y-full",
+          "absolute inset-x-3 bottom-3 mx-auto flex max-h-[80vh] w-auto max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-2xl transition-transform duration-300 ease-out sm:inset-x-0 sm:bottom-1/2 sm:w-full sm:translate-y-1/2",
+          open ? "translate-y-0" : "translate-y-[calc(100%+0.75rem)]",
           open ? "sm:opacity-100" : "sm:opacity-0",
         )}
       >

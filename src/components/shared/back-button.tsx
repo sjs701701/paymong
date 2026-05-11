@@ -6,6 +6,10 @@ import { ChevronLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {
+  getPreviousInternalPath,
+  popCurrentInternalPath,
+} from "./navigation-history";
 
 type BackButtonProps = Omit<
   ComponentPropsWithoutRef<typeof Button>,
@@ -32,12 +36,7 @@ export function BackButton({
 }: BackButtonProps) {
   const router = useRouter();
 
-  const navigateBack = () => {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back();
-      return;
-    }
-
+  const navigateToFallback = () => {
     if (onFallback) {
       onFallback();
       return;
@@ -46,6 +45,25 @@ export function BackButton({
     if (fallbackHref) {
       router.push(fallbackHref);
     }
+  };
+
+  const navigateBack = () => {
+    if (onFallback) {
+      onFallback();
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      const previousInternalPath = getPreviousInternalPath();
+
+      if (previousInternalPath && window.history.length > 1) {
+        popCurrentInternalPath();
+        router.back();
+        return;
+      }
+    }
+
+    navigateToFallback();
   };
 
   const handleClick = () => {

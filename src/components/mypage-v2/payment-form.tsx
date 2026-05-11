@@ -325,7 +325,7 @@ export function PaymentFormView({
           className="shrink-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
         />
         <div className="min-w-0 flex-1 text-center lg:text-left">
-          <h2 className="truncate text-sm font-semibold text-slate-900">
+          <h2 className="truncate text-lg font-bold tracking-[-0.04em] text-slate-900 sm:text-sm sm:font-semibold sm:tracking-normal">
             {contract.name}
           </h2>
           <p className="mt-0.5 truncate text-xs text-slate-600">

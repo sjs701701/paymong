@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
+import Link from "next/link";
 import { ChevronDown, Search, Wallet, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -20,12 +21,12 @@ import {
   PRICE_RANGES,
   type PriceRangeId,
   PRODUCTS,
+  USER_MILEAGE,
 } from "./data";
 import { ProductCard, ProductCardSkeleton } from "./product-card";
 import { BrandSheet, PriceSheet } from "./filter-sheet";
 
 const PAGE_SIZE = 24;
-const USER_MILEAGE = 124_300;
 
 export function ShopShell() {
   const [categoryId, setCategoryId] = useState<CategoryId>("all");
@@ -42,7 +43,7 @@ export function ShopShell() {
   const [headerHeight, setHeaderHeight] = useState(57);
   const [isHeaderHidden, setIsHeaderHidden] = useState(false);
   const lastScrollTopRef = useRef(0);
-  const isMobileViewportRef = useRef(false);
+  const isProgrammaticScrollRef = useRef(false);
   const gridSectionRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const categoryScrollRef = useRef<HTMLDivElement>(null);
@@ -59,26 +60,6 @@ export function ShopShell() {
     startScrollLeft: 0,
     moved: false,
   });
-
-  // Wheel-to-horizontal scroll for the category rail (mouse-friendly)
-  useEffect(() => {
-    const el = categoryScrollRef.current;
-    if (!el) return;
-
-    const onWheel = (e: WheelEvent) => {
-      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
-      const max = el.scrollWidth - el.clientWidth;
-      if (max <= 0) return;
-      // Let the page scroll vertically when chip rail can't move further
-      if (e.deltaY > 0 && el.scrollLeft >= max) return;
-      if (e.deltaY < 0 && el.scrollLeft <= 0) return;
-      e.preventDefault();
-      el.scrollLeft = Math.max(0, Math.min(max, el.scrollLeft + e.deltaY));
-    };
-
-    el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
-  }, []);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     // Only start drag tracking for primary button on mouse / pen. Touch uses native scroll.
@@ -163,28 +144,9 @@ export function ShopShell() {
     return () => observer.disconnect();
   }, []);
 
-  // Track mobile viewport — only mobile gets hide-on-scroll behavior
-  useEffect(() => {
-    const mobileQuery = window.matchMedia("(max-width: 719px)");
-    const sync = () => {
-      isMobileViewportRef.current = mobileQuery.matches;
-      if (!mobileQuery.matches) {
-        setIsHeaderHidden((c) => (c ? false : c));
-      }
-    };
-    sync();
-    mobileQuery.addEventListener("change", sync);
-    return () => mobileQuery.removeEventListener("change", sync);
-  }, []);
-
-  // Hide header on scroll-down, show on scroll-up (mobile only)
+  // Hide header on scroll-down, show on scroll-up (all viewports)
   useEffect(() => {
     const handleScroll = () => {
-      if (!isMobileViewportRef.current) {
-        setIsHeaderHidden((c) => (c ? false : c));
-        return;
-      }
-
       const scrollTop = Math.max(
         window.scrollY,
         document.documentElement.scrollTop,
@@ -194,6 +156,13 @@ export function ShopShell() {
         0,
       );
       const safe = Math.max(0, Math.min(scrollTop, maxScrollTop));
+
+      // Ignore scroll events triggered by programmatic scrollTo (filter reset, etc.)
+      if (isProgrammaticScrollRef.current) {
+        lastScrollTopRef.current = safe;
+        return;
+      }
+
       const prev = lastScrollTopRef.current;
       const delta = safe - prev;
       lastScrollTopRef.current = safe;
@@ -202,7 +171,7 @@ export function ShopShell() {
         setIsHeaderHidden((c) => (c ? false : c));
         return;
       }
-      if (Math.abs(delta) < 6) return;
+      if (Math.abs(delta) < 2) return;
 
       const bottomDist = maxScrollTop - safe;
       const prevBottomDist = maxScrollTop - prev;
@@ -258,7 +227,12 @@ export function ShopShell() {
     const targetY = el.getBoundingClientRect().top + window.scrollY - headerHeight - 8;
     const currentY = window.scrollY;
     if (currentY > targetY) {
+      isProgrammaticScrollRef.current = true;
       window.scrollTo({ top: targetY, behavior: "auto" });
+      // Clear flag after the resulting scroll event has been processed
+      window.setTimeout(() => {
+        isProgrammaticScrollRef.current = false;
+      }, 100);
     }
   }, [filterKey, headerHeight]);
 
@@ -328,7 +302,7 @@ export function ShopShell() {
 
       {/* Sticky filter rail — translates up with the header on hide */}
       <div
-        className="sticky z-20 border-b border-slate-200 bg-white/95 backdrop-blur transition-transform duration-200 ease-out will-change-transform supports-[backdrop-filter]:bg-white/85"
+        className="sticky z-20 border-b border-slate-200 bg-white/95 backdrop-blur transition-transform duration-300 ease-in-out will-change-transform supports-[backdrop-filter]:bg-white/85"
         style={{
           top: "var(--shop-header-height)",
           transform: "translateY(var(--shop-header-shift))",
@@ -344,7 +318,7 @@ export function ShopShell() {
                 iconClassName="transition-transform group-hover:-translate-x-1"
                 className="group h-auto shrink-0 rounded-none p-0 text-slate-600 hover:bg-transparent hover:text-slate-950"
               />
-              <h1 className="text-base font-bold tracking-[-0.03em] text-slate-950 sm:text-lg lg:text-xl">
+              <h1 className="text-lg font-bold tracking-[-0.04em] text-slate-900 sm:text-lg sm:tracking-[-0.03em] sm:text-slate-950 lg:text-xl">
                 기프티콘 샵
               </h1>
 
@@ -389,7 +363,11 @@ export function ShopShell() {
                 ) : null}
               </div>
 
-              <div className="order-2 ml-auto inline-flex shrink-0 items-center gap-1 rounded-full bg-white px-2.5 py-1.5 text-xs font-bold text-[#0038F1] ring-1 ring-[#0038F1]/15 sm:order-3 sm:ml-0 sm:gap-1.5 sm:px-3 sm:py-2 sm:text-sm lg:gap-2 lg:px-4 lg:py-2.5">
+              <Link
+                href="/shop/history"
+                aria-label="내 마일리지 잔액 및 구매 내역 보기"
+                className="order-2 ml-auto inline-flex shrink-0 items-center gap-1 rounded-full bg-white px-2.5 py-1.5 text-xs font-bold text-[#0038F1] ring-1 ring-[#0038F1]/15 transition hover:bg-[#0038F1]/8 hover:ring-[#0038F1]/30 active:scale-[0.97] sm:order-3 sm:ml-0 sm:gap-1.5 sm:px-3 sm:py-2 sm:text-sm lg:gap-2 lg:px-4 lg:py-2.5"
+              >
                 <Wallet
                   aria-hidden
                   className="size-3 shrink-0 sm:size-3.5 lg:size-4"
@@ -397,7 +375,7 @@ export function ShopShell() {
                 <span className="whitespace-nowrap">
                   {USER_MILEAGE.toLocaleString("ko-KR")} P
                 </span>
-              </div>
+              </Link>
             </div>
 
             {/* Category chips */}
@@ -511,7 +489,13 @@ export function ShopShell() {
           <>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
               {visibleProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <Link
+                  key={product.id}
+                  href={`/shop/${product.id}`}
+                  className="rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-[#0038F1] focus-visible:ring-offset-2"
+                >
+                  <ProductCard product={product} />
+                </Link>
               ))}
               {hasMore
                 ? Array.from({ length: 4 }).map((_, i) => (

@@ -48,7 +48,7 @@ export function ContractList({
       >
         <div className="shrink-0 px-4 pb-4 pt-4 sm:px-5 lg:px-5 lg:pt-5">
           <div className="mb-4 flex items-baseline justify-between gap-2">
-            <h1 className="text-xl font-bold tracking-[-0.04em] text-slate-900 sm:text-2xl">
+            <h1 className="text-lg font-bold tracking-[-0.04em] text-slate-900 sm:text-2xl">
               계약리스트
             </h1>
             <span className="text-xs text-slate-500">

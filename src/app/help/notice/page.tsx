@@ -101,7 +101,7 @@ export default function NoticePage() {
   return (
     <div>
       <div
-        className="sticky top-[var(--help-header-height)] z-20 bg-[#eef2fa] transition-transform duration-200 ease-out will-change-transform"
+        className="sticky top-[var(--help-header-height)] z-20 bg-[#eef2fa] transition-transform duration-300 ease-in-out will-change-transform"
         style={{
           transform: "translateY(var(--help-header-shift))",
         }}

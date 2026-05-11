@@ -217,6 +217,9 @@ function UserMenuInner({
   const isOnContractListHome =
     isOnContractsPage && searchParams.toString() === "";
   const isOnContractRegister = pathname === "/contracts/new";
+  // /shop catalog page (used to skip navigation when already there)
+  const isOnShopRoot = pathname === "/shop";
+  // Anywhere in the shop section, including history / detail (used for the "현재" badge)
   const isOnShop = pathname === "/shop" || pathname.startsWith("/shop/");
   const isOnFaq = pathname === "/help/faq";
   const isOnNotice =
@@ -294,7 +297,7 @@ function UserMenuInner({
         return;
       }
       if (item.key === "mileage") {
-        if (!isOnShop) {
+        if (!isOnShopRoot) {
           router.push("/shop");
         }
         return;

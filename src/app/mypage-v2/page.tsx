@@ -345,7 +345,7 @@ function UnavailableState({
           onFallback={onBack}
           className="shrink-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900 lg:hidden"
         />
-        <span className="flex-1 text-center text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 lg:text-left">
+        <span className="flex-1 text-center text-lg font-bold tracking-[-0.04em] text-slate-900 sm:text-xs sm:font-semibold sm:uppercase sm:tracking-[0.18em] sm:text-slate-500 lg:text-left">
           계약 상세
         </span>
         <UserMenu trigger="icon" className="shrink-0 lg:hidden" />

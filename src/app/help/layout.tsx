@@ -24,7 +24,6 @@ export default function HelpLayout({
   const [headerHeight, setHeaderHeight] = useState(57);
   const [isHeaderHidden, setIsHeaderHidden] = useState(false);
   const lastScrollTopRef = useRef(0);
-  const isMobileViewportRef = useRef(false);
 
   useEffect(() => {
     const headerEl = headerRef.current;
@@ -42,25 +41,7 @@ export default function HelpLayout({
   }, [pathname]);
 
   useEffect(() => {
-    const mobileQuery = window.matchMedia("(max-width: 719px)");
-    const syncViewport = () => {
-      isMobileViewportRef.current = mobileQuery.matches;
-      if (!mobileQuery.matches) {
-        setIsHeaderHidden((current) => (current ? false : current));
-      }
-    };
-    syncViewport();
-    mobileQuery.addEventListener("change", syncViewport);
-    return () => mobileQuery.removeEventListener("change", syncViewport);
-  }, []);
-
-  useEffect(() => {
     const handleScroll = () => {
-      if (!isMobileViewportRef.current) {
-        setIsHeaderHidden((current) => (current ? false : current));
-        return;
-      }
-
       const scrollTop = Math.max(
         window.scrollY,
         document.documentElement.scrollTop,
@@ -78,7 +59,7 @@ export default function HelpLayout({
         setIsHeaderHidden((current) => (current ? false : current));
         return;
       }
-      if (Math.abs(delta) < 6) return;
+      if (Math.abs(delta) < 2) return;
 
       const bottomDistance = maxScrollTop - safeScrollTop;
       const previousBottomDistance = maxScrollTop - prev;
@@ -130,7 +111,7 @@ export default function HelpLayout({
       {!pageHandlesTabs ? (
         <nav
           aria-label="게시판 탭"
-          className="sticky top-[var(--help-header-height)] z-20 border-b border-slate-200 bg-white transition-transform duration-200 ease-out will-change-transform"
+          className="sticky top-[var(--help-header-height)] z-20 border-b border-slate-200 bg-white transition-transform duration-300 ease-in-out will-change-transform"
           style={{
             transform: "translateY(var(--help-header-shift))",
           }}

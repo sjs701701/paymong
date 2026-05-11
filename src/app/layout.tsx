@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { NavigationHistoryTracker } from "@/components/shared/navigation-history";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -21,6 +22,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full bg-[var(--bg)] text-[var(--text-primary)] antialiased selection:bg-[var(--brand-1)]/16">
+        <NavigationHistoryTracker />
         {children}
       </body>
     </html>

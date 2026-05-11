@@ -2,6 +2,7 @@
 
 import {
   type ChangeEvent,
+  type CSSProperties,
   type DragEvent,
   type RefObject,
   useEffect,
@@ -527,6 +528,8 @@ export function ContractRegistrationScreen() {
   const accountSectionRef = useRef<HTMLElement | null>(null);
   const transferSectionRef = useRef<HTMLElement | null>(null);
   const attachmentsSectionRef = useRef<HTMLElement | null>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(57);
   const lastScrollTopRef = useRef(0);
 
   const [form, setForm] = useState<ContractRegistrationForm>(initialFormState);
@@ -577,14 +580,20 @@ export function ContractRegistrationScreen() {
   }, [isBankMenuOpen]);
 
   useEffect(() => {
-    const mobileQuery = window.matchMedia("(max-width: 719px)");
+    const el = headerRef.current;
+    if (!el) return;
+    const measure = () => {
+      const next = el.offsetHeight;
+      setHeaderHeight((current) => (current === next ? current : next));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
+  useEffect(() => {
     const handleScroll = () => {
-      if (!mobileQuery.matches) {
-        setIsHeaderHidden(false);
-        return;
-      }
-
       const scrollTop = window.scrollY;
       const delta = scrollTop - lastScrollTopRef.current;
       lastScrollTopRef.current = scrollTop;
@@ -593,7 +602,7 @@ export function ContractRegistrationScreen() {
         setIsHeaderHidden((current) => (current ? false : current));
         return;
       }
-      if (Math.abs(delta) < 6) return;
+      if (Math.abs(delta) < 2) return;
 
       const shouldHideHeader = delta > 0;
       setIsHeaderHidden((current) =>
@@ -601,21 +610,9 @@ export function ContractRegistrationScreen() {
       );
     };
 
-    const handleBreakpointChange = () => {
-      lastScrollTopRef.current = window.scrollY;
-      if (!mobileQuery.matches) {
-        setIsHeaderHidden(false);
-      }
-    };
-
-    handleBreakpointChange();
+    lastScrollTopRef.current = window.scrollY;
     window.addEventListener("scroll", handleScroll, { passive: true });
-    mobileQuery.addEventListener("change", handleBreakpointChange);
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      mobileQuery.removeEventListener("change", handleBreakpointChange);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const amountNumber = form.amount ? Number(form.amount) : 0;
@@ -797,28 +794,45 @@ export function ContractRegistrationScreen() {
   };
 
   return (
-    <div className="section-two-onward-font relative min-h-screen overflow-x-clip bg-[#eef2fa] text-[#151515]">
+    <div
+      className="section-two-onward-font relative min-h-screen overflow-x-clip bg-[#eef2fa] text-[#151515]"
+      style={
+        {
+          "--reg-header-height": `${headerHeight}px`,
+          "--reg-header-shift": `${isHeaderHidden ? -headerHeight : 0}px`,
+        } as CSSProperties
+      }
+    >
       <DashboardHeader
+        ref={headerRef}
         hidden={isHeaderHidden}
-        className="sticky z-30 px-0 md:translate-y-0 md:px-0"
+        className="sticky top-0 z-30 px-0 md:px-0"
         innerClassName="mx-auto max-w-[1200px] px-4 sm:px-6 min-[920px]:px-0"
       />
 
-      <main className="relative z-10 px-4 pb-[150px] pt-2 sm:px-6 min-[920px]:px-8 min-[920px]:pt-10 min-[920px]:pb-16">
+      {/* Sticky title bar — follows the DashboardHeader on hide-on-scroll */}
+      <div
+        className="sticky z-20 border-b border-slate-200 bg-white transition-transform duration-300 ease-in-out will-change-transform"
+        style={{
+          top: "var(--reg-header-height)",
+          transform: "translateY(var(--reg-header-shift))",
+        }}
+      >
+        <div className="mx-auto flex max-w-[1200px] items-center gap-3 px-4 py-3 sm:px-6 sm:py-4">
+          <BackButton
+            variant="ghost"
+            fallbackHref="/mypage-v2"
+            iconClassName="transition-transform group-hover:-translate-x-1"
+            className="group h-auto shrink-0 rounded-none p-0 text-slate-600 hover:bg-transparent hover:text-slate-950"
+          />
+          <h1 className="text-lg font-bold tracking-[-0.04em] text-slate-900 sm:text-lg sm:tracking-[-0.03em] sm:text-slate-950 lg:text-xl">
+            계약등록
+          </h1>
+        </div>
+      </div>
+
+      <main className="relative z-10 px-4 pb-[150px] pt-5 sm:px-6 sm:pt-6 min-[920px]:px-8 min-[920px]:pt-10 min-[920px]:pb-16">
         <div className="mx-auto max-w-[1200px]">
-          <div className="relative mt-6 mb-8 flex items-center min-[920px]:mt-0 min-[920px]:mb-10 min-[920px]:gap-4">
-            <BackButton
-              variant="ghost"
-              fallbackHref="/mypage-v2"
-              iconClassName="transition-transform group-hover:-translate-x-1"
-              className="group relative z-10 h-auto rounded-none p-0 text-slate-600 hover:bg-transparent hover:text-slate-950"
-            />
-
-            <h1 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-bold tracking-[-0.03em] text-slate-950 min-[920px]:static min-[920px]:left-auto min-[920px]:top-auto min-[920px]:translate-x-0 min-[920px]:translate-y-0 min-[920px]:text-2xl">
-              계약등록
-            </h1>
-          </div>
-
           <form id="contract-registration-form" onSubmit={handleFormSubmit}>
             <div
               id="contract-form-status"

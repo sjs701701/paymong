@@ -244,6 +244,31 @@ function priceToMileage(price: number): number {
   return Math.floor((price * 0.95) / 100) * 100;
 }
 
+// User's current mileage balance (mock).
+export const USER_MILEAGE = 124_300;
+
+export type Purchase = {
+  id: string;
+  product: Product;
+  purchasedAt: Date;
+  expiresAt: Date;
+  used: boolean;
+  barcodeNumber: string; // 16 digits, formatted xxxx-xxxx-xxxx-xxxx
+  issuer: string;
+};
+
+function generateBarcode(seed: string): string {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  const digits = `${hash}${hash * 7}${hash * 13}`
+    .replace(/\D/g, "")
+    .slice(0, 16)
+    .padStart(16, "0");
+  return `${digits.slice(0, 4)}-${digits.slice(4, 8)}-${digits.slice(8, 12)}-${digits.slice(12, 16)}`;
+}
+
 export const PRODUCTS: Product[] = (() => {
   const out: Product[] = [];
   let counter = 0;
@@ -261,9 +286,7 @@ export const PRODUCTS: Product[] = (() => {
           Math.round((tpl.price * (1 + variance)) / 100) * 100,
         );
         out.push({
-          id: `${cat.id}-${brand}-${tpl.name}-${counter}`
-            .replace(/\s+/g, "-")
-            .toLowerCase(),
+          id: `g${counter}`,
           name: tpl.name,
           brand,
           category: cat.id,
@@ -276,3 +299,67 @@ export const PRODUCTS: Product[] = (() => {
   }
   return out;
 })();
+
+// Sample purchase history (mock). Spread across categories and time.
+export const PURCHASES: Purchase[] = (() => {
+  // Pick product indices from across the catalog so brands/categories vary.
+  const samples: Array<{ idx: number; daysAgo: number }> = [
+    { idx: 4, daysAgo: 1 },
+    { idx: 18, daysAgo: 3 },
+    { idx: 47, daysAgo: 6 },
+    { idx: 73, daysAgo: 10 },
+    { idx: 102, daysAgo: 14 },
+    { idx: 138, daysAgo: 18 },
+    { idx: 175, daysAgo: 22 },
+    { idx: 214, daysAgo: 27 },
+    { idx: 259, daysAgo: 34 },
+    { idx: 301, daysAgo: 41 },
+    { idx: 347, daysAgo: 52 },
+    { idx: 390, daysAgo: 68 },
+  ];
+  // Use a fixed reference date so server/client render the same dates (no hydration mismatch).
+  const reference = new Date("2026-05-11T00:00:00+09:00");
+  return samples
+    .filter((s) => s.idx < PRODUCTS.length)
+    .map((s, i) => {
+      const product = PRODUCTS[s.idx];
+      const purchasedAt = new Date(reference);
+      purchasedAt.setDate(purchasedAt.getDate() - s.daysAgo);
+      // 유효기간은 구매일 + 365일
+      const expiresAt = new Date(purchasedAt);
+      expiresAt.setDate(expiresAt.getDate() + 365);
+      // 2주 이상 지난 구매는 대부분 사용됨, 최근 건은 미사용 비중 높음
+      const used = s.daysAgo > 14 || (i % 5 === 0 && s.daysAgo > 5);
+      const id = `p${i}`;
+      return {
+        id,
+        product,
+        purchasedAt,
+        expiresAt,
+        used,
+        barcodeNumber: generateBarcode(id),
+        issuer: "KT 알파",
+      };
+    });
+})();
+
+export function getPurchaseById(id: string): Purchase | null {
+  return PURCHASES.find((p) => p.id === id) ?? null;
+}
+
+export function getProductById(id: string): Product | null {
+  return PRODUCTS.find((p) => p.id === id) ?? null;
+}
+
+// Find products in the same category within a similar price band, excluding the given one.
+export function getSimilarProducts(product: Product, limit = 8): Product[] {
+  const minPrice = product.price * 0.6;
+  const maxPrice = product.price * 1.6;
+  return PRODUCTS.filter(
+    (p) =>
+      p.id !== product.id &&
+      p.category === product.category &&
+      p.price >= minPrice &&
+      p.price <= maxPrice,
+  ).slice(0, limit);
+}
