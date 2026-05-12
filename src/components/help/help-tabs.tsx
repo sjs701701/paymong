@@ -34,7 +34,7 @@ export function HelpTabs() {
               href={tab.path}
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "relative shrink-0 px-3 py-3 text-lg font-bold tracking-[-0.04em] transition-colors duration-75 sm:text-base sm:font-semibold sm:tracking-normal lg:text-[18px]",
+                "relative shrink-0 px-3 py-3 text-lg font-bold tracking-[-0.04em] transition-colors duration-75 sm:text-lg sm:tracking-[-0.03em] lg:text-xl",
                 isActive
                   ? "text-[#0038F1]"
                   : "text-slate-500 hover:text-slate-800",

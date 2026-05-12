@@ -71,8 +71,7 @@ export default function NoticePage() {
   const pageStart = (currentPage - 1) * PAGE_SIZE;
   const pageItems = regular.slice(pageStart, pageStart + PAGE_SIZE);
 
-  const tableRows: NoticeItem[] =
-    currentPage === 1 ? [...pinned, ...pageItems] : pageItems;
+  const tableRows: NoticeItem[] = [...pinned, ...pageItems];
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

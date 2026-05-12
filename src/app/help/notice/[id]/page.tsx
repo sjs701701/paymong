@@ -12,6 +12,12 @@ type NoticeDetailPageProps = {
   params: Promise<{ id: string }>;
 };
 
+export function generateStaticParams() {
+  return NOTICE_ITEMS.map((item) => ({
+    id: String(item.id),
+  }));
+}
+
 function renderBlock(block: NoticeContentBlock, index: number) {
   if (block.type === "image") {
     return (

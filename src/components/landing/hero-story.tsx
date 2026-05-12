@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, type CSSProperties, forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import gsap from "gsap";
 import Lottie from "lottie-react";
@@ -948,6 +949,7 @@ export function HeroStory({
   const [isFooterInView, setIsFooterInView] = useState(false);
   const [isCtaReturning, setIsCtaReturning] = useState(false);
   const [ctaWidth, setCtaWidth] = useState(0);
+  const [ctaPortalRoot, setCtaPortalRoot] = useState<HTMLElement | null>(null);
   const reducedMotion = useHydratedReducedMotion();
   const {
     width: viewportWidth,
@@ -956,6 +958,10 @@ export function HeroStory({
     isStackedVideoLayout,
   } = useViewport();
   useHeroLenisControl(heroScrollPhase);
+
+  useEffect(() => {
+    setCtaPortalRoot(document.body);
+  }, []);
 
   const writeCardStylesForProgress = useCallback((progress: number) => {
     const leftPanel = leftPanelRef.current;
@@ -1716,11 +1722,11 @@ export function HeroStory({
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          setIsFooterInView(entry.isIntersecting);
+          setIsFooterInView(entry.isIntersecting && entry.intersectionRatio >= 0.5);
         });
       },
       {
-        threshold: 0.2,
+        threshold: [0, 0.5],
       },
     );
 
@@ -1811,6 +1817,63 @@ export function HeroStory({
       : {}),
   } satisfies CSSProperties;
 
+  const ctaLayer = (
+    <div
+      ref={ctaShellRef}
+      className={`hero-cta-shell ${isCtaDocked ? "hero-cta-shell--docked" : ""} ${isCtaReturning ? "hero-cta-shell--returning" : ""}`}
+      style={ctaShellStyle}
+    >
+      <button
+        ref={ctaRef}
+        type="button"
+        className={`cta-btn ${isCtaDocked ? "cta-btn--docked" : ""} ${isCtaPreviewActive || (isCtaDocked && isFooterInView) ? "cta-btn--preview" : ""} ${isCtaReturning ? "cta-btn--returning" : ""}`}
+        aria-label={HERO_COPY.cta}
+        onClick={() => router.push("/login")}
+        onMouseEnter={() => {
+          if (isCtaDocked && !isFooterInView) setIsCtaPreviewActive(true);
+        }}
+        onMouseLeave={() => {
+          if (isCtaDocked && !isFooterInView) setIsCtaPreviewActive(false);
+        }}
+        onFocus={() => {
+          if (isCtaDocked && !isFooterInView) setIsCtaPreviewActive(true);
+        }}
+        onBlur={() => {
+          if (isCtaDocked && !isFooterInView) setIsCtaPreviewActive(false);
+        }}
+      >
+        <span className="bg-fill"></span>
+        <svg className="cta-btn__logo" viewBox="0 0 47 29" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <mask id="mask0_2016_717" style={{ maskType: "luminance" }} maskUnits="userSpaceOnUse" x="0" y="0" width="47" height="29">
+            <path d="M46.2638 0H0V28.8H46.2638V0Z" fill="white"/>
+          </mask>
+          <g mask="url(#mask0_2016_717)">
+            <path d="M23.1219 7.7976C23.1004 5.112 24.4942 2.5056 26.973 1.0656C30.6517 -1.0656 35.3722 0.201601 37.499 3.8808L45.2084 17.2296C47.3351 20.9088 46.0706 25.6248 42.3919 27.756C38.7132 29.8872 33.9927 28.62 31.866 24.9408L30.8026 23.0976L29.7608 24.912C28.6759 26.7912 26.9227 28.0368 24.9684 28.5336H24.9325C24.9325 28.5336 24.9038 28.5336 24.8966 28.5408C24.3577 28.6776 23.8045 28.7424 23.2584 28.7496H22.9351C22.389 28.7424 21.843 28.6632 21.2969 28.5408C21.2897 28.5408 21.2682 28.5408 21.261 28.5336H21.2251C19.278 28.044 17.5177 26.7912 16.4327 24.912L15.0029 22.4352L23.1578 7.7976H23.1363H23.1219Z" fill="url(#paint0_logo_cta2)"/>
+            <path d="M23.1219 7.7976C23.1004 5.112 24.4942 2.5056 26.973 1.0656C30.6517 -1.0656 35.3722 0.201601 37.499 3.8808L45.2084 17.2296C47.3351 20.9088 46.0706 25.6248 42.3919 27.756C38.7132 29.8872 33.9927 28.62 31.866 24.9408L30.8026 23.0976L29.7608 24.912C28.6759 26.7912 26.9227 28.0368 24.9684 28.5336H24.9325C24.9325 28.5336 24.9038 28.5336 24.8966 28.5408C24.3577 28.6776 23.8045 28.7424 23.2584 28.7496H22.9351C22.389 28.7424 21.843 28.6632 21.2969 28.5408C21.2897 28.5408 21.2682 28.5408 21.261 28.5336H21.2251C19.278 28.044 17.5177 26.7912 16.4327 24.912L15.0029 22.4352L23.1578 7.7976H23.1363H23.1219Z" fill="url(#paint1_logo_cta2)" fillOpacity="0.8"/>
+            <path d="M19.2705 1.07279C22.9492 3.20399 24.2137 7.91999 22.087 11.5992L14.3775 24.948C12.2508 28.6272 7.5303 29.8944 3.85161 27.7632C0.172922 25.6392 -1.08444 20.916 1.0423 17.2368L8.74455 3.89519C10.8713 0.201595 15.5846 -1.05121 19.2705 1.07279Z" fill="url(#paint2_logo_cta2)"/>
+          </g>
+          <defs>
+            <linearGradient id="paint0_logo_cta2" x1="21.8717" y1="10.2672" x2="47.7876" y2="31.2093" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#0038F1"/><stop offset="0.65" stopColor="#008FFC"/>
+            </linearGradient>
+            <linearGradient id="paint1_logo_cta2" x1="41.465" y1="29.952" x2="21.439" y2="8.56665" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#AE00FF"/><stop offset="1" stopColor="#AE00FF" stopOpacity="0"/>
+            </linearGradient>
+            <linearGradient id="paint2_logo_cta2" x1="19.2489" y1="1.0584" x2="3.83196" y2="27.7569" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#0038F1"/><stop offset="1" stopColor="#00ABFF"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <span className="text-box" aria-hidden={isCtaDocked}>
+          <span className="text-wrapper">
+            <span className="text-top">{HERO_COPY.cta}</span>
+            <span className="text-bottom">{HERO_COPY.cta}</span>
+          </span>
+        </span>
+      </button>
+    </div>
+  );
+
   return (
     <section ref={sectionRef} className="relative">
       <div className="sticky top-0 z-30 overflow-hidden" style={stableViewportStyle}>
@@ -1847,60 +1910,7 @@ export function HeroStory({
         </div>
       </div>
 
-      <div
-        ref={ctaShellRef}
-        className={`hero-cta-shell ${isCtaDocked ? "hero-cta-shell--docked" : ""} ${isCtaReturning ? "hero-cta-shell--returning" : ""}`}
-        style={ctaShellStyle}
-      >
-          <button
-            ref={ctaRef}
-              type="button"
-              className={`cta-btn ${isCtaDocked ? "cta-btn--docked" : ""} ${isCtaPreviewActive || (isCtaDocked && isFooterInView) ? "cta-btn--preview" : ""} ${isCtaReturning ? "cta-btn--returning" : ""}`}
-              aria-label={HERO_COPY.cta}
-              onClick={() => router.push("/login")}
-              onMouseEnter={() => {
-                if (isCtaDocked && !isFooterInView) setIsCtaPreviewActive(true);
-              }}
-              onMouseLeave={() => {
-                if (isCtaDocked && !isFooterInView) setIsCtaPreviewActive(false);
-              }}
-              onFocus={() => {
-                if (isCtaDocked && !isFooterInView) setIsCtaPreviewActive(true);
-              }}
-              onBlur={() => {
-                if (isCtaDocked && !isFooterInView) setIsCtaPreviewActive(false);
-              }}
-            >
-          <span className="bg-fill"></span>
-          <svg className="cta-btn__logo" viewBox="0 0 47 29" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <mask id="mask0_2016_717" style={{ maskType: "luminance" }} maskUnits="userSpaceOnUse" x="0" y="0" width="47" height="29">
-              <path d="M46.2638 0H0V28.8H46.2638V0Z" fill="white"/>
-            </mask>
-            <g mask="url(#mask0_2016_717)">
-              <path d="M23.1219 7.7976C23.1004 5.112 24.4942 2.5056 26.973 1.0656C30.6517 -1.0656 35.3722 0.201601 37.499 3.8808L45.2084 17.2296C47.3351 20.9088 46.0706 25.6248 42.3919 27.756C38.7132 29.8872 33.9927 28.62 31.866 24.9408L30.8026 23.0976L29.7608 24.912C28.6759 26.7912 26.9227 28.0368 24.9684 28.5336H24.9325C24.9325 28.5336 24.9038 28.5336 24.8966 28.5408C24.3577 28.6776 23.8045 28.7424 23.2584 28.7496H22.9351C22.389 28.7424 21.843 28.6632 21.2969 28.5408C21.2897 28.5408 21.2682 28.5408 21.261 28.5336H21.2251C19.278 28.044 17.5177 26.7912 16.4327 24.912L15.0029 22.4352L23.1578 7.7976H23.1363H23.1219Z" fill="url(#paint0_logo_cta2)"/>
-              <path d="M23.1219 7.7976C23.1004 5.112 24.4942 2.5056 26.973 1.0656C30.6517 -1.0656 35.3722 0.201601 37.499 3.8808L45.2084 17.2296C47.3351 20.9088 46.0706 25.6248 42.3919 27.756C38.7132 29.8872 33.9927 28.62 31.866 24.9408L30.8026 23.0976L29.7608 24.912C28.6759 26.7912 26.9227 28.0368 24.9684 28.5336H24.9325C24.9325 28.5336 24.9038 28.5336 24.8966 28.5408C24.3577 28.6776 23.8045 28.7424 23.2584 28.7496H22.9351C22.389 28.7424 21.843 28.6632 21.2969 28.5408C21.2897 28.5408 21.2682 28.5408 21.261 28.5336H21.2251C19.278 28.044 17.5177 26.7912 16.4327 24.912L15.0029 22.4352L23.1578 7.7976H23.1363H23.1219Z" fill="url(#paint1_logo_cta2)" fillOpacity="0.8"/>
-              <path d="M19.2705 1.07279C22.9492 3.20399 24.2137 7.91999 22.087 11.5992L14.3775 24.948C12.2508 28.6272 7.5303 29.8944 3.85161 27.7632C0.172922 25.6392 -1.08444 20.916 1.0423 17.2368L8.74455 3.89519C10.8713 0.201595 15.5846 -1.05121 19.2705 1.07279Z" fill="url(#paint2_logo_cta2)"/>
-            </g>
-            <defs>
-              <linearGradient id="paint0_logo_cta2" x1="21.8717" y1="10.2672" x2="47.7876" y2="31.2093" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#0038F1"/><stop offset="0.65" stopColor="#008FFC"/>
-              </linearGradient>
-              <linearGradient id="paint1_logo_cta2" x1="41.465" y1="29.952" x2="21.439" y2="8.56665" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#AE00FF"/><stop offset="1" stopColor="#AE00FF" stopOpacity="0"/>
-              </linearGradient>
-              <linearGradient id="paint2_logo_cta2" x1="19.2489" y1="1.0584" x2="3.83196" y2="27.7569" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#0038F1"/><stop offset="1" stopColor="#00ABFF"/>
-              </linearGradient>
-            </defs>
-          </svg>
-          <span className="text-box" aria-hidden={isCtaDocked}>
-            <span className="text-wrapper">
-              <span className="text-top">{HERO_COPY.cta}</span>
-              <span className="text-bottom">{HERO_COPY.cta}</span>
-            </span>
-          </span>
-        </button>
-      </div>
+      {ctaPortalRoot ? createPortal(ctaLayer, ctaPortalRoot) : ctaLayer}
 
       <section
         ref={nextSectionRef}

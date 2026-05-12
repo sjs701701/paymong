@@ -42,7 +42,6 @@ function EventStatusBadge({ status }: { status: EventItem["status"] }) {
 export default function EventPage() {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [isEndedDialogOpen, setIsEndedDialogOpen] = useState(false);
-  const [endedEventTitle, setEndedEventTitle] = useState("");
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const visibleEvents = useMemo(
@@ -120,7 +119,6 @@ export default function EventPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setEndedEventTitle(event.title);
                     setIsEndedDialogOpen(true);
                   }}
                   className="group block w-full overflow-hidden rounded-2xl border border-slate-200 bg-white text-left opacity-85 transition duration-150 hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00abff]"
@@ -160,9 +158,6 @@ export default function EventPage() {
               선택하신 이벤트는 종료되어 상세 내용을 확인할 수 없습니다.
             </DialogDescription>
           </DialogHeader>
-          <p className="min-h-11 rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
-            {endedEventTitle}
-          </p>
           <DialogFooter>
             <Button
               type="button"

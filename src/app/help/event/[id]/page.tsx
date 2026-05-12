@@ -16,6 +16,12 @@ type EventDetailPageProps = {
   params: Promise<{ id: string }>;
 };
 
+export function generateStaticParams() {
+  return EVENT_ITEMS.map((item) => ({
+    id: String(item.id),
+  }));
+}
+
 function EventStatusBadge({
   status,
 }: {

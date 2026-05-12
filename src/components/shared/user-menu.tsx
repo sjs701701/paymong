@@ -251,6 +251,11 @@ function UserMenuInner({
   useEffect(() => {
     if (!isOpen) return;
 
+    const originalOverflow = document.body.style.overflow;
+    const originalOverscrollBehavior = document.body.style.overscrollBehavior;
+    document.body.style.overflow = "hidden";
+    document.body.style.overscrollBehavior = "none";
+
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
       if (
@@ -270,6 +275,8 @@ function UserMenuInner({
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.overscrollBehavior = originalOverscrollBehavior;
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
@@ -384,14 +391,14 @@ function UserMenuInner({
                   type="button"
                   aria-label="메뉴 닫기"
                   onClick={() => closeMenu()}
-                  className="fixed inset-0 z-[90] hidden cursor-default bg-slate-950/10 min-[920px]:block"
+                  className="fixed inset-0 isolate z-[90] hidden cursor-default bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs min-[920px]:block"
                 />
                 <div
                   ref={menuPanelRef}
                   role="menu"
                   data-lenis-prevent
                   className={cn(
-                    "fixed inset-0 z-[100] flex h-[100dvh] flex-col overflow-hidden bg-white duration-200 ease-out min-[920px]:inset-auto min-[920px]:right-5 min-[920px]:top-20 min-[920px]:h-auto min-[920px]:w-[min(calc(100vw-2rem),22rem)] min-[920px]:rounded-[1.75rem] min-[920px]:border min-[920px]:border-slate-200 min-[920px]:shadow-[0_24px_70px_rgba(15,23,42,0.18)]",
+                    "fixed inset-0 z-[100] flex h-[100dvh] flex-col overflow-hidden bg-white duration-200 ease-out min-[920px]:inset-auto min-[920px]:right-5 min-[920px]:top-20 min-[920px]:h-auto min-[920px]:w-[min(calc(100vw-2rem),22rem)] min-[920px]:rounded-[1.75rem] min-[920px]:border min-[920px]:border-slate-200 min-[920px]:bg-white/90 min-[920px]:shadow-[0_24px_70px_rgba(15,23,42,0.18)] min-[920px]:backdrop-blur-sm",
                     isExiting
                       ? "animate-out slide-out-to-right fill-mode-forwards min-[920px]:fade-out-0 min-[920px]:slide-out-to-right-0 min-[920px]:slide-out-to-top-2"
                       : "animate-in slide-in-from-right min-[920px]:fade-in-0 min-[920px]:slide-in-from-right-0 min-[920px]:slide-in-from-top-2",

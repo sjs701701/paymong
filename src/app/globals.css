@@ -825,11 +825,11 @@ button {
   backface-visibility: hidden;
   will-change: transform, width, opacity;
   transition:
-    width 0.5s cubic-bezier(.165, .84, .44, 1),
-    padding 1.48s cubic-bezier(.165, .84, .44, 1),
-    gap 1.48s cubic-bezier(.165, .84, .44, 1),
-    border-radius 1.48s cubic-bezier(.165, .84, .44, 1),
-    box-shadow 1.48s cubic-bezier(.165, .84, .44, 1),
+    width 0.7s cubic-bezier(0.25, 1, 0.5, 1),
+    padding 0.7s cubic-bezier(0.25, 1, 0.5, 1),
+    gap 0.7s cubic-bezier(0.25, 1, 0.5, 1),
+    border-radius 0.7s cubic-bezier(0.25, 1, 0.5, 1),
+    box-shadow 0.7s cubic-bezier(0.25, 1, 0.5, 1),
     transform 0.2s ease;
 }
 
@@ -863,15 +863,15 @@ button {
   transform-origin: left center;
   will-change: max-width, opacity;
   transition:
-    max-width 1.18s cubic-bezier(0.22, 1, 0.36, 1),
-    margin 1.08s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.62s ease;
+    max-width 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+    margin 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+    opacity 0.35s ease;
 }
 
 .text-wrapper {
   display: grid;
   will-change: transform, opacity;
-  transition: transform 1.08s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.62s ease;
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.35s ease;
 }
 
 @keyframes cta-return-text-rise {
@@ -955,7 +955,10 @@ button {
   display: flex;
   justify-content: center;
   top: var(--cta-shell-top);
-  z-index: 35;
+  /* Keep the docked CTA above downstream sections so the compact button
+     remains visible until the footer state expands it again. */
+  z-index: 9999;
+  isolation: isolate;
   pointer-events: none;
   transform: translate3d(0, calc(-50% + var(--cta-shell-shift, 0px)), 0);
   will-change: transform;
@@ -967,7 +970,7 @@ button {
 }
 
 .hero-cta-shell--docked {
-  transition-delay: 0.74s;
+  transition-delay: 0s;
 }
 
 .hero-cta-shell--returning {
@@ -982,7 +985,7 @@ button {
   box-shadow:
     0 20px 44px rgba(10, 15, 30, 0.18),
     0 8px 18px rgba(10, 15, 30, 0.1);
-  transition-delay: 0.74s, 0.74s, 0.74s, 0.74s, 0.74s, 0s;
+  transition-delay: 0s, 0s, 0s, 0s, 0s, 0s;
 }
 
 .cta-btn--docked .text-box {
@@ -2054,81 +2057,6 @@ button {
     background-image: none !important;
   }
 
-  /* Mobile CTA: behaves as part of section 1's content — stays at the
-     same viewport position (position: fixed) without docking/width changes,
-     and gets covered by section 2 (z-40) as it rises up because the CTA
-     sits at z-index 35, between section-1 sticky (z-30) and section-2.
-     `!important` is required because JS keeps toggling
-     .cta-btn--docked/--returning/--preview and we want zero visual reaction
-     on mobile. */
-  .hero-cta-shell,
-  .hero-cta-shell--docked,
-  .hero-cta-shell--returning {
-    position: fixed !important;
-    transform: translate3d(0, -50%, 0) !important;
-    transition: none !important;
-    transition-delay: 0s !important;
-    z-index: 35 !important;
-  }
-
-  .cta-btn,
-  .cta-btn--docked,
-  .cta-btn--returning,
-  .cta-btn--preview {
-    width: var(--cta-expanded-width, auto) !important;
-    gap: 0.625rem !important;
-    padding: 13px 52px !important;
-    border-radius: 9999px !important;
-    box-shadow:
-      0 10px 25px -5px rgba(0, 0, 0, 0.1),
-      0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
-    transition: none !important;
-    transition-delay: 0s !important;
-  }
-
-  .cta-btn .text-box,
-  .cta-btn--docked .text-box,
-  .cta-btn--returning .text-box,
-  .cta-btn--preview .text-box {
-    max-width: 13rem !important;
-    margin: 0 !important;
-    opacity: 1 !important;
-    transition: none !important;
-  }
-
-  .cta-btn .text-wrapper,
-  .cta-btn--docked .text-wrapper,
-  .cta-btn--returning .text-wrapper {
-    transform: translateY(0) !important;
-    opacity: 1 !important;
-    transition: none !important;
-    animation: none !important;
-  }
-
-  .cta-btn .text-top,
-  .cta-btn--docked .text-top,
-  .cta-btn--returning .text-top,
-  .cta-btn--preview .text-top {
-    color: var(--text-initial) !important;
-    transform: translateY(0) !important;
-    opacity: 1 !important;
-  }
-
-  .cta-btn .text-bottom,
-  .cta-btn--docked .text-bottom,
-  .cta-btn--returning .text-bottom,
-  .cta-btn--preview .text-bottom {
-    transform: translateY(120%) !important;
-    opacity: 0 !important;
-  }
-
-  .cta-btn .bg-fill,
-  .cta-btn--docked .bg-fill,
-  .cta-btn--returning .bg-fill,
-  .cta-btn--preview .bg-fill {
-    transform: translateY(100%) !important;
-    transition: none !important;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
