@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronRight,
+  CircleHelp,
   FileImage,
   FileText,
   Info,
@@ -116,6 +117,11 @@ type DocumentGuide = {
   description: string;
 };
 
+type StepGuide = {
+  title: string;
+  description: string;
+};
+
 const DOCUMENT_GUIDES: DocumentGuide[] = [
   {
     type: "월세",
@@ -167,6 +173,37 @@ const DOCUMENT_GUIDES: DocumentGuide[] = [
     description: "단, 추가 확인이 필요할 경우 추가자료를 요청할 수 있습니다.",
   },
 ];
+
+const STEP_GUIDES: Record<
+  "contractType" | "coreInfo" | "account" | "transfer" | "attachments",
+  StepGuide
+> = {
+  contractType: {
+    title: "계약 유형 안내",
+    description:
+      "등록하려는 거래의 성격에 맞는 계약 유형을 선택해주세요. 선택한 유형에 따라 다음 단계의 입력 항목과 필요한 첨부서류 안내가 달라집니다.",
+  },
+  coreInfo: {
+    title: "계약 핵심 정보 안내",
+    description:
+      "월세 계약은 실제 계약 주소와 상세주소를 입력합니다. 월세 외 계약은 리스트와 상세 화면에서 구분할 수 있도록 계약명을 입력합니다.",
+  },
+  account: {
+    title: "계좌정보 안내",
+    description:
+      "송금을 받을 거래 상대방의 은행과 계좌번호를 입력하고 계좌인증을 완료해주세요. 이전 송금 이력이 있다면 계좌 불러오기로 빠르게 입력할 수 있습니다.",
+  },
+  transfer: {
+    title: "송금 정보 안내",
+    description:
+      "실제 송금 시 표시될 송금자명과 송금할 금액을 입력합니다. 월세 계약은 월세 입력으로, 그 외 계약은 송금액 입력으로 표시됩니다.",
+  },
+  attachments: {
+    title: "첨부 파일 안내",
+    description:
+      "계약 확인에 필요한 계약서, 고지서, 영수증, 견적서 등의 서류를 첨부해주세요. 계약 유형별 필요 서류는 첨부서류 안내에서 확인할 수 있습니다.",
+  },
+};
 
 type SavedAccount = {
   id: number;
@@ -331,6 +368,7 @@ type SectionHeaderProps = {
   isActive: boolean;
   isLocked?: boolean;
   hint?: string;
+  onGuideClick?: () => void;
 };
 
 function SectionHeader({
@@ -340,6 +378,7 @@ function SectionHeader({
   isActive,
   isLocked = false,
   hint,
+  onGuideClick,
 }: SectionHeaderProps) {
   return (
     <div className="mb-6 flex items-start gap-4">
@@ -359,14 +398,31 @@ function SectionHeader({
         {isComplete ? <Check className="h-5 w-5" /> : number}
       </div>
       <div className="min-w-0 pt-1">
-        <h2
-          className={cn(
-            "text-lg font-semibold tracking-[-0.03em] sm:text-xl",
-            isLocked ? "text-slate-400" : "text-slate-950",
-          )}
-        >
-          {title}
-        </h2>
+        <div className="flex min-w-0 items-center gap-1.5">
+          <h2
+            className={cn(
+              "min-w-0 text-lg font-semibold tracking-[-0.03em] sm:text-xl",
+              isLocked ? "text-slate-400" : "text-slate-950",
+            )}
+          >
+            {title}
+          </h2>
+          {onGuideClick ? (
+            <button
+              type="button"
+              onClick={onGuideClick}
+              aria-label={`${title} 안내 보기`}
+              className={cn(
+                "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0038F1]/30",
+                isLocked
+                  ? "bg-slate-100 text-slate-400 hover:bg-slate-200"
+                  : "bg-[#0038F1]/10 text-[#0038F1] hover:bg-[#0038F1]/15",
+              )}
+            >
+              <CircleHelp className="h-3.5 w-3.5" />
+            </button>
+          ) : null}
+        </div>
         {hint ? (
           <p
             className={cn(
@@ -537,6 +593,9 @@ export function ContractRegistrationScreen() {
   const [isBankMenuOpen, setIsBankMenuOpen] = useState(false);
   const [isSavedAccountsOpen, setIsSavedAccountsOpen] = useState(false);
   const [isDocumentGuideOpen, setIsDocumentGuideOpen] = useState(false);
+  const [activeStepGuide, setActiveStepGuide] = useState<StepGuide | null>(
+    null,
+  );
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
   const [isHeaderHidden, setIsHeaderHidden] = useState(false);
@@ -854,6 +913,9 @@ export function ContractRegistrationScreen() {
                     hint="계약 유형에 따라 입력 필드가 달라져요."
                     isComplete={effectiveComplete[0]}
                     isActive={activeSectionIndex === 0}
+                    onGuideClick={() =>
+                      setActiveStepGuide(STEP_GUIDES.contractType)
+                    }
                   />
                   <div className="flex flex-wrap gap-2.5">
                     {CONTRACT_TYPES.map((type) => {
@@ -891,6 +953,9 @@ export function ContractRegistrationScreen() {
                     isComplete={effectiveComplete[1]}
                     isActive={activeSectionIndex === 1}
                     isLocked={!sectionUnlocked[1]}
+                    onGuideClick={() =>
+                      setActiveStepGuide(STEP_GUIDES.coreInfo)
+                    }
                   />
 
                   {sectionUnlocked[1] ? (
@@ -999,6 +1064,9 @@ export function ContractRegistrationScreen() {
                     isComplete={effectiveComplete[2]}
                     isActive={activeSectionIndex === 2}
                     isLocked={!sectionUnlocked[2]}
+                    onGuideClick={() =>
+                      setActiveStepGuide(STEP_GUIDES.account)
+                    }
                   />
 
                   {sectionUnlocked[2] ? (
@@ -1199,6 +1267,9 @@ export function ContractRegistrationScreen() {
                     isComplete={effectiveComplete[3]}
                     isActive={activeSectionIndex === 3}
                     isLocked={!sectionUnlocked[3]}
+                    onGuideClick={() =>
+                      setActiveStepGuide(STEP_GUIDES.transfer)
+                    }
                   />
 
                   {sectionUnlocked[3] ? (
@@ -1285,6 +1356,9 @@ export function ContractRegistrationScreen() {
                     isComplete={effectiveComplete[4]}
                     isActive={activeSectionIndex === 4}
                     isLocked={!sectionUnlocked[4]}
+                    onGuideClick={() =>
+                      setActiveStepGuide(STEP_GUIDES.attachments)
+                    }
                   />
 
                   {sectionUnlocked[4] ? (
@@ -1444,6 +1518,36 @@ export function ContractRegistrationScreen() {
           </div>
         </div>
       </div>
+
+      <Dialog
+        open={activeStepGuide != null}
+        onOpenChange={(open) => {
+          if (!open) setActiveStepGuide(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <div className="mb-1 flex h-10 w-10 items-center justify-center rounded-full bg-[#0038F1]/10 text-[#0038F1]">
+              <CircleHelp size={18} />
+            </div>
+            <DialogTitle className="text-base font-bold text-slate-900">
+              {activeStepGuide?.title ?? "단계 안내"}
+            </DialogTitle>
+            <DialogDescription className="leading-6">
+              {activeStepGuide?.description}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-row sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={() => setActiveStepGuide(null)}
+              className="inline-flex w-full items-center justify-center rounded-xl bg-[#0038F1] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#002fd0]"
+            >
+              확인
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
         <DialogContent className="sm:max-w-[520px]">

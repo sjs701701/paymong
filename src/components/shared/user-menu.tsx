@@ -16,6 +16,7 @@ import {
   ChevronRight,
   CircleHelp,
   ClipboardList,
+  CreditCard,
   Download,
   FilePlus,
   Gift,
@@ -87,6 +88,7 @@ type UserMenuItemKey =
   | "faq"
   | "notice"
   | "event"
+  | "installment-info"
   | "magazine"
   | "guide"
   | "review"
@@ -119,6 +121,7 @@ const USER_MENU_SECTIONS: Array<{
       { key: "faq", label: "자주하는 질문", icon: CircleHelp },
       { key: "notice", label: "공지사항", icon: Megaphone },
       { key: "event", label: "이벤트", icon: Gift },
+      { key: "installment-info", label: "할부정보", icon: CreditCard },
       { key: "magazine", label: "페이몽 매거진", icon: Newspaper },
       { key: "guide", label: "이용가이드", icon: BookOpen },
       { key: "review", label: "이용후기", icon: MessageCircle },
@@ -138,6 +141,7 @@ const ACCESSIBLE_WITHOUT_AUTH: ReadonlySet<UserMenuItemKey> = new Set([
   "faq",
   "notice",
   "event",
+  "installment-info",
   "magazine",
   "guide",
   "review",

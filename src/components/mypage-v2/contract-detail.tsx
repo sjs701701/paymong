@@ -1,6 +1,7 @@
 "use client";
 
-import { Ban, ReceiptText, Wallet } from "lucide-react";
+import { useState } from "react";
+import { Ban, CircleHelp, ReceiptText, Wallet } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,14 @@ import { BackButton } from "@/components/shared/back-button";
 import { UserMenu } from "@/components/shared/user-menu";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { CustomScrollArea } from "@/components/ui/custom-scroll-area";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +46,7 @@ export function ContractDetailView({
   onPay,
   onOpenUsage,
 }: ContractDetailViewProps) {
+  const [isLimitInfoOpen, setIsLimitInfoOpen] = useState(false);
   const remaining = Math.max(detail.monthlyLimit - detail.usedThisMonth, 0);
   const isLimitClosed = remaining <= 0;
   const isMonthlyRentContract = contract.type.includes("월세");
@@ -100,14 +110,27 @@ export function ContractDetailView({
               남은 한도
             </span>
           </span>
-          <span
-            className={cn(
-              "rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-medium text-white/85 ring-1 ring-white/15 lg:px-2.5 lg:py-1 lg:text-[11px]",
-              isLimitClosed && "bg-white/10 text-white/90",
-              isLimitWarning && "bg-amber-300/15 text-amber-100 ring-amber-200/20",
-            )}
-          >
-            {limitBadgeText}
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              className={cn(
+                "rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-medium text-white/85 ring-1 ring-white/15 lg:px-2.5 lg:py-1 lg:text-[11px]",
+                isLimitClosed && "bg-white/10 text-white/90",
+                isLimitWarning &&
+                  "bg-amber-300/15 text-amber-100 ring-amber-200/20",
+              )}
+            >
+              {limitBadgeText}
+            </span>
+            {isLimitClosed ? (
+              <button
+                type="button"
+                aria-label="한도마감 안내 보기"
+                onClick={() => setIsLimitInfoOpen(true)}
+                className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-white/85 ring-1 ring-white/15 transition hover:bg-white/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 lg:h-7 lg:w-7"
+              >
+                <CircleHelp className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
+              </button>
+            ) : null}
           </span>
         </div>
       </CardHeader>
@@ -183,7 +206,8 @@ export function ContractDetailView({
   );
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <>
+      <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:px-6 lg:py-3">
         <BackButton
           variant="ghost"
@@ -302,6 +326,39 @@ export function ContractDetailView({
           {isLimitClosed ? "한도마감" : "결제하기"}
         </Button>
       </div>
-    </div>
+      </div>
+
+      <Dialog open={isLimitInfoOpen} onOpenChange={setIsLimitInfoOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <div className="mb-1 flex h-10 w-10 items-center justify-center rounded-full bg-[#0038F1]/10 text-[#0038F1]">
+              <CircleHelp size={18} />
+            </div>
+            <DialogTitle className="text-base font-bold text-slate-900">
+              한도마감 안내
+            </DialogTitle>
+            <DialogDescription>
+              한도마감은 해당 계약의 결제 가능 한도를 모두 사용해 남은 한도가
+              0원인 상태입니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm leading-6 text-slate-700">
+            {isMonthlyRentContract
+              ? "월세 계약은 매달 1일 한도가 초기화됩니다. 초기화 이후에는 다시 결제를 진행할 수 있습니다."
+              : "초기화되지 않는 계약은 추가 결제를 위해 새 계약 등록 또는 고객센터 확인이 필요할 수 있습니다."}
+          </div>
+          <DialogFooter className="flex-row sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              size="lg"
+              onClick={() => setIsLimitInfoOpen(false)}
+              className="h-auto w-full rounded-xl bg-[#0038F1] px-5 py-3 text-sm font-semibold text-white hover:bg-[#002fd0]"
+            >
+              확인
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
