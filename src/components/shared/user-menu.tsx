@@ -230,6 +230,7 @@ function UserMenuInner({
     pathname === "/help/notice" || pathname.startsWith("/help/notice/");
   const isOnEvent =
     pathname === "/help/event" || pathname.startsWith("/help/event/");
+  const isOnTax = pathname === "/tax";
 
   const closeMenu = useCallback(
     (onAfterClose?: () => void) => {
@@ -310,6 +311,12 @@ function UserMenuInner({
       if (item.key === "mileage") {
         if (!isOnShopRoot) {
           router.push("/shop");
+        }
+        return;
+      }
+      if (item.key === "tax") {
+        if (!isOnTax) {
+          router.push("/tax");
         }
         return;
       }
@@ -479,6 +486,7 @@ function UserMenuInner({
                                   (item.key === "contract-register" &&
                                     isOnContractRegister) ||
                                   (item.key === "mileage" && isOnShop) ||
+                                  (item.key === "tax" && isOnTax) ||
                                   (item.key === "faq" && isOnFaq) ||
                                   (item.key === "notice" && isOnNotice) ||
                                   (item.key === "event" && isOnEvent);
