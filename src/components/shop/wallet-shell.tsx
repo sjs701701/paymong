@@ -31,6 +31,7 @@ type MileageHistoryItem = {
   description: string;
   amount: number;
   balance: number;
+  expiresAt?: string;
 };
 
 const WALLET_TABS: Array<{
@@ -78,6 +79,7 @@ const MILEAGE_HISTORY: MileageHistoryItem[] = [
     description: "판교 푸르지오 그랑블 101동 1502호",
     amount: 12000,
     balance: 147300,
+    expiresAt: "2027.05.08",
   },
   {
     id: "m3",
@@ -87,6 +89,7 @@ const MILEAGE_HISTORY: MileageHistoryItem[] = [
     description: "5월 월세 자동결제 예약 이벤트",
     amount: 3000,
     balance: 135300,
+    expiresAt: "2027.05.03",
   },
   {
     id: "m4",
@@ -443,6 +446,11 @@ function MileageHistory() {
                   <p className="mt-0.5 text-xs leading-5 text-slate-500">
                     {item.description}
                   </p>
+                  {item.expiresAt ? (
+                    <p className="mt-1 text-[11px] font-medium leading-4 text-slate-400 sm:text-xs">
+                      소멸 예정일 {item.expiresAt}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="shrink-0 text-right">
                   <p

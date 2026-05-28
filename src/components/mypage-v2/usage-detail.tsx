@@ -173,6 +173,28 @@ export function UsageDetailView({
           <div className="space-y-4 px-4 pt-4 pb-24 sm:px-6 sm:pt-5 sm:pb-24">
             {receipt ? (
               <>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    onClick={() => setIsCertOpen(true)}
+                    className="h-auto w-full gap-2 rounded-xl border-slate-200 bg-white py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    <FileCheck2 size={16} />
+                    이체확인증
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    className="h-auto w-full gap-2 rounded-xl border-slate-200 bg-white py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    <Download size={16} />
+                    PDF 다운
+                  </Button>
+                </div>
+
                 <ReceiptCard title="카드결제정보">
                 <ReceiptRow label="카드사" value={receipt.cardPayment.company} />
                 <ReceiptRow
@@ -265,28 +287,6 @@ export function UsageDetailView({
                     value={receipt.merchant.address}
                   />
                 </ReceiptCard>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    onClick={() => setIsCertOpen(true)}
-                    className="h-auto w-full gap-2 rounded-xl border-slate-200 bg-white py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                  >
-                    <FileCheck2 size={16} />
-                    이체확인증
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    className="h-auto w-full gap-2 rounded-xl border-slate-200 bg-white py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                  >
-                    <Download size={16} />
-                    PDF 다운
-                  </Button>
-                </div>
               </>
             ) : (
               <StatusFallbackCard usage={usage} />

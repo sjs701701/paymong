@@ -23,6 +23,7 @@ import {
   Info,
   Lock,
   Search,
+  Star,
   Upload,
   Wallet,
   X,
@@ -186,7 +187,7 @@ const STEP_GUIDES: Record<
   coreInfo: {
     title: "계약 핵심 정보 안내",
     description:
-      "월세 계약은 실제 계약 주소와 상세주소를 입력합니다. 월세 외 계약은 리스트와 상세 화면에서 구분할 수 있도록 계약명을 입력합니다.",
+      "리스트와 상세 화면에서 구분할 수 있도록 계약명을 입력합니다. 계약 유형에 맞는 이름을 입력해주세요.",
   },
   account: {
     title: "계좌정보 안내",
@@ -241,6 +242,34 @@ const SAVED_ACCOUNTS: SavedAccount[] = [
     accountNumber: "333322221111",
     holder: "디자인 스튜디오",
     lastPaidAt: "2025-12-30",
+  },
+  {
+    id: 5,
+    bank: "우리은행",
+    accountNumber: "1002123456789",
+    holder: "홍임대",
+    lastPaidAt: "2025-11-14",
+  },
+  {
+    id: 6,
+    bank: "하나은행",
+    accountNumber: "21891004432109",
+    holder: "에이블컴퍼니",
+    lastPaidAt: "2025-10-03",
+  },
+  {
+    id: 7,
+    bank: "농협은행",
+    accountNumber: "3021234567891",
+    holder: "최관리",
+    lastPaidAt: "2025-09-21",
+  },
+  {
+    id: 8,
+    bank: "기업은행",
+    accountNumber: "01098765432100",
+    holder: "정산파트너스",
+    lastPaidAt: "2025-08-12",
   },
 ];
 
@@ -468,13 +497,7 @@ function SummaryPanel({
   completedSectionCount,
   isFormComplete,
 }: SummaryPanelProps) {
-  const coreInfoValue = (() => {
-    if (form.contractType === "월세") {
-      const combined = [form.address, form.addressDetail].filter(Boolean).join(" ");
-      return combined || "미입력";
-    }
-    return form.contractName || "미입력";
-  })();
+  const coreInfoValue = form.contractName || "미입력";
 
   const accountValue =
     form.bank && form.accountNumber
@@ -592,6 +615,7 @@ export function ContractRegistrationScreen() {
   const [bankQuery, setBankQuery] = useState("");
   const [isBankMenuOpen, setIsBankMenuOpen] = useState(false);
   const [isSavedAccountsOpen, setIsSavedAccountsOpen] = useState(false);
+  const [favoriteAccountIds, setFavoriteAccountIds] = useState<number[]>([]);
   const [isDocumentGuideOpen, setIsDocumentGuideOpen] = useState(false);
   const [activeStepGuide, setActiveStepGuide] = useState<StepGuide | null>(
     null,
@@ -622,6 +646,25 @@ export function ContractRegistrationScreen() {
       ),
     [normalizedBankQuery],
   );
+  const sortedSavedAccounts = useMemo(() => {
+    const favoriteOrder = new Map(
+      favoriteAccountIds.map((id, index) => [id, index]),
+    );
+
+    return [...SAVED_ACCOUNTS].sort((a, b) => {
+      const aFavoriteIndex = favoriteOrder.get(a.id);
+      const bFavoriteIndex = favoriteOrder.get(b.id);
+      const aFavorite = aFavoriteIndex != null;
+      const bFavorite = bFavoriteIndex != null;
+
+      if (aFavorite && bFavorite) {
+        return aFavoriteIndex - bFavoriteIndex;
+      }
+      if (aFavorite) return -1;
+      if (bFavorite) return 1;
+      return 0;
+    });
+  }, [favoriteAccountIds]);
 
   useEffect(() => {
     if (!isBankMenuOpen) return;
@@ -679,10 +722,7 @@ export function ContractRegistrationScreen() {
 
   const isContractTypeComplete = Boolean(form.contractType);
   const isCoreInfoComplete = Boolean(
-    form.contractType &&
-      (isRentContract
-        ? form.address.trim() && form.addressDetail.trim()
-        : form.contractName.trim()),
+    form.contractType && form.contractName.trim(),
   );
   const isAccountComplete = Boolean(
     form.bank && isAccountNumberValid && form.isAccountVerified,
@@ -719,16 +759,8 @@ export function ContractRegistrationScreen() {
     Boolean(form.bank) &&
     form.accountNumber.length > 0;
 
-  const addressError =
-    isRentContract && !form.address.trim() ? "주소를 입력해주세요." : null;
-  const addressDetailError =
-    isRentContract && !form.addressDetail.trim()
-      ? "상세주소를 입력해주세요."
-      : null;
   const contractNameError =
-    !isRentContract &&
-    form.contractType != null &&
-    !form.contractName.trim()
+    form.contractType != null && !form.contractName.trim()
       ? "계약명을 입력해주세요."
       : null;
   const bankError = !form.bank ? "은행을 선택해주세요." : null;
@@ -768,6 +800,14 @@ export function ContractRegistrationScreen() {
 
   const handleContractTypeSelect = (contractType: ContractType) => {
     updateForm({ contractType });
+  };
+
+  const handleFavoriteAccountToggle = (accountId: number) => {
+    setFavoriteAccountIds((current) =>
+      current.includes(accountId)
+        ? current.filter((id) => id !== accountId)
+        : [...current, accountId],
+    );
   };
 
   const handleAccountNumberChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -959,96 +999,38 @@ export function ContractRegistrationScreen() {
                   />
 
                   {sectionUnlocked[1] ? (
-                    isRentContract ? (
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <label className="block">
-                          <span className="mb-2 block text-sm font-medium text-slate-600">
-                            주소
-                          </span>
-                          <input
-                            type="text"
-                            value={form.address}
-                            onChange={(event) =>
-                              updateForm({ address: event.target.value })
-                            }
-                            onBlur={() =>
-                              setTouched((prev) => ({ ...prev, address: true }))
-                            }
-                            placeholder="예: 서울특별시 강남구 테헤란로 123"
-                            className={cn(
-                              "block w-full rounded-2xl border bg-[#fbfcff] px-4 py-3.5 text-slate-900 outline-none transition focus:bg-white focus:ring-4",
-                              showError("address", addressError)
-                                ? "border-rose-300 focus:border-rose-400 focus:ring-rose-200/40"
-                                : "border-slate-200 focus:border-[#0038F1] focus:ring-[#0038F1]/10",
-                            )}
-                          />
-                          {showError("address", addressError) ? (
-                            <FieldError message={addressError!} />
-                          ) : null}
-                        </label>
-                        <label className="block">
-                          <span className="mb-2 block text-sm font-medium text-slate-600">
-                            상세주소
-                          </span>
-                          <input
-                            type="text"
-                            value={form.addressDetail}
-                            onChange={(event) =>
-                              updateForm({ addressDetail: event.target.value })
-                            }
-                            onBlur={() =>
-                              setTouched((prev) => ({
-                                ...prev,
-                                addressDetail: true,
-                              }))
-                            }
-                            placeholder="예: 502호"
-                            className={cn(
-                              "block w-full rounded-2xl border bg-[#fbfcff] px-4 py-3.5 text-slate-900 outline-none transition focus:bg-white focus:ring-4",
-                              showError("addressDetail", addressDetailError)
-                                ? "border-rose-300 focus:border-rose-400 focus:ring-rose-200/40"
-                                : "border-slate-200 focus:border-[#0038F1] focus:ring-[#0038F1]/10",
-                            )}
-                          />
-                          {showError("addressDetail", addressDetailError) ? (
-                            <FieldError message={addressDetailError!} />
-                          ) : null}
-                        </label>
-                      </div>
-                    ) : (
-                      <label className="block">
-                        <span className="mb-2 block text-sm font-medium text-slate-600">
-                          계약명
-                        </span>
-                        <input
-                          type="text"
-                          value={form.contractName}
-                          onChange={(event) =>
-                            updateForm({ contractName: event.target.value })
-                          }
-                          onBlur={() =>
-                            setTouched((prev) => ({
-                              ...prev,
-                              contractName: true,
-                            }))
-                          }
-                          placeholder={
-                            form.contractType
-                              ? CONTRACT_NAME_PLACEHOLDERS[form.contractType]
-                              : "계약명을 입력해주세요"
-                          }
-                          className={cn(
-                            "block w-full rounded-2xl border bg-[#fbfcff] px-4 py-3.5 text-slate-900 outline-none transition focus:bg-white focus:ring-4",
-                            showError("contractName", contractNameError)
-                              ? "border-rose-300 focus:border-rose-400 focus:ring-rose-200/40"
-                              : "border-slate-200 focus:border-[#0038F1] focus:ring-[#0038F1]/10",
-                          )}
-                        />
-                        {showError("contractName", contractNameError) ? (
-                          <FieldError message={contractNameError!} />
-                        ) : null}
-                      </label>
-                    )
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-medium text-slate-600">
+                        계약명
+                      </span>
+                      <input
+                        type="text"
+                        value={form.contractName}
+                        onChange={(event) =>
+                          updateForm({ contractName: event.target.value })
+                        }
+                        onBlur={() =>
+                          setTouched((prev) => ({
+                            ...prev,
+                            contractName: true,
+                          }))
+                        }
+                        placeholder={
+                          form.contractType
+                            ? CONTRACT_NAME_PLACEHOLDERS[form.contractType]
+                            : "계약명을 입력해주세요"
+                        }
+                        className={cn(
+                          "block w-full rounded-2xl border bg-[#fbfcff] px-4 py-3.5 text-slate-900 outline-none transition focus:bg-white focus:ring-4",
+                          showError("contractName", contractNameError)
+                            ? "border-rose-300 focus:border-rose-400 focus:ring-rose-200/40"
+                            : "border-slate-200 focus:border-[#0038F1] focus:ring-[#0038F1]/10",
+                        )}
+                      />
+                      {showError("contractName", contractNameError) ? (
+                        <FieldError message={contractNameError!} />
+                      ) : null}
+                    </label>
                   ) : (
                     <LockedPlaceholder />
                   )}
@@ -1153,7 +1135,10 @@ export function ContractRegistrationScreen() {
                                       }}
                                       className="flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                                     >
-                                      {bank}
+                                      <span className="flex min-w-0 items-center gap-3">
+                                        <span className="h-8 w-8 shrink-0 rounded-full bg-slate-200" />
+                                        <span className="truncate">{bank}</span>
+                                      </span>
                                       {form.bank === bank ? (
                                         <CheckCircle2 className="h-4 w-4 text-[#0038F1]" />
                                       ) : null}
@@ -1470,7 +1455,10 @@ export function ContractRegistrationScreen() {
                 </section>
               </div>
 
-              <aside className="hidden min-[920px]:sticky min-[920px]:top-6 min-[920px]:block min-[920px]:self-start">
+              <aside
+                className="hidden min-[920px]:sticky min-[920px]:block min-[920px]:self-start min-[920px]:transition-[top] min-[920px]:duration-300"
+                style={{ top: isHeaderHidden ? 84 : headerHeight + 84 }}
+              >
                 <SummaryPanel
                   form={form}
                   sectionStatuses={sectionStatuses}
@@ -1563,12 +1551,7 @@ export function ContractRegistrationScreen() {
               {(
                 [
                   { label: "계약 유형", value: form.contractType ?? "—" },
-                  ...(isRentContract
-                    ? [
-                        { label: "주소", value: form.address },
-                        { label: "상세주소", value: form.addressDetail },
-                      ]
-                    : [{ label: "계약명", value: form.contractName }]),
+                  { label: "계약명", value: form.contractName },
                   { label: "은행", value: form.bank },
                   { label: "계좌번호", value: form.accountNumber },
                   { label: "송금자명", value: form.senderName },
@@ -1656,59 +1639,88 @@ export function ContractRegistrationScreen() {
           {SAVED_ACCOUNTS.length > 0 ? (
             <div className="-mx-1 max-h-[50vh] overflow-y-auto px-1">
               <ul className="divide-y divide-slate-100">
-                {SAVED_ACCOUNTS.map((account) => {
+                {sortedSavedAccounts.map((account) => {
                   const isSelected =
                     form.bank === account.bank &&
                     form.accountNumber === account.accountNumber;
+                  const isFavorite = favoriteAccountIds.includes(account.id);
 
                   return (
                     <li key={account.id}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          updateForm({
-                            bank: account.bank,
-                            accountNumber: account.accountNumber,
-                            isAccountVerified: true,
-                          });
-                          setHasBeenVerifiedOnce(true);
-                          setBankQuery(account.bank);
-                          setIsBankMenuOpen(false);
-                          setIsSavedAccountsOpen(false);
-                        }}
+                      <div
                         className={cn(
-                          "flex w-full items-center gap-3 rounded-2xl px-3 py-3.5 text-left transition",
+                          "flex w-full items-center gap-2 rounded-2xl px-3 py-3.5 transition",
                           isSelected
                             ? "bg-[#0038F1]/5"
                             : "hover:bg-slate-50",
                         )}
                       >
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500">
-                          <Wallet className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                            <span className="text-sm font-semibold text-slate-900">
-                              {account.bank}
-                            </span>
-                            <span className="text-sm text-slate-700">
-                              {account.accountNumber}
-                            </span>
-                            <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-                              자동 인증
-                            </span>
+                        <button
+                          type="button"
+                          aria-label={
+                            isFavorite
+                              ? `${account.bank} 즐겨찾기 해제`
+                              : `${account.bank} 즐겨찾기 추가`
+                          }
+                          aria-pressed={isFavorite}
+                          onClick={() => handleFavoriteAccountToggle(account.id)}
+                          className={cn(
+                            "group flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition hover:bg-amber-50 hover:text-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300",
+                            isFavorite
+                              ? "bg-amber-50 text-amber-400"
+                              : "text-slate-300",
+                          )}
+                        >
+                          <Star
+                            className={cn(
+                              "h-4 w-4 fill-transparent transition-transform group-hover:scale-110",
+                              isFavorite && "fill-amber-400 stroke-amber-400",
+                            )}
+                          />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateForm({
+                              bank: account.bank,
+                              accountNumber: account.accountNumber,
+                              isAccountVerified: true,
+                            });
+                            setHasBeenVerifiedOnce(true);
+                            setBankQuery(account.bank);
+                            setIsBankMenuOpen(false);
+                            setIsSavedAccountsOpen(false);
+                          }}
+                          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                        >
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                            <Wallet className="h-4 w-4" />
                           </div>
-                          <p className="mt-0.5 text-xs text-slate-500">
-                            예금주 {account.holder} · 마지막 송금{" "}
-                            {account.lastPaidAt}
-                          </p>
-                        </div>
-                        {isSelected ? (
-                          <CheckCircle2 className="h-4 w-4 shrink-0 text-[#0038F1]" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
-                        )}
-                      </button>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                              <span className="text-sm font-semibold text-slate-900">
+                                {account.bank}
+                              </span>
+                              <span className="text-sm text-slate-700">
+                                {account.accountNumber}
+                              </span>
+                              <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                                자동 인증
+                              </span>
+                            </div>
+                            <p className="mt-0.5 text-xs text-slate-500">
+                              예금주 {account.holder} · 마지막 송금{" "}
+                              {account.lastPaidAt}
+                            </p>
+                          </div>
+                          {isSelected ? (
+                            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#0038F1]" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
+                          )}
+                        </button>
+                      </div>
                     </li>
                   );
                 })}
