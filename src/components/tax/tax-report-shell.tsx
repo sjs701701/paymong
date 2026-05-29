@@ -354,11 +354,7 @@ export function TaxReportShell() {
         >
           <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="min-w-0">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-3 py-1 text-[11px] font-semibold tracking-[0.02em] text-white/90 ring-1 ring-inset ring-white/20">
-                <ReceiptText size={13} />
-                송금완료 내역 통합 관리
-              </span>
-              <h2 className="mt-4 text-2xl font-extrabold tracking-[-0.04em] sm:text-[28px] sm:leading-[1.2]">
+              <h2 className="text-2xl font-extrabold tracking-[-0.04em] sm:text-[28px] sm:leading-[1.2]">
                 신고와 발급에 필요한 내역을
                 <br className="hidden sm:block" />{" "}
                 선택해주세요
@@ -531,37 +527,46 @@ export function TaxReportShell() {
         </section>
 
         <div className="mt-5 overflow-hidden rounded-[28px] border border-slate-200/80 bg-white/95 shadow-[0_18px_52px_rgba(15,23,42,0.06)] backdrop-blur-sm">
-          <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
-            <div className="flex items-center gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0038F1]/10 text-[#0038F1]">
-                <CalendarDays size={16} />
+          <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-6 sm:py-5">
+            <button
+              type="button"
+              onClick={toggleVisibleItems}
+              disabled={filteredItems.length === 0}
+              aria-pressed={allVisibleSelected}
+              aria-label="조회 결과 전체 선택"
+              className="group/all inline-flex shrink-0 items-center gap-2 rounded-full py-1.5 pr-2 text-sm font-bold text-slate-700 transition hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:text-slate-700"
+            >
+              <span
+                className={cn(
+                  "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition",
+                  allVisibleSelected
+                    ? "border-[#0038F1] bg-[#0038F1] text-white"
+                    : "border-slate-300 bg-white text-transparent group-hover/all:border-slate-400",
+                )}
+              >
+                <Check size={14} strokeWidth={3} />
               </span>
-              <div className="min-w-0">
+              전체
+            </button>
+            <div className="flex items-end gap-2.5">
+              {visibleSelectedCount > 0 ? (
+                <span className="whitespace-nowrap pb-0.5 text-xs font-semibold text-slate-500">
+                  {visibleSelectedCount}건 선택됨
+                </span>
+              ) : null}
+              <div className="text-right">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
                   조회 결과
                 </p>
-                <p className="mt-0.5 text-sm font-bold text-slate-900">
+                <p className="mt-0.5 whitespace-nowrap text-sm font-bold text-slate-900">
                   총{" "}
                   <span className="text-[#0038F1]">
                     {filteredItems.length}
                   </span>
                   건
-                  {visibleSelectedCount > 0 ? (
-                    <span className="ml-2 text-xs font-semibold text-slate-500">
-                      · {visibleSelectedCount}건 선택됨
-                    </span>
-                  ) : null}
                 </p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={toggleVisibleItems}
-              disabled={filteredItems.length === 0}
-              className="inline-flex h-9 items-center justify-center self-start rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45 sm:self-auto"
-            >
-              {allVisibleSelected ? "조회 결과 선택 해제" : "조회 결과 전체 선택"}
-            </button>
           </div>
 
           {filteredItems.length === 0 ? (
@@ -714,9 +719,11 @@ export function TaxReportShell() {
           setIsDateRangeOpen(false);
         }}
       >
-        <DialogContent className="w-[min(320px,calc(100%-2rem))] max-w-none sm:max-w-none">
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>날짜 범위 선택</DialogTitle>
+            <DialogTitle className="text-base font-bold text-slate-900">
+              날짜 범위 선택
+            </DialogTitle>
             <DialogDescription>
               송금완료 내역을 조회할 시작일과 종료일을 선택해주세요.
             </DialogDescription>
@@ -747,13 +754,13 @@ export function TaxReportShell() {
             </label>
           </div>
 
-          <DialogFooter className="flex-row gap-2.5 sm:justify-end">
+          <DialogFooter className="flex-row gap-2 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"
               size="lg"
               onClick={clearDateRange}
-              className="h-auto flex-1 rounded-xl border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:flex-initial"
+              className="h-auto flex-1 rounded-xl border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:flex-initial"
             >
               초기화
             </Button>
@@ -761,7 +768,7 @@ export function TaxReportShell() {
               type="button"
               size="lg"
               onClick={applyDateRange}
-              className="h-auto flex-[2] rounded-xl bg-[#0038F1] px-4 py-3 text-sm font-semibold text-white hover:bg-[#002fd0] sm:flex-initial"
+              className="h-auto flex-1 rounded-xl bg-[#0038F1] px-5 py-3 text-sm font-semibold text-white hover:bg-[#002fd0] sm:flex-initial"
             >
               적용
             </Button>
