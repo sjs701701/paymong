@@ -11,6 +11,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import {
+  ArrowLeftRight,
   BookOpen,
   ChevronDown,
   ChevronRight,
@@ -96,6 +97,7 @@ type UserMenuItemKey =
   | "contracts"
   | "contract-register"
   | "tax"
+  | "payment-records"
   | "sns-login";
 
 const USER_MENU_SECTIONS: Array<{
@@ -112,7 +114,12 @@ const USER_MENU_SECTIONS: Array<{
       { key: "contracts", label: "계약리스트", icon: ClipboardList },
       { key: "contract-register", label: "계약등록하기", icon: FilePlus },
       { key: "mileage", label: "마일리지샵", icon: Sparkles },
-      { key: "tax", label: "세금계산서/부가세 신고", icon: Receipt },
+      {
+        key: "payment-records",
+        label: "결제/송금자료 조회",
+        icon: ArrowLeftRight,
+      },
+      { key: "tax", label: "부가세 신고/자료받기", icon: Receipt },
     ],
   },
   {
@@ -230,6 +237,7 @@ function UserMenuInner({
     pathname === "/help/notice" || pathname.startsWith("/help/notice/");
   const isOnEvent =
     pathname === "/help/event" || pathname.startsWith("/help/event/");
+  const isOnPaymentRecords = pathname === "/payment-records";
   const isOnTax = pathname === "/tax";
 
   const closeMenu = useCallback(
@@ -311,6 +319,12 @@ function UserMenuInner({
       if (item.key === "mileage") {
         if (!isOnShopRoot) {
           router.push("/shop");
+        }
+        return;
+      }
+      if (item.key === "payment-records") {
+        if (!isOnPaymentRecords) {
+          router.push("/payment-records");
         }
         return;
       }
@@ -486,6 +500,8 @@ function UserMenuInner({
                                   (item.key === "contract-register" &&
                                     isOnContractRegister) ||
                                   (item.key === "mileage" && isOnShop) ||
+                                  (item.key === "payment-records" &&
+                                    isOnPaymentRecords) ||
                                   (item.key === "tax" && isOnTax) ||
                                   (item.key === "faq" && isOnFaq) ||
                                   (item.key === "notice" && isOnNotice) ||

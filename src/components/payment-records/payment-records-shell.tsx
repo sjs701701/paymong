@@ -11,7 +11,6 @@ import {
   CalendarDays,
   Check,
   FileSpreadsheet,
-  ReceiptText,
   Search,
   X,
 } from "lucide-react";
@@ -121,22 +120,6 @@ function buildTaxReportItems(): TaxReportItem[] {
 
 const TAX_REPORT_ITEMS = buildTaxReportItems();
 
-type IssuanceStatus = "발급신청중" | "발급완료";
-
-// 데모 시드: 일부 내역은 이미 발급 신청됨("발급신청중") 또는 관리자 승인 완료("발급완료") 상태
-const ISSUANCE_SEED_BY_USAGE: Record<number, IssuanceStatus> = {
-  501: "발급완료",
-  201: "발급완료",
-  601: "발급신청중",
-  503: "발급신청중",
-};
-
-const INITIAL_ISSUANCE_STATUSES: Record<string, IssuanceStatus> = {};
-for (const item of TAX_REPORT_ITEMS) {
-  const seeded = ISSUANCE_SEED_BY_USAGE[item.usageId];
-  if (seeded) INITIAL_ISSUANCE_STATUSES[item.id] = seeded;
-}
-
 function getDateRangeLabel(from: string, to: string) {
   if (from && to) return `${from} ~ ${to}`;
   if (from) return `${from} 이후`;
@@ -144,7 +127,7 @@ function getDateRangeLabel(from: string, to: string) {
   return "날짜 선택";
 }
 
-export function TaxReportShell() {
+export function PaymentRecordsShell() {
   const headerRef = useRef<HTMLElement>(null);
   const lastScrollTopRef = useRef(0);
   const [headerHeight, setHeaderHeight] = useState(57);
@@ -160,15 +143,6 @@ export function TaxReportShell() {
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [requestMessage, setRequestMessage] = useState<string | null>(null);
-  const [issuanceStatuses, setIssuanceStatuses] = useState<
-    Record<string, IssuanceStatus>
-  >(INITIAL_ISSUANCE_STATUSES);
-  const [isIssuanceGuideOpen, setIsIssuanceGuideOpen] = useState(false);
-  const [hasReadGuide, setHasReadGuide] = useState(false);
-  const [hasAgreed, setHasAgreed] = useState(false);
-  const [isIssuanceDoneOpen, setIsIssuanceDoneOpen] = useState(false);
-  const [isIssuanceBlockedOpen, setIsIssuanceBlockedOpen] = useState(false);
-  const guideScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = headerRef.current;
@@ -335,64 +309,6 @@ export function TaxReportShell() {
     );
   };
 
-  const requestIssuance = () => {
-    if (selectedItems.length === 0) return;
-    setIssuanceStatuses((prev) => {
-      const next = { ...prev };
-      selectedItems.forEach((item) => {
-        if (next[item.id] !== "발급완료") {
-          next[item.id] = "발급신청중";
-        }
-      });
-      return next;
-    });
-    setRequestMessage(
-      `세금계산서 발급 신청 ${selectedItems.length}건이 접수되었습니다.`,
-    );
-    setSelectedIds([]);
-  };
-
-  const checkGuideScrolled = (el: HTMLDivElement | null) => {
-    if (!el) return;
-    if (el.scrollHeight - el.scrollTop - el.clientHeight <= 8) {
-      setHasReadGuide(true);
-    }
-  };
-
-  const openIssuanceGuide = () => {
-    if (selectedItems.length === 0) return;
-    const hasProcessed = selectedItems.some(
-      (item) =>
-        issuanceStatuses[item.id] === "발급완료" ||
-        issuanceStatuses[item.id] === "발급신청중",
-    );
-    if (hasProcessed) {
-      setIsIssuanceBlockedOpen(true);
-      return;
-    }
-    setRequestMessage(null);
-    setHasReadGuide(false);
-    setHasAgreed(false);
-    setIsIssuanceGuideOpen(true);
-  };
-
-  const confirmIssuance = () => {
-    setIsIssuanceGuideOpen(false);
-    requestIssuance();
-    setIsIssuanceDoneOpen(true);
-  };
-
-  useEffect(() => {
-    if (!isIssuanceGuideOpen) return;
-    const id = window.requestAnimationFrame(() => {
-      const el = guideScrollRef.current;
-      if (el && el.scrollHeight - el.scrollTop - el.clientHeight <= 8) {
-        setHasReadGuide(true);
-      }
-    });
-    return () => window.cancelAnimationFrame(id);
-  }, [isIssuanceGuideOpen]);
-
   return (
     <div
       className="section-two-onward-font min-h-screen bg-[#eef2fa] text-[#151515]"
@@ -425,7 +341,7 @@ export function TaxReportShell() {
             className="group h-auto shrink-0 rounded-none p-0 text-slate-600 hover:bg-transparent hover:text-slate-950"
           />
           <h1 className="text-lg font-bold tracking-[-0.04em] text-slate-900 sm:text-lg sm:tracking-[-0.03em] sm:text-slate-950 lg:text-xl">
-            부가세 신고/자료받기
+            결제/송금자료 조회
           </h1>
         </div>
       </div>
@@ -709,18 +625,6 @@ export function TaxReportShell() {
                           <span className="text-xs font-medium text-slate-400">
                             {item.date}
                           </span>
-                          {issuanceStatuses[item.id] ? (
-                            <span
-                              className={cn(
-                                "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold",
-                                issuanceStatuses[item.id] === "발급완료"
-                                  ? "bg-emerald-100 text-emerald-700"
-                                  : "bg-amber-100 text-amber-700",
-                              )}
-                            >
-                              {issuanceStatuses[item.id]}
-                            </span>
-                          ) : null}
                         </div>
                         <p className="mt-2 truncate text-sm font-semibold leading-6 text-slate-950 sm:text-[15px]">
                           {item.contractName}
@@ -779,26 +683,16 @@ export function TaxReportShell() {
             ) : null}
           </div>
 
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:min-w-[520px]">
+          <div className="grid grid-cols-1 gap-2 lg:w-80">
             <Button
               type="button"
               size="lg"
               disabled={selectedItems.length === 0}
-              onClick={() => handleRequest("부가세 신고용 정산 자료 요청")}
-              className="h-auto min-h-12 w-full whitespace-normal rounded-2xl border border-slate-200 bg-white px-3 py-3.5 text-center text-xs font-bold leading-tight text-slate-800 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:opacity-100 sm:text-sm"
-            >
-              <FileSpreadsheet size={16} />
-              부가세 신고용 정산 자료 요청
-            </Button>
-            <Button
-              type="button"
-              size="lg"
-              disabled={selectedItems.length === 0}
-              onClick={openIssuanceGuide}
+              onClick={() => handleRequest("자료 받기")}
               className="h-auto min-h-12 w-full whitespace-normal rounded-2xl bg-[#0038F1] px-3 py-3.5 text-center text-xs font-bold leading-tight text-white transition hover:bg-[#002fd0] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:opacity-100 sm:text-sm"
             >
-              <ReceiptText size={16} />
-              세금계산서 발급 신청
+              <FileSpreadsheet size={16} />
+              자료 받기
             </Button>
           </div>
         </div>
@@ -866,208 +760,6 @@ export function TaxReportShell() {
               className="h-auto flex-1 rounded-xl bg-[#0038F1] px-5 py-3 text-sm font-semibold text-white hover:bg-[#002fd0] sm:flex-initial"
             >
               적용
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={isIssuanceGuideOpen}
-        onOpenChange={(open) => {
-          if (!open) setIsIssuanceGuideOpen(false);
-        }}
-      >
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-base font-bold text-slate-900">
-              세금계산서 발급 신청 안내
-            </DialogTitle>
-            <DialogDescription>
-              아래 안내를 끝까지 확인하신 후 신청을 완료할 수 있습니다.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div
-            ref={guideScrollRef}
-            onScroll={(event) => checkGuideScrolled(event.currentTarget)}
-            className="max-h-[55vh] space-y-4 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/60 p-4 text-sm leading-6 text-slate-600"
-          >
-            <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
-              <p className="flex items-center gap-1.5 text-[15px] font-bold text-rose-700">
-                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-rose-600 text-[10px] font-bold text-white">
-                  !
-                </span>
-                세금계산서 중복 발행 시 유의사항
-              </p>
-              <p className="mt-1.5 font-medium text-rose-700">
-                동일 거래에 대해 카드자료와 세금계산서를 중복 발행하는 것은
-                허용되지 않습니다. 중복 발행 시 공급자와 수취인 모두에게 가산세
-                등 불이익이 발생할 수 있으므로 주의해 주세요.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-[15px] font-bold text-slate-900">
-                페이몽 이용내역, 부가세 공제 처리 이렇게 하세요!
-              </h3>
-              <p className="mt-1.5">
-                페이몽에서 사업자카드로 결제하신 내역은 국세청에 자동으로
-                과세자료가 제출되며, 별도의 세금계산서 없이도 부가세 공제가
-                가능합니다.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-bold text-slate-800">
-                1. 부가세 매입세액 공제 안내
-              </h4>
-              <p className="mt-1">
-                사업자 명의 카드로 결제한 내역은 국세청에 자동 반영됩니다.
-                별도의 세금계산서 없이도 매입세액 공제가 가능하며, 홈택스에서
-                부가세 신고 시 카드 사용내역이 자동으로 연결됩니다.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-bold text-slate-800">
-                2. 꼭 세금계산서가 필요한 경우
-              </h4>
-              <p className="mt-1">
-                세금계산서가 반드시 필요한 경우 아래 절차를 따라주세요.
-              </p>
-              <p className="mt-1 font-medium text-slate-700">
-                거래내역 → 상세 보기 → 하단의 ‘세금계산서 발급 요청’
-              </p>
-            </div>
-            <div>
-              <h4 className="font-bold text-slate-800">
-                3. 페이몽 부가세 신고자료 제공
-              </h4>
-              <p className="mt-1">월별·분기별 정산 자료를 제공해 드립니다.</p>
-              <ul className="mt-1 list-disc space-y-0.5 pl-5">
-                <li>제공 형식: PDF 요약본 / 엑셀 명세서</li>
-                <li>포함 항목: 결제일, 승인번호, 수수료, 부가세 금액 등</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-slate-800">유의사항 및 동의</h4>
-              <p className="mt-1">
-                본 세금계산서 발급 신청은 관리자 승인 후 처리되며, 승인 완료 시
-                발급 상태가 ‘발급완료’로 표시됩니다. 동일 거래의 중복 발행으로
-                인한 불이익은 신청자에게 책임이 있습니다.
-              </p>
-              <label className="mt-3 flex cursor-pointer select-none items-start gap-2.5">
-                <input
-                  type="checkbox"
-                  checked={hasAgreed}
-                  onChange={(event) => setHasAgreed(event.target.checked)}
-                  className="peer sr-only"
-                />
-                <span
-                  className={cn(
-                    "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition peer-focus-visible:ring-2 peer-focus-visible:ring-[#0038F1]/30",
-                    hasAgreed
-                      ? "border-[#0038F1] bg-[#0038F1] text-white"
-                      : "border-slate-300 bg-white text-transparent",
-                  )}
-                >
-                  <Check size={14} strokeWidth={3} />
-                </span>
-                <span className="text-sm font-semibold text-slate-700">
-                  위 안내 사항을 모두 확인하였으며, 세금계산서 발급 신청에
-                  동의합니다.
-                </span>
-              </label>
-            </div>
-          </div>
-
-          {!hasReadGuide || !hasAgreed ? (
-            <p className="text-center text-xs font-medium text-slate-400">
-              {!hasReadGuide
-                ? "안내 내용을 끝까지 읽어주세요."
-                : "동의에 체크하시면 신청을 완료할 수 있습니다."}
-            </p>
-          ) : null}
-
-          <DialogFooter className="flex-row gap-2 sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              onClick={() => setIsIssuanceGuideOpen(false)}
-              className="h-auto flex-1 rounded-xl border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:flex-initial"
-            >
-              취소
-            </Button>
-            <Button
-              type="button"
-              size="lg"
-              disabled={!hasReadGuide || !hasAgreed}
-              onClick={confirmIssuance}
-              className="h-auto flex-1 rounded-xl bg-[#0038F1] px-5 py-3 text-sm font-semibold text-white hover:bg-[#002fd0] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:opacity-100 sm:flex-initial"
-            >
-              확인
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={isIssuanceDoneOpen}
-        onOpenChange={(open) => {
-          if (!open) setIsIssuanceDoneOpen(false);
-        }}
-      >
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <div className="mb-1 flex h-10 w-10 items-center justify-center rounded-full bg-[#0038F1]/10 text-[#0038F1]">
-              <Check size={20} strokeWidth={3} />
-            </div>
-            <DialogTitle className="text-base font-bold text-slate-900">
-              세금계산서 발급 신청이 완료되었습니다
-            </DialogTitle>
-            <DialogDescription>
-              신청 내역은 관리자 검토 후 승인 처리됩니다. 승인이 완료되면 발급
-              상태가 ‘발급완료’로 표시됩니다.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex-row sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              size="lg"
-              onClick={() => setIsIssuanceDoneOpen(false)}
-              className="h-auto w-full rounded-xl bg-[#0038F1] px-5 py-3 text-sm font-semibold text-white hover:bg-[#002fd0]"
-            >
-              확인
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={isIssuanceBlockedOpen}
-        onOpenChange={(open) => {
-          if (!open) setIsIssuanceBlockedOpen(false);
-        }}
-      >
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <div className="mb-1 flex h-10 w-10 items-center justify-center rounded-full bg-rose-600 text-lg font-extrabold text-white">
-              !
-            </div>
-            <DialogTitle className="text-base font-bold text-slate-900">
-              신청할 수 없는 내역이 포함되어 있습니다
-            </DialogTitle>
-            <DialogDescription>
-              선택한 내역 중 이미 발급완료되었거나 발급신청중인 건이 포함되어
-              있습니다. 해당 내역을 제외한 후 다시 신청해 주세요.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex-row sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              size="lg"
-              onClick={() => setIsIssuanceBlockedOpen(false)}
-              className="h-auto w-full rounded-xl bg-[#0038F1] px-5 py-3 text-sm font-semibold text-white hover:bg-[#002fd0]"
-            >
-              확인
             </Button>
           </DialogFooter>
         </DialogContent>
