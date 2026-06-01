@@ -423,7 +423,7 @@ function UserMenuInner({
                   role="menu"
                   data-lenis-prevent
                   className={cn(
-                    "fixed inset-0 z-[100] flex h-[100dvh] flex-col overflow-hidden bg-white duration-200 ease-out min-[920px]:inset-auto min-[920px]:right-5 min-[920px]:top-20 min-[920px]:h-auto min-[920px]:w-[min(calc(100vw-2rem),22rem)] min-[920px]:rounded-[1.75rem] min-[920px]:border min-[920px]:border-slate-200 min-[920px]:bg-white/90 min-[920px]:shadow-[0_24px_70px_rgba(15,23,42,0.18)] min-[920px]:backdrop-blur-sm",
+                    "fixed inset-0 z-[100] flex h-[100dvh] flex-col overflow-hidden bg-white duration-200 ease-out min-[920px]:inset-auto min-[920px]:right-5 min-[920px]:top-16 min-[920px]:h-auto min-[920px]:w-[min(calc(100vw-2rem),22rem)] min-[920px]:rounded-[1.75rem] min-[920px]:border min-[920px]:border-slate-200 min-[920px]:bg-white/90 min-[920px]:shadow-[0_24px_70px_rgba(15,23,42,0.18)] min-[920px]:backdrop-blur-sm",
                     isExiting
                       ? "animate-out slide-out-to-right fill-mode-forwards min-[920px]:fade-out-0 min-[920px]:slide-out-to-right-0 min-[920px]:slide-out-to-top-2"
                       : "animate-in slide-in-from-right min-[920px]:fade-in-0 min-[920px]:slide-in-from-right-0 min-[920px]:slide-in-from-top-2",
