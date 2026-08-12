@@ -177,51 +177,6 @@
   padding: 16px 16px 104px;
 }
 
-.periodWrap { order: 1; }
-
-.periodTabs {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  border: 1px solid rgba(0, 62, 129, 0.08);
-  border-radius: 999px;
-  background: #f0f4fa;
-  padding: 4px;
-}
-
-.periodTabs button {
-  height: 38px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: #536b7c;
-  font-size: 13px;
-  cursor: pointer;
-  transition: 160ms ease;
-}
-
-.periodTabs .activePeriod {
-  border: 1px solid rgba(0, 62, 129, 0.08);
-  background: #fff;
-  box-shadow: 0 8px 12px 2px rgba(0, 0, 0, 0.02);
-  color: #070429;
-  font-weight: 600;
-}
-
-.customDates {
-  display: none;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  border: 1px solid rgba(0, 62, 129, 0.08);
-  border-radius: 12px;
-  background: #fff;
-  padding: 9px 11px;
-  color: #8ea0ac;
-}
-
-.customDates.showDates { display: flex; }
-.customDates input { min-width: 0; flex: 1; border: 0; outline: none; color: #354977; font-size: 12px; }
-
 .limitCard {
   order: 2;
   border: 1px solid rgba(0, 62, 129, 0.08);
@@ -331,7 +286,47 @@
   background: #fff;
 }
 
+.mobileUsageHead {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #edf1f5;
+  padding: 12px 14px;
+}
+
+.mobileUsageHead h3 {
+  margin: 0;
+  color: #052236;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.mobileUsageHead button {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 9px;
+  background: #f1f6ff;
+  padding: 0 10px;
+  color: #2663ed;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.mobileUsageHead button:active {
+  background: #e7efff;
+  transform: scale(0.98);
+}
+
 .tableCard table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.mobileTableBody { display: table-row-group; }
+.desktopTableBody { display: none; }
 .tableCard th {
   height: 40px;
   border-bottom: 1px solid #edf1f5;
@@ -371,8 +366,32 @@
 .status[data-status="결제"] { background: #f8f3ff; color: #7541d7; }
 .status[data-status="실패"] { background: #fff3f3; color: #a52f2f; }
 
-.pagination {
+.mobileLoadMore {
   display: flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-top: 1px solid #f0f2f5;
+  color: #8ea0ac;
+  font-size: 11px;
+}
+
+.loadingSpinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #dce8ff;
+  border-top-color: #2663ed;
+  border-radius: 50%;
+  animation: usage-loading 700ms linear infinite;
+}
+
+@keyframes usage-loading {
+  to { transform: rotate(360deg); }
+}
+
+.pagination {
+  display: none;
   align-items: center;
   justify-content: center;
   gap: 5px;
@@ -397,6 +416,157 @@
 .pagination button:last-child { background: transparent; }
 .pagination button svg { width: 16px; height: 16px; }
 .pagination .currentPage { background: #2663ed; color: #fff; font-weight: 700; }
+
+.dateModalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 20, 35, 0.46);
+  padding: 16px;
+  animation: date-backdrop-in 180ms ease-out both;
+}
+
+.dateModal {
+  width: 100%;
+  max-width: 438px;
+  border-radius: 20px;
+  background: #fff;
+  padding: 20px 18px calc(env(safe-area-inset-bottom) + 18px);
+  animation: date-modal-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.dateModalHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dateModalHead h2 {
+  margin: 0;
+  color: #052236;
+  font-size: 18px;
+  font-weight: 750;
+  line-height: 25px;
+}
+
+.dateModalHead p {
+  margin: 4px 0 0;
+  color: #8ea0ac;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.dateModalHead > button {
+  display: flex;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 10px;
+  background: #f6f8fb;
+  color: #758b9a;
+  cursor: pointer;
+}
+
+.dateFields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.dateFields label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.dateFields label span {
+  color: #536b7c;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.dateFields input {
+  width: 100%;
+  height: 46px;
+  min-width: 0;
+  border: 1px solid #dfe6eb;
+  border-radius: 11px;
+  background: #fff;
+  padding: 0 10px;
+  color: #052236;
+  font-size: 12px;
+  outline: none;
+}
+
+.dateFields input:focus {
+  border-color: #2663ed;
+  box-shadow: 0 0 0 3px rgba(38, 99, 237, 0.1);
+}
+
+.dateFields > i {
+  padding-bottom: 14px;
+  color: #aebbc4;
+  font-size: 12px;
+  font-style: normal;
+}
+
+.dateError {
+  margin: 9px 0 0;
+  color: #c13d3d;
+  font-size: 11px;
+}
+
+.dateModalActions {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.dateModalActions button {
+  height: 48px;
+  border: 0;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dateModalActions button:first-child {
+  background: #f0f3f6;
+  color: #536b7c;
+}
+
+.dateModalActions button:last-child {
+  background: #2663ed;
+  color: #fff;
+}
+
+.dateModalActions button:last-child:disabled {
+  background: #d8e0e7;
+  color: #fff;
+  cursor: not-allowed;
+}
+
+@keyframes date-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes date-modal-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 .mobilePayFooter {
   position: fixed;
@@ -438,6 +608,50 @@
   .summaryValues strong { font-size: 18px; }
   .tableCard td,
   .tableCard td b { font-size: 10px; }
+}
+
+@media (max-width: 1023px) {
+  .screen {
+    height: 100svh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .detail {
+    height: 100svh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .detailBody {
+    height: calc(100svh - 56px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-width: none;
+  }
+
+  .detailBody::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tableCard {
+    overflow: clip;
+  }
+
+  .mobileUsageHead {
+    position: sticky;
+    top: -16px;
+    z-index: 12;
+    background: #fff;
+  }
+
+  .tableCard th {
+    position: sticky;
+    top: 43px;
+    z-index: 11;
+    background: #fff;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -544,7 +758,6 @@
     overflow-y: auto;
     padding: 24px 32px 40px;
   }
-  .periodWrap { display: none; }
   .usageCard {
     display: block;
     grid-row: 1 / span 2;
@@ -568,6 +781,7 @@
   .summaryValues strong { font-size: 23px; line-height: 29px; }
   .summaryValues small { font-size: 14px; }
   .summary > button { width: auto; min-width: 128px; height: 42px; margin: 0; padding: 0 14px; font-size: 12px; }
+  .mobileUsageHead { display: none; }
   .tableCard { margin-top: 16px; border-radius: 14px; }
   .tableCard th { height: 54px; padding: 0 16px; font-size: 12px; }
   .tableCard td { height: 64px; padding: 0 16px; font-size: 12px; }
@@ -577,7 +791,10 @@
   .tableCard td:last-child { padding-right: 16px; }
   .tableCard td b { font-size: 13px; }
   .tableCard td:last-child > svg { display: inline-block; margin-left: 8px; color: #d1d8de; vertical-align: middle; }
-  .pagination { gap: 7px; padding: 10px 8px 12px; }
+  .mobileTableBody { display: none; }
+  .desktopTableBody { display: table-row-group; }
+  .mobileLoadMore { display: none; }
+  .pagination { display: flex; gap: 7px; padding: 10px 8px 12px; }
   .pagination button { width: 34px; height: 34px; }
   .limitCard {
     position: sticky;
@@ -592,6 +809,7 @@
   .limitInfo { margin-top: 13px; }
   .desktopPayButton { display: flex; width: 100%; height: 56px; align-items: center; justify-content: center; gap: 6px; margin-top: 24px; border: 0; border-radius: 12px; background: #2663ed; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; }
   .mobilePayFooter { display: none; }
+  .dateModalBackdrop { display: none; }
 }
 
 @media (min-width: 1024px) and (max-width: 1210px) {
